@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(claude *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(python --version; python -c \"import openpyxl; print\\('openpyxl ok'\\)\" 2>&1; node --version 2>&1)",
+      "PowerShell(\\(Get-Content \"Pasted-20260712-091019.svg\" -Tail 5\\))",
+      "Bash(where node *)",
+      "Bash(py --version)"
+    ]
+  }
+}

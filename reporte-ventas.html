@@ -1,0 +1,2035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Ventas Diarias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#050B12;
+    --bg-mid:#081420;
+    --panel:#0B1B28;
+    --panel-2:#0F2334;
+    --line:#173347;
+    --line-bright:#23516B;
+    --paper:#EAF6F7;
+    --paper-dim:#6E8A98;
+    --cyan:#3FE8E0;
+    --cyan-dim:#1B6B67;
+    --cyan-glow:rgba(63,232,224,0.35);
+    --blue:#4C8DFF;
+    --blue-dim:#28497F;
+    --blue-glow:rgba(76,141,255,0.3);
+    --red:#FF6B6B;
+    --green:#3FE8E0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 12% -6%, rgba(63,232,224,.10) 0%, transparent 42%),
+      radial-gradient(circle at 105% 20%, rgba(76,141,255,.10) 0%, transparent 45%),
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0/42px 42px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/42px 42px,
+      var(--bg-deep);
+    background-blend-mode:normal, normal, overlay, overlay, normal;
+    background-attachment:fixed;
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    padding:32px 20px 80px;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, rgba(63,232,224,.35) 0, transparent 100%),
+      radial-gradient(1px 1px at 300px 120px, rgba(76,141,255,.3) 0, transparent 100%),
+      radial-gradient(1.5px 1.5px at 620px 260px, rgba(63,232,224,.3) 0, transparent 100%),
+      radial-gradient(1px 1px at 860px 60px, rgba(63,232,224,.25) 0, transparent 100%),
+      radial-gradient(1.5px 1.5px at 140px 460px, rgba(76,141,255,.25) 0, transparent 100%);
+    background-repeat:no-repeat;
+    pointer-events:none;
+    z-index:0;
+  }
+  .wrap{max-width:1080px;margin:0 auto;position:relative;z-index:1;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:1px solid var(--line-bright);
+    padding-bottom:20px;
+    margin-bottom:28px;
+    position:relative;
+  }
+  header::after{
+    content:"";
+    position:absolute;bottom:-1px;left:0;
+    width:120px;height:2px;
+    background:linear-gradient(90deg, var(--cyan), transparent);
+    box-shadow:0 0 10px var(--cyan-glow);
+  }
+  .brand-eyebrow{
+    font-size:11px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    margin:0 0 10px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .brand-eyebrow::before{
+    content:"";
+    width:7px;height:7px;border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 8px 2px var(--cyan-glow);
+  }
+  h1{
+    font-family:'Orbitron',sans-serif;
+    font-weight:700;
+    font-size:clamp(26px,4vw,38px);
+    margin:0;
+    letter-spacing:.01em;
+    color:var(--paper);
+    text-shadow:0 0 22px rgba(63,232,224,.18);
+  }
+  #liveDate{
+    font-size:12px;
+    color:var(--paper-dim);
+    text-align:right;
+    line-height:1.6;
+  }
+  #liveDate b{color:var(--cyan);font-size:14px;display:block;letter-spacing:.04em;}
+
+  /* ---------- UPLOAD SLOTS ---------- */
+  .slots{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-bottom:26px;
+  }
+  @media(max-width:640px){.slots{grid-template-columns:1fr;}}
+  .slots.single{grid-template-columns:1fr;}
+
+  .upload-status-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:16px;
+  }
+  @media(max-width:640px){.upload-status-grid{grid-template-columns:1fr;}}
+  .upload-status-grid .status-line{margin-top:4px;}
+
+  .slot{
+    position:relative;
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px;
+    transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .slot::before,.slot::after{
+    content:"";
+    position:absolute;width:14px;height:14px;
+    border-color:var(--line-bright);
+    opacity:.8;
+  }
+  .slot::before{top:8px;left:8px;border-top:2px solid;border-left:2px solid;}
+  .slot::after{bottom:8px;right:8px;border-bottom:2px solid;border-right:2px solid;}
+  .slot.filled{border-color:var(--tone,var(--cyan));box-shadow:0 0 0 1px var(--tone,var(--cyan)) inset, 0 0 24px -8px var(--tone,var(--cyan));}
+  .slot.filled::before,.slot.filled::after{border-color:var(--tone,var(--cyan));}
+  .slot .tag{
+    font-size:10px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--tone,var(--cyan));
+    display:flex;align-items:center;gap:8px;
+    margin-bottom:10px;
+    font-family:'Orbitron',sans-serif;
+    font-weight:600;
+  }
+  .slot .tag .dot{width:7px;height:7px;border-radius:50%;background:var(--tone,var(--cyan));box-shadow:0 0 8px 1px var(--tone,var(--cyan));}
+  .slot .title{font-family:'Orbitron',sans-serif;font-weight:600;font-size:15px;margin-bottom:4px;letter-spacing:.02em;}
+  .slot .desc{font-size:11.5px;color:var(--paper-dim);margin-bottom:14px;line-height:1.5;}
+  .slot .rule{font-size:10.5px;color:var(--tone,var(--cyan));margin-bottom:12px;line-height:1.5;border-left:2px solid var(--tone,var(--cyan));padding-left:8px;}
+  .slot input[type=file]{display:none;}
+  .drop{
+    border:1px dashed var(--line-bright);
+    border-radius:5px;
+    padding:16px;
+    text-align:center;
+    font-size:12px;
+    color:var(--paper-dim);
+    cursor:pointer;
+    transition:.2s;
+    display:block;
+  }
+  .drop:hover{border-color:var(--tone,var(--cyan));color:var(--paper);background:rgba(63,232,224,.04);}
+  .drop.has-file{
+    border-style:solid;
+    border-color:var(--tone,var(--cyan));
+    color:var(--paper);
+    background:rgba(63,232,224,.05);
+    text-align:left;
+  }
+  .drop .fname{font-weight:600;font-size:12.5px;color:var(--paper);}
+  .drop .fmeta{font-size:10.5px;color:var(--paper-dim);margin-top:2px;}
+
+  .mapping{
+    margin-top:12px;
+    display:none;
+    gap:10px;
+    grid-template-columns:1fr 1fr;
+  }
+  .mapping.show{display:grid;}
+  .mapping .full{grid-column:1/-1;}
+  .mapping label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--paper-dim);display:block;margin-bottom:4px;}
+  .mapping select{
+    width:100%;
+    background:var(--bg-mid);
+    color:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:7px 8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+  }
+  .mapping select:focus{outline:1px solid var(--cyan);border-color:var(--cyan);}
+
+  .status-line{
+    font-size:11px;
+    margin-top:10px;
+    min-height:14px;
+    color:var(--paper-dim);
+  }
+  .status-line.err{color:var(--red);}
+  .status-line.ok{color:var(--cyan);}
+  .status-line.filtered{color:var(--tone,var(--cyan));}
+
+  /* ---------- EMPTY STATE ---------- */
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--paper-dim);
+    font-size:13px;
+    border:1px dashed var(--line);
+    border-radius:8px;
+    display:block;
+    background:rgba(15,35,52,.3);
+  }
+  .empty b{display:block;color:var(--paper);font-family:'Orbitron',sans-serif;font-size:16px;margin-bottom:8px;letter-spacing:.02em;}
+
+  /* ---------- KPI TICKER ---------- */
+  .kpis{
+    display:none;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:14px;
+    margin:26px 0;
+  }
+  .kpis.show{display:grid;}
+  .kpi{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 16px 14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi::before{
+    content:"";
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg, var(--tone,var(--cyan)), transparent);
+  }
+  .kpi .lab{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-dim);margin-bottom:10px;}
+  .kpi .val{
+    font-family:'Orbitron',sans-serif;
+    font-weight:700;
+    font-size:19px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.01em;
+  }
+  .kpi .sub{font-size:11px;margin-top:7px;color:var(--paper-dim);}
+  .kpi .sub.up{color:var(--cyan);}
+  .kpi .sub.down{color:var(--red);}
+  .kpi.accent-cyan{--tone:var(--cyan);}
+  .kpi.accent-cyan .val{color:var(--cyan);}
+  .kpi.accent-blue{--tone:var(--blue);}
+  .kpi.accent-blue .val{color:var(--blue);}
+  .kpi.accent-total{--tone:#FFB454;}
+  .kpi.accent-total .val{color:#FFB454;}
+
+  /* ---------- CHART PANELS ---------- */
+  .panels{display:none;flex-direction:column;gap:18px;}
+  .panels.show{display:flex;}
+  .panel{
+    background:linear-gradient(180deg, var(--panel), var(--bg-mid));
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:20px 20px 8px;
+    position:relative;
+  }
+  .panel::before,.panel::after{
+    content:"";
+    position:absolute;width:12px;height:12px;
+    border-color:var(--line-bright);
+  }
+  .panel::before{top:7px;left:7px;border-top:2px solid;border-left:2px solid;}
+  .panel::after{top:7px;right:7px;border-top:2px solid;border-right:2px solid;}
+  .panel-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:14px;flex-wrap:wrap;gap:8px;
+  }
+  .panel-head .ph-title{font-family:'Orbitron',sans-serif;font-weight:600;font-size:14px;letter-spacing:.02em;}
+  .panel-head .ph-title span{color:var(--paper-dim);font-weight:400;font-size:11px;display:block;font-family:'IBM Plex Mono',monospace;margin-top:4px;letter-spacing:0;}
+  .legend-chip{display:flex;gap:14px;font-size:11px;color:var(--paper-dim);}
+  .legend-chip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  .chart-wrap{position:relative;width:100%;height:300px;}
+  canvas{display:block;}
+
+  .rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:760px){.rank-grid{grid-template-columns:1fr;}}
+
+  /* ---------- SELECTOR DE MES (botones) ---------- */
+  .month-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .month-pill{
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--paper-dim);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:6px 13px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:.2s;
+    letter-spacing:.03em;
+  }
+  .month-pill:hover{border-color:var(--cyan);color:var(--paper);}
+  .month-pill.active{background:var(--cyan);border-color:var(--cyan);color:var(--bg-deep);font-weight:600;}
+
+  /* ---------- TABLE ---------- */
+  .table-wrap{display:none;overflow-x:auto;}
+  .table-wrap.show{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead th{
+    text-align:right;
+    padding:8px 10px;
+    color:var(--cyan);
+    font-weight:500;
+    text-transform:uppercase;
+    font-size:9.5px;
+    letter-spacing:.1em;
+    border-bottom:1px solid var(--line-bright);
+    white-space:nowrap;
+  }
+  thead th:first-child{text-align:left;}
+  tbody td{
+    padding:7px 10px;
+    text-align:right;
+    border-bottom:1px dashed var(--line);
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+  tbody td:first-child{text-align:left;color:var(--paper-dim);}
+  tbody tr:hover{background:rgba(63,232,224,.04);}
+  .pct-cell{color:var(--blue);}
+
+  .rank-table thead th{color:var(--tone,var(--cyan));}
+  .rank-table tbody td:first-child{color:var(--paper);}
+  .rank-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:3px;
+    background:rgba(255,255,255,.06);
+    font-size:10px;margin-right:8px;color:var(--paper-dim);
+  }
+  .rank-table tbody tr:nth-child(1) .rank-num{background:var(--tone,var(--cyan));color:var(--bg-deep);font-weight:700;}
+
+  footer{
+    margin-top:40px;
+    text-align:center;
+    font-size:10.5px;
+    color:var(--paper-dim);
+    letter-spacing:.06em;
+  }
+  footer::before{content:"◆ ";color:var(--cyan);}
+
+  .snapshot-banner{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    background:linear-gradient(90deg, rgba(63,232,224,.08), rgba(76,141,255,.06));
+    border:1px solid var(--line-bright);
+    border-radius:8px;
+    padding:12px 16px;
+    margin-bottom:22px;
+    font-size:12px;
+    color:var(--paper-dim);
+  }
+  .snapshot-banner b{color:var(--paper);font-family:'Orbitron',sans-serif;font-weight:600;font-size:12px;letter-spacing:.02em;}
+  .snapshot-banner button{
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:7px 12px;
+    border-radius:5px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .snapshot-banner button:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  /* ---------- MASCOT ---------- */
+  .mascot-wrap{
+    position:relative;
+    width:74px;height:88px;
+    flex:0 0 auto;
+  }
+  @media(max-width:640px){.mascot-wrap{width:56px;height:66px;}}
+  .mascot-shadow{
+    position:absolute;
+    left:50%;bottom:2px;
+    width:56%;height:14%;
+    background:radial-gradient(ellipse at center, rgba(63,232,224,.4) 0%, rgba(63,232,224,0) 74%);
+    border-radius:50%;
+    transform:translateX(-50%);
+    filter:blur(1px);
+    animation:mascotShadowPulse 3.6s ease-in-out infinite;
+    z-index:0;
+  }
+  .mascot-float{
+    position:relative;
+    width:100%;height:100%;
+    z-index:1;
+    transform-origin:50% 88%;
+    animation:mascotFloat 3.6s ease-in-out infinite;
+  }
+  .mascot-svg{
+    display:block;
+    width:100%;height:100%;
+    object-fit:contain;
+    filter:drop-shadow(0 0 10px rgba(63,232,224,.28));
+  }
+  .mascot-antenna-glow{
+    position:absolute;
+    top:6%;left:49%;
+    width:24%;height:24%;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(0,208,255,.95) 0%, rgba(0,138,251,.55) 42%, rgba(0,138,251,0) 72%);
+    transform:translate(-50%,-50%);
+    mix-blend-mode:screen;
+    pointer-events:none;
+    z-index:2;
+    animation:mascotAntennaPulse 1.8s ease-in-out infinite;
+  }
+  .mascot-wrap.celebrate .mascot-float{animation:mascotCelebrate .9s cubic-bezier(.34,1.56,.64,1) 1;}
+  .mascot-wrap.celebrate .mascot-shadow{animation:mascotShadowCelebrate .9s ease 1;}
+  @keyframes mascotFloat{
+    0%,100%{transform:translateY(0) rotate(-2deg);}
+    50%{transform:translateY(-12px) rotate(2deg);}
+  }
+  @keyframes mascotShadowPulse{
+    0%,100%{transform:translateX(-50%) scale(1,1);opacity:.5;}
+    50%{transform:translateX(-50%) scale(.72,.65);opacity:.24;}
+  }
+  @keyframes mascotAntennaPulse{
+    0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1);}
+    50%{opacity:1;transform:translate(-50%,-50%) scale(1.35);}
+  }
+  @keyframes mascotCelebrate{
+    0%{transform:translateY(0) rotate(0deg) scale(1);}
+    20%{transform:translateY(-34px) rotate(-16deg) scale(1.14);}
+    45%{transform:translateY(0) rotate(12deg) scale(1.05);}
+    65%{transform:translateY(-14px) rotate(-6deg) scale(1.08);}
+    85%{transform:translateY(0) rotate(2deg) scale(1);}
+    100%{transform:translateY(0) rotate(0deg) scale(1);}
+  }
+  @keyframes mascotShadowCelebrate{
+    0%{transform:translateX(-50%) scale(1,1);opacity:.5;}
+    20%{transform:translateX(-50%) scale(.55,.5);opacity:.18;}
+    45%{transform:translateX(-50%) scale(1.1,1);opacity:.5;}
+    65%{transform:translateX(-50%) scale(.8,.7);opacity:.3;}
+    100%{transform:translateX(-50%) scale(1,1);opacity:.5;}
+  }
+
+  .example-btn{
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    padding:9px 16px;
+    border-radius:5px;
+    cursor:pointer;
+    transition:.2s;
+    letter-spacing:.04em;
+  }
+  .example-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  /* ---------- VISTA ACUMULADA (ADMIN, con clave) ---------- */
+  .admin-panel{--tone:#FFB454;}
+  .admin-gate{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    padding:6px 0 2px;
+  }
+  .admin-gate .lock-note{font-size:11.5px;color:var(--paper-dim);flex:1 1 220px;line-height:1.5;}
+  .admin-pin-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .admin-pin-row input[type=password]{
+    background:var(--bg-mid);
+    color:var(--paper);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:8px 10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    width:120px;
+  }
+  .admin-pin-row input[type=password]:focus{outline:1px solid #FFB454;border-color:#FFB454;}
+  .admin-pin-error{font-size:11px;color:var(--red);min-height:14px;width:100%;}
+  .admin-content{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div style="display:flex;align-items:flex-end;gap:14px;">
+      <div class="mascot-wrap" id="mascotWrap" aria-hidden="true">
+        <div class="mascot-shadow"></div>
+        <div class="mascot-float" id="mascotFloat">
+          <div class="mascot-antenna-glow"></div>
+          <img class="mascot-svg" src="Pasted-20260712-091019.svg" alt="">
+        </div>
+      </div>
+      <div>
+        <p class="brand-eyebrow">Sistema activo &bull; EFFI + Dropi</p>
+        <h1>Reporte de Ventas</h1>
+      </div>
+    </div>
+    <div id="liveDate"></div>
+  </header>
+
+  <div class="snapshot-banner" id="snapshotBanner">
+    <div><b>Estas viendo datos de EJEMPLO</b><br>Numeros ilustrativos para mostrar como luce el reporte — no son ventas reales. Sube tus archivos para ver el reporte real.</div>
+    <button id="clearSnapshotBtn" type="button">Salir del ejemplo</button>
+  </div>
+
+  <section class="slots single">
+    <div class="slot" id="slotUpload" style="--tone:var(--cyan)">
+      <div class="tag"><span class="dot"></span>EFFI + Dropi</div>
+      <div class="title">Sube tus excel</div>
+      <div class="desc">Sube el excel de EFFI (remisiones de venta) y el de Dropi (ordenes de productos) — juntos o uno a la vez. El sistema detecta solo cual archivo es cual por sus columnas.</div>
+      <div class="rule">Automatico: EFFI descarta Vendedor = "Cambios"; Dropi descarta Estatus = "Cancelado" y suma prendas (Cantidad) por pedido.</div>
+      <label class="drop" id="dropUpload">
+        <input type="file" id="fileUpload" accept=".xlsx,.xls,.csv" multiple>
+        <span class="dtext">Arrastra o toca para subir los excel (EFFI y Dropi)</span>
+      </label>
+      <div class="status-line" id="statusUpload"></div>
+      <div class="upload-status-grid">
+        <div>
+          <div class="tag"><span class="dot"></span>EFFI</div>
+          <div class="status-line" id="statusA"></div>
+          <div class="mapping" id="mapA">
+            <div><label>Columna de fecha</label><select class="colDate"></select></div>
+            <div><label>Columna de cantidad</label><select class="colVal"></select></div>
+            <div class="full"><label>Columna de vendedor (ranking)</label><select class="colRank"></select></div>
+          </div>
+        </div>
+        <div style="--tone:var(--blue)">
+          <div class="tag"><span class="dot"></span>Dropi</div>
+          <div class="status-line" id="statusB"></div>
+          <div class="mapping" id="mapB">
+            <div><label>Columna de fecha</label><select class="colDate"></select></div>
+            <div><label>Columna de cantidad</label><select class="colVal"></select></div>
+            <div class="full"><label>Columna de tienda (ranking)</label><select class="colRank"></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="empty" id="emptyState">
+    <b>Sube los dos excel para ver el reporte</b>
+    EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>
+    Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>
+    Los cancelados se descartan automaticamente.
+    <div style="margin-top:18px;">
+      <button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button>
+    </div>
+  </div>
+
+  <section class="kpis" id="kpis">
+    <div class="kpi accent-cyan">
+      <div class="lab">Unidades EFFI (total)</div>
+      <div class="val" id="kpiPropiasTotal">—</div>
+      <div class="sub" id="kpiPropiasVar">—</div>
+    </div>
+    <div class="kpi accent-blue">
+      <div class="lab">Unidades Dropi (total)</div>
+      <div class="val" id="kpiTotalTotal">—</div>
+      <div class="sub" id="kpiTotalVar">—</div>
+    </div>
+    <div class="kpi accent-total">
+      <div class="lab">Total combinado (último día)</div>
+      <div class="val" id="kpiCombinadoTotal">—</div>
+      <div class="sub" id="kpiCombinadoVar">EFFI + Dropi</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Top vendedor EFFI</div>
+      <div class="val" id="kpiTopVendedor">—</div>
+      <div class="sub" id="kpiTopVendedorVal">—</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Top tienda Dropi</div>
+      <div class="val" id="kpiTopTienda">—</div>
+      <div class="sub" id="kpiTopTiendaVal">—</div>
+    </div>
+  </section>
+
+  <section class="panels" id="panels">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="ph-title">Detalle por dia<span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
+        <select id="detalleMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
+      </div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="chartDetalle"></canvas></div>
+      <div class="table-wrap show" id="tableWrap">
+        <table>
+          <thead>
+            <tr><th id="tableTh1">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4">Meta 200</th></tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="ph-title">Unidades EFFI vs. unidades Dropi<span id="comboSubtitle">Comparativo diario</span></div>
+        <div class="legend-chip">
+          <span><i style="background:var(--cyan)"></i>Unidades EFFI</span>
+          <span><i style="background:var(--blue)"></i>Unidades Dropi</span>
+        </div>
+      </div>
+      <div class="month-pills" id="comboMesPills"></div>
+      <div class="chart-wrap"><canvas id="chartCombo"></canvas></div>
+    </div>
+
+    <div class="rank-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title" style="--tone:var(--cyan)">Ranking de vendedores<span>EFFI &bull; unidades vendidas</span></div>
+        </div>
+        <div class="table-wrap show">
+          <table class="rank-table" style="--tone:var(--cyan)">
+            <thead><tr><th style="text-align:left">Vendedor</th><th>Unidades</th><th>%</th></tr></thead>
+            <tbody id="rankVendedorBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="ph-title" style="--tone:var(--blue)">Ranking de tiendas<span>Dropi &bull; unidades despachadas</span></div>
+        </div>
+        <div class="table-wrap show">
+          <table class="rank-table" style="--tone:var(--blue)">
+            <thead><tr><th style="text-align:left">Tienda</th><th>Unidades</th><th>%</th></tr></thead>
+            <tbody id="rankTiendaBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="ph-title" style="--tone:var(--cyan)">Cumplimiento de vendedores<span>EFFI &bull; tope de 180 prendas por dia operativo (turno 8am-8am, sabado hasta las 7am)</span></div>
+        <select id="metasMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
+      </div>
+      <div class="table-wrap show">
+        <table class="rank-table" style="--tone:var(--cyan)">
+          <thead><tr><th id="metasTh1" style="text-align:left">Mes</th><th style="text-align:left">Vendedor</th><th>Unidades</th><th id="metasTh4">Dias &ge; 180</th></tr></thead>
+          <tbody id="metasVendedorBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="ph-title">Historial y comparativo mensual<span>Guardado automatico en este navegador, por dia operativo</span></div>
+        <div class="legend-chip" style="gap:10px;flex-wrap:wrap;">
+          <select id="historialMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="chartHistorial"></canvas></div>
+      <div class="table-wrap show">
+        <table>
+          <thead><tr><th id="historialTh1" style="text-align:left">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th>Total</th><th id="historialTh5">Meta 200 cumplida</th></tr></thead>
+          <tbody id="historialMesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-top:18px;">
+    <div class="panel admin-panel">
+      <div class="panel-head">
+        <div class="ph-title" style="--tone:#FFB454">🔒 Vista acumulada<span>Solo administradores &bull; ventanas de fin de semana/festivo sin repartir</span></div>
+      </div>
+      <div class="admin-gate" id="adminGate">
+        <div class="lock-note">Esta vista muestra sabado+domingo(+festivo) como una sola fila con el total acumulado, sin dividir por dia. Es informacion interna: pide la clave a quien administra el reporte.</div>
+        <div class="admin-pin-row">
+          <input type="password" id="adminPinInput" placeholder="Clave" autocomplete="off">
+          <button class="example-btn" id="adminUnlockBtn" type="button">Desbloquear</button>
+        </div>
+        <div class="admin-pin-error" id="adminPinError"></div>
+      </div>
+      <div class="admin-content" id="adminContent">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+          <button class="example-btn" id="adminLockBtn" type="button">🔒 Ocultar de nuevo</button>
+        </div>
+        <div class="table-wrap show">
+          <table style="--tone:#FFB454">
+            <thead>
+              <tr>
+                <th style="text-align:left">Fecha inicio</th>
+                <th style="text-align:left">Fecha fin</th>
+                <th>Dia</th>
+                <th># Dias</th>
+                <th style="text-align:left">Observaciones</th>
+                <th>Ventas EFFI</th>
+                <th>Ventas Dropi</th>
+                <th>Total del dia</th>
+                <th>% EFFI</th>
+                <th>% Dropi</th>
+              </tr>
+            </thead>
+            <tbody id="vistaAcumuladaBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>reporte generado en tu navegador — los archivos no se suben a ningun servidor. El historial se guarda solo en este navegador (localStorage).</footer>
+</div>
+
+<script>
+/* ---------------- reloj cabecera ---------------- */
+function paintClock(){
+  const d = new Date();
+  const opts = {weekday:'long', day:'numeric', month:'long', year:'numeric'};
+  document.getElementById('liveDate').innerHTML =
+    '<b>'+d.toLocaleDateString('es-ES', opts)+'</b>'+d.toLocaleTimeString('es-ES');
+}
+paintClock(); setInterval(paintClock, 1000);
+
+/* ---------------- estado ---------------- */
+const store = {
+  A: {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0},
+  B: {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0}
+};
+let comboChart=null;
+
+/* pistas de columnas por sistema */
+const HINTS = {
+  A: { // EFFI
+    date:  [/^fecha creaci/i, /fecha/i],
+    val:   [/^cantidad$/i, /cantidad/i, /venta|monto|importe/i],
+    rank:  [/^vendedor$/i, /vendedor/i],
+    filterCol: [/^vendedor$/i, /vendedor/i],
+    filterBad: /^cambios?$/i
+  },
+  B: { // Dropi — por ahora medimos en prendas (Cantidad); el valor en dinero (Total de la orden) se afina mas adelante
+    date:  [/^fecha$/i, h=>/fecha/i.test(h) && !/reporte|novedad|soluci|guia|movimiento|indemniz/i.test(h), /fecha/i],
+    hora:  [/^hora$/i],
+    val:   [/^cantidad$/i, /cantidad/i, /^total de la orden$/i, /total.*orden/i, /venta|monto|importe/i],
+    rank:  [/^tienda$/i, /tienda/i],
+    id:    [/^id$/i],
+    filterCol: [/^estatus$/i, /estatus|estado/i],
+    filterBad: /cancelad/i
+  }
+};
+
+/* METAS: tope de 180 prendas por vendedor por "dia operativo" (EFFI), y meta combinada
+   de 200 prendas por dia operativo (EFFI + Dropi). El dia operativo NO es el dia calendario:
+   corre de lunes a viernes de 8:00am a 8:00am del dia siguiente, y los sabados el corte es
+   a las 7:00am (todo lo que caiga entre sabado 00:00 y 06:59 pertenece al dia operativo del viernes).
+   Domingo y sabado desde las 7am no tienen regla definida por el negocio; se dejan tal cual caigan
+   en el calendario (en la practica no deberia haber despachos en esa ventana). */
+const META_VENDEDOR = 180;
+const META_COMBINADA = 200;
+function businessDayISO(dateObj){
+  if(!(dateObj instanceof Date) || isNaN(dateObj)) return null;
+  const dow = dateObj.getDay(); // 0=domingo ... 6=sabado
+  const hour = dateObj.getHours() + dateObj.getMinutes()/60;
+  const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+  if(dow === 6){ // sabado: el turno del viernes cierra a las 7am
+    if(hour < 7) d.setDate(d.getDate()-1);
+  } else if(dow !== 0){ // lunes a viernes: turno de 8am a 8am
+    if(hour < 8) d.setDate(d.getDate()-1);
+  }
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+/* combina una fecha (Date, a veces sin hora util) con una columna de hora tipo "23:18" */
+function combineDateAndHora(dateVal, horaVal){
+  if(!(dateVal instanceof Date) || isNaN(dateVal)) return dateVal;
+  if(horaVal===null || horaVal===undefined || horaVal==='') return dateVal;
+  const m = String(horaVal).trim().match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return dateVal;
+  const d = new Date(dateVal);
+  d.setHours(parseInt(m[1],10), parseInt(m[2],10), 0, 0);
+  return d;
+}
+/* el dedup por ID solo aplica si la columna de valor es dinero (Total de la orden repite el mismo
+   monto en cada fila de un pedido con varios productos); si estamos sumando Cantidad, cada fila es
+   un producto distinto y no hay que deduplicar. */
+function isMoneyColumn(colName){
+  return /total.*orden|venta|monto|importe/i.test(normalizeStr(colName||''));
+}
+
+/* quita tildes y normaliza mayusculas para comparar texto */
+function normalizeStr(s){
+  if(s===null||s===undefined) return '';
+  return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase();
+}
+
+/* detecta si un excel es de EFFI o de Dropi mirando las columnas presentes,
+   sin importar en que casilla se solto */
+function detectSystemFromHeaders(headers){
+  const norm = headers.map(h=>normalizeStr(h));
+  const isDropi = norm.some(h=>/total\s*de\s*la\s*orden/.test(h)) ||
+                  (norm.some(h=>h==='estatus'||h==='estado') && norm.some(h=>h==='tienda'));
+  const isEffi = norm.some(h=>/^fecha creacion/.test(h));
+  if(isDropi && !isEffi) return 'B';
+  if(isEffi && !isDropi) return 'A';
+  return null;
+}
+
+const copFormatter = new Intl.NumberFormat('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0});
+function fmtMoney(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  return copFormatter.format(n);
+}
+function fmtUnits(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  return n.toLocaleString('es-CO', {maximumFractionDigits:0}) + ' u.';
+}
+function fmtDateLabel(iso){
+  const [y,m,d]=iso.split('-');
+  return d+'/'+m;
+}
+
+function toISODate(v){
+  if(v===null||v===undefined||v==='') return null;
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  if(typeof v === 'number'){
+    const d = XLSX.SSF.parse_date_code(v);
+    if(d) return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+    return null;
+  }
+  if(typeof v === 'string'){
+    const s = v.trim();
+    let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(m){
+      let [_,d,mo,y] = m;
+      if(y.length===2) y = '20'+y;
+      return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+    m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m){
+      const [_,y,mo,d] = m;
+      return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+    const parsed = new Date(s);
+    if(!isNaN(parsed)) return parsed.toISOString().slice(0,10);
+  }
+  return null;
+}
+
+/* como toISODate pero devuelve un objeto Date real (conservando hora si la trae),
+   para poder calcular el dia operativo (turno 8am-8am). */
+function toDateObj(v){
+  if(v===null||v===undefined||v==='') return null;
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v === 'number'){
+    const d = XLSX.SSF.parse_date_code(v);
+    if(!d) return null;
+    return new Date(d.y, d.m-1, d.d, d.H||0, d.M||0, d.S||0);
+  }
+  if(typeof v === 'string'){
+    const s = v.trim();
+    let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(m){
+      let [_,d,mo,y] = m;
+      if(y.length===2) y = '20'+y;
+      return new Date(parseInt(y,10), parseInt(mo,10)-1, parseInt(d,10));
+    }
+    m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m){
+      const [_,y,mo,d] = m;
+      return new Date(parseInt(y,10), parseInt(mo,10)-1, parseInt(d,10));
+    }
+    const parsed = new Date(s);
+    if(!isNaN(parsed)) return parsed;
+  }
+  return null;
+}
+
+function toNumber(v){
+  if(v===null||v===undefined||v==='') return null;
+  if(typeof v === 'number') return v;
+  if(typeof v === 'string'){
+    const clean = v.replace(/[^0-9.,-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',', '.');
+    const n = parseFloat(clean);
+    return isNaN(n) ? null : n;
+  }
+  return null;
+}
+
+function pickColumn(headers, rules){
+  for(const rule of rules){
+    let found = null;
+    if(rule instanceof RegExp){
+      found = headers.find(h => rule.test(String(h).trim()));
+    } else if(typeof rule === 'function'){
+      found = headers.find(h => rule(String(h)));
+    }
+    if(found) return found;
+  }
+  return null;
+}
+
+function guessColumns(slotKey, headers){
+  const h = HINTS[slotKey];
+  return {
+    dateCol: pickColumn(headers, h.date),
+    horaCol: h.hora ? pickColumn(headers, h.hora) : null,
+    valCol: pickColumn(headers, h.val),
+    rankCol: pickColumn(headers, h.rank),
+    filterCol: pickColumn(headers, h.filterCol),
+    idCol: h.id ? pickColumn(headers, h.id) : null
+  };
+}
+
+function readFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {defval:null});
+        if(!rows.length) return reject(new Error('El archivo no tiene filas de datos.'));
+        const headers = Object.keys(rows[0]);
+        resolve({rows, headers});
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = ()=>reject(new Error('No se pudo leer el archivo.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function applyAutoFilter(rows, filterCol, badRegex){
+  if(!filterCol) return {kept: rows, removed: 0};
+  const kept = [];
+  let removed = 0;
+  rows.forEach(r=>{
+    const s = normalizeStr(r[filterCol]);
+    if(s && badRegex.test(s)) removed++;
+    else kept.push(r);
+  });
+  return {kept, removed};
+}
+
+/* Dropi repite la fila por cada producto del pedido, con el mismo TOTAL DE LA ORDEN.
+   Hay que quedarse con la primera aparicion de cada ID antes de sumar, si no el total se infla. */
+function dedupById(rows, idCol){
+  if(!idCol) return {kept: rows, removedDup: 0};
+  const seen = new Set();
+  const kept = [];
+  let removedDup = 0;
+  rows.forEach(r=>{
+    const raw = r[idCol];
+    const key = (raw===null || raw===undefined || String(raw).trim()==='') ? null : String(raw).trim();
+    if(key===null){ kept.push(r); return; }
+    if(seen.has(key)){ removedDup++; return; }
+    seen.add(key);
+    kept.push(r);
+  });
+  return {kept, removedDup};
+}
+
+/* agrupa por "dia operativo" (turno 8am-8am, sabado hasta las 7am), no por dia calendario.
+   horaCol es opcional: si la fecha ya trae hora (EFFI: Fecha creacion), se deja null. */
+function buildByDate(rows, dateCol, valCol, horaCol){
+  const map = {};
+  rows.forEach(r=>{
+    let dt = toDateObj(r[dateCol]);
+    if(horaCol) dt = combineDateAndHora(dt, r[horaCol]);
+    const bd = businessDayISO(dt);
+    const num = toNumber(r[valCol]);
+    if(bd===null || num===null) return;
+    map[bd] = (map[bd]||0) + num;
+  });
+  return map;
+}
+
+function buildByRank(rows, rankCol, valCol){
+  const map = {};
+  rows.forEach(r=>{
+    let key = r[rankCol];
+    key = (key===null || key===undefined || String(key).trim()==='') ? '(sin dato)' : String(key).trim();
+    const num = toNumber(r[valCol]);
+    const add = (num===null) ? 1 : num; // si no hay columna numerica, cuenta filas
+    map[key] = (map[key]||0) + add;
+  });
+  return map;
+}
+
+/* solo para EFFI: unidades por vendedor, agrupadas por dia operativo, para el tope de 180/dia. */
+function buildByDayAndRank(rows, dateCol, horaCol, rankCol, valCol){
+  const map = {}; // { diaOperativo: { vendedor: unidades } }
+  rows.forEach(r=>{
+    let dt = toDateObj(r[dateCol]);
+    if(horaCol) dt = combineDateAndHora(dt, r[horaCol]);
+    const bd = businessDayISO(dt);
+    if(bd===null) return;
+    let key = r[rankCol];
+    key = (key===null || key===undefined || String(key).trim()==='') ? '(sin dato)' : String(key).trim();
+    const num = toNumber(r[valCol]);
+    const add = (num===null) ? 1 : num;
+    if(!map[bd]) map[bd] = {};
+    map[bd][key] = (map[bd][key]||0) + add;
+  });
+  return map;
+}
+
+/* --------- festivos de Colombia ---------
+   Se calculan en vivo (algoritmo de Gauss/Meeus para el Domingo de Resurreccion, valido
+   para cualquier año) en vez de mantener una lista fija a mano: fechas fijas + las que la
+   Ley Emiliani traslada al lunes siguiente + las que dependen de la Pascua. */
+function addDays(dateObj, days){
+  const d = new Date(dateObj);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+function isoOfDate(dateObj){
+  const y=dateObj.getFullYear(), m=String(dateObj.getMonth()+1).padStart(2,'0'), day=String(dateObj.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function parseISODateLocal(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function easterSundayDate(year){
+  const a=year%19, b=Math.floor(year/100), c=year%100;
+  const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+  const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(c/4), k=c%4;
+  const l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451);
+  const month=Math.floor((h+l-7*m+114)/31);
+  const day=((h+l-7*m+114)%31)+1;
+  return new Date(year, month-1, day);
+}
+function moveToNextMonday(dateObj){
+  const dow = dateObj.getDay();
+  if(dow === 1) return dateObj;
+  return addDays(dateObj, (8-dow)%7);
+}
+const festivosCache = {}; // year -> Set(iso)
+function festivosColombia(year){
+  if(festivosCache[year]) return festivosCache[year];
+  const set = new Set();
+  const fija = (m,d)=> set.add(isoOfDate(new Date(year,m-1,d)));
+  fija(1,1); fija(5,1); fija(7,20); fija(8,7); fija(12,8); fija(12,25); // fijas, no se trasladan
+  const emiliani = (m,d)=> set.add(isoOfDate(moveToNextMonday(new Date(year,m-1,d))));
+  emiliani(1,6); emiliani(3,19); emiliani(6,29); emiliani(8,15);
+  emiliani(10,12); emiliani(11,1); emiliani(11,11); // Ley Emiliani: se trasladan al lunes siguiente
+  const easter = easterSundayDate(year);
+  set.add(isoOfDate(addDays(easter,-3))); // Jueves Santo
+  set.add(isoOfDate(addDays(easter,-2))); // Viernes Santo
+  set.add(isoOfDate(moveToNextMonday(addDays(easter,40)))); // Ascension del Señor
+  set.add(isoOfDate(moveToNextMonday(addDays(easter,61)))); // Corpus Christi
+  set.add(isoOfDate(moveToNextMonday(addDays(easter,68)))); // Sagrado Corazon de Jesus
+  festivosCache[year] = set;
+  return set;
+}
+function isFestivoColombia(iso){
+  const year = parseInt(iso.slice(0,4),10);
+  return festivosColombia(year).has(iso);
+}
+
+/* --------- reparto de fin de semana / festivo largo ---------
+   Sabado (desde las 7am) + domingo se suman y se reparten en partes iguales entre esos
+   2 dias. Si el lunes siguiente es festivo, se suma tambien y se reparte entre 3
+   (sabado+domingo+lunes) y el corte pasa a ser el martes a las 8am; si el festivo se
+   extiende mas dias seguidos (ej. martes tambien festivo), se sigue repartiendo hasta
+   el primer dia habil. Un festivo entre semana que NO esta pegado a un fin de semana
+   (ej. un festivo aislado un miercoles) no entra en este reparto, se deja como un dia
+   operativo normal. */
+function ventanaFinDeSemanaDe(iso){
+  const d = parseISODateLocal(iso);
+  const dow = d.getDay();
+  if(dow === 6) return iso; // sabado: la ventana empieza en el mismo dia
+  if(dow === 0) return isoOfDate(addDays(d,-1)); // domingo: la ventana empieza el sabado anterior
+  if(dow>=1 && dow<=5 && isFestivoColombia(iso)){
+    // dia entre semana festivo: solo cuenta si encadena hacia atras hasta el domingo
+    let cur = d;
+    while(true){
+      if(cur.getDay() === 1){ // lunes: siempre conecta con el domingo anterior
+        return isoOfDate(addDays(cur, -2));
+      }
+      const prev = addDays(cur, -1);
+      if(!isFestivoColombia(isoOfDate(prev))) return null; // se corta la cadena, festivo aislado
+      cur = prev;
+    }
+  }
+  return null;
+}
+function miembrosDeVentana(sabadoIso){
+  const sab = parseISODateLocal(sabadoIso);
+  const miembros = [sabadoIso, isoOfDate(addDays(sab,1))]; // sabado, domingo
+  let cur = addDays(sab,2); // lunes
+  while(isFestivoColombia(isoOfDate(cur))){
+    miembros.push(isoOfDate(cur));
+    cur = addDays(cur,1);
+  }
+  return miembros;
+}
+/* reparte en partes iguales las unidades {isoDate: unidades} de cada fin de semana / festivo largo */
+function repartirFinDeSemana(byDateMap){
+  const result = {...byDateMap};
+  const vistos = new Set();
+  Object.keys(byDateMap).forEach(iso=>{
+    const ventana = ventanaFinDeSemanaDe(iso);
+    if(!ventana || vistos.has(ventana)) return;
+    vistos.add(ventana);
+    const miembros = miembrosDeVentana(ventana);
+    const total = miembros.reduce((s,d)=> s + (byDateMap[d]||0), 0);
+    const promedio = total / miembros.length;
+    miembros.forEach(d=>{ result[d] = promedio; });
+  });
+  return result;
+}
+/* igual que repartirFinDeSemana pero para el mapa {isoDate: {vendedor: unidades}} del tope de 180 */
+function repartirFinDeSemanaVendedores(byDayRankMap){
+  const result = {...byDayRankMap};
+  const vistos = new Set();
+  Object.keys(byDayRankMap).forEach(iso=>{
+    const ventana = ventanaFinDeSemanaDe(iso);
+    if(!ventana || vistos.has(ventana)) return;
+    vistos.add(ventana);
+    const miembros = miembrosDeVentana(ventana);
+    const vendedores = new Set();
+    miembros.forEach(d=>{ if(byDayRankMap[d]) Object.keys(byDayRankMap[d]).forEach(v=>vendedores.add(v)); });
+    const promedios = {};
+    vendedores.forEach(v=>{
+      const total = miembros.reduce((s,d)=> s + ((byDayRankMap[d]||{})[v]||0), 0);
+      promedios[v] = total / miembros.length;
+    });
+    miembros.forEach(d=>{ result[d] = promedios; });
+  });
+  return result;
+}
+
+/* --------- vista acumulada (privada, solo administradores) ---------
+   Misma agrupacion por ventana (ventanaFinDeSemanaDe/miembrosDeVentana) que repartirFinDeSemana(),
+   pero en vez de dividir el total entre los dias, lo deja como UNA sola fila con el acumulado
+   completo de la ventana (sabado+domingo(+festivo)) — como el reporte interno "ventas reales".
+   Los dias que no pertenecen a ninguna ventana quedan como fila normal de 1 dia, igual que siempre. */
+const DIA_CORTO = {0:'Dom',1:'Lun',2:'Mar',3:'Mie',4:'Jue',5:'Vie',6:'Sab'};
+const DIA_LARGO = {0:'Domingo',1:'Lunes',2:'Martes',3:'Miércoles',4:'Jueves',5:'Viernes',6:'Sábado'};
+function buildVistaAcumulada(dates, effiByDateRaw, dropiByDateRaw){
+  const rows = [];
+  const vistos = new Set();
+  dates.slice().sort().forEach(iso=>{
+    const ventana = ventanaFinDeSemanaDe(iso);
+    if(ventana){
+      if(vistos.has(ventana)) return;
+      vistos.add(ventana);
+      const miembros = miembrosDeVentana(ventana);
+      const effi = miembros.reduce((s,d)=> s + (effiByDateRaw[d]||0), 0);
+      const dropi = miembros.reduce((s,d)=> s + (dropiByDateRaw[d]||0), 0);
+      const total = effi + dropi;
+      const fechaInicio = miembros[0];
+      const fechaFin = miembros[miembros.length-1];
+      const lastDow = parseISODateLocal(fechaFin).getDay();
+      const observaciones = miembros.length===2 ? 'Sábado a Domingo' : `Sábado a ${DIA_LARGO[lastDow]} Festivo`;
+      rows.push({
+        fechaInicio, fechaFin, dia:'Sab', numDias: miembros.length, observaciones,
+        effi, dropi, total,
+        pctEffi: total>0 ? effi/total*100 : 0,
+        pctDropi: total>0 ? dropi/total*100 : 0
+      });
+    } else {
+      const effi = effiByDateRaw[iso]||0;
+      const dropi = dropiByDateRaw[iso]||0;
+      const total = effi + dropi;
+      const dow = parseISODateLocal(iso).getDay();
+      rows.push({
+        fechaInicio: iso, fechaFin: iso, dia: DIA_CORTO[dow], numDias: 1, observaciones: '',
+        effi, dropi, total,
+        pctEffi: total>0 ? effi/total*100 : 0,
+        pctDropi: total>0 ? dropi/total*100 : 0
+      });
+    }
+  });
+  rows.sort((a,b)=> a.fechaInicio.localeCompare(b.fechaInicio));
+  return rows;
+}
+
+/* clave para desbloquear la vista acumulada — cambiar este valor si se necesita otra clave */
+const ADMIN_PIN = '1234';
+let adminUnlocked = false;
+let vistaAcumuladaCache = [];
+function updateVistaAcumulada(dates, effiByDateRaw, dropiByDateRaw){
+  vistaAcumuladaCache = buildVistaAcumulada(dates, effiByDateRaw||{}, dropiByDateRaw||{});
+  renderVistaAcumuladaTable();
+}
+function renderVistaAcumuladaTable(){
+  if(!adminUnlocked) return;
+  const body = document.getElementById('vistaAcumuladaBody');
+  if(!body) return;
+  if(!vistaAcumuladaCache.length){
+    body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--paper-dim)">sin datos</td></tr>';
+    return;
+  }
+  body.innerHTML = vistaAcumuladaCache.map(r=>{
+    const obs = r.observaciones ? `<td style="text-align:left">${r.observaciones}</td>` : '<td style="text-align:left">—</td>';
+    return `<tr><td style="text-align:left">${fmtDateLabel(r.fechaInicio)}</td><td style="text-align:left">${fmtDateLabel(r.fechaFin)}</td><td>${r.dia}</td><td>${r.numDias}</td>${obs}<td>${fmtUnits(r.effi)}</td><td>${fmtUnits(r.dropi)}</td><td>${fmtUnits(r.total)}</td><td>${r.pctEffi.toFixed(0)}%</td><td>${r.pctDropi.toFixed(0)}%</td></tr>`;
+  }).join('');
+}
+function tryUnlockAdmin(){
+  const input = document.getElementById('adminPinInput');
+  const err = document.getElementById('adminPinError');
+  if(!input) return;
+  if(input.value === ADMIN_PIN){
+    adminUnlocked = true;
+    input.value = '';
+    err.textContent = '';
+    document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+    renderVistaAcumuladaTable();
+  } else {
+    err.textContent = 'Clave incorrecta.';
+  }
+}
+
+function populateSelects(slotKey, headers, guess){
+  const mapEl = document.getElementById('map'+slotKey);
+  const dateSel = mapEl.querySelector('.colDate');
+  const valSel = mapEl.querySelector('.colVal');
+  const rankSel = mapEl.querySelector('.colRank');
+  const opts = headers.map(h=>`<option value="${h}">${h}</option>`).join('');
+  dateSel.innerHTML = opts;
+  valSel.innerHTML = opts;
+  rankSel.innerHTML = opts;
+  if(guess.dateCol) dateSel.value = guess.dateCol;
+  if(guess.valCol) valSel.value = guess.valCol;
+  if(guess.rankCol) rankSel.value = guess.rankCol;
+}
+
+/* zona unica: el sistema (EFFI o Dropi) se detecta solo por las columnas del archivo,
+   ya no se elige una casilla al subir. El panel de columnas detectadas queda siempre
+   oculto (ver .mapping en CSS) — los selects se siguen poblando por dentro para que
+   store[slotKey] tenga fecha/valor/rank, pero no hay UI para corregirlos a mano. */
+async function handleUpload(file){
+  const statusUpload = document.getElementById('statusUpload');
+  try{
+    const {rows, headers} = await readFile(file);
+
+    const slotKey = detectSystemFromHeaders(headers);
+    if(!slotKey){
+      statusUpload.textContent = `No pude identificar si "${file.name}" es un excel de EFFI o de Dropi por sus columnas.`;
+      statusUpload.className = 'status-line err';
+      return;
+    }
+
+    const statusEl = document.getElementById('status'+slotKey);
+    const guess = guessColumns(slotKey, headers);
+
+    /* Ojo: aqui NO se deduplica todavia. isMoneyColumn() puede depender de la columna que el
+       usuario elija despues en el selector, asi que el dedup se evalua en cada recompute(),
+       no una sola vez al subir el archivo (si no, cambiar la columna manualmente a "Total de la
+       orden" mas adelante no reactivaria la deduplicacion y se repetiria el bug original). */
+    const filterBad = slotKey==='B' ? HINTS.B.filterBad : HINTS.A.filterBad;
+    const {kept, removed} = applyAutoFilter(rows, guess.filterCol, filterBad);
+
+    store[slotKey].rows = kept;
+    store[slotKey].headers = headers;
+    store[slotKey].dateCol = guess.dateCol;
+    store[slotKey].horaCol = guess.horaCol;
+    store[slotKey].valCol = guess.valCol;
+    store[slotKey].rankCol = guess.rankCol;
+    store[slotKey].idCol = guess.idCol;
+    store[slotKey].removed = removed;
+    store[slotKey].removedDup = 0; // se recalcula en recompute() segun la columna de valor activa
+
+    populateSelects(slotKey, headers, guess); // queda poblado pero oculto, no se muestra nunca
+
+    document.getElementById('slotUpload').classList.add('filled');
+    document.getElementById('dropUpload').classList.add('has-file');
+
+    const label = slotKey==='A' ? 'Cambios' : 'Cancelados';
+    let msg = `"${file.name}" — `;
+    if(!guess.dateCol || !guess.valCol){
+      msg += 'no pude detectar todas las columnas automaticamente en este archivo.';
+      statusEl.className = 'status-line err';
+    } else {
+      msg += `detectado: fecha = "${guess.dateCol}", valor = "${guess.valCol}".`;
+      statusEl.className = 'status-line ok';
+    }
+    if(slotKey==='B' && isMoneyColumn(guess.valCol)){
+      const preview = guess.idCol ? dedupById(kept, guess.idCol) : {removedDup:0};
+      msg += guess.idCol ? (preview.removedDup>0 ? ` ${preview.removedDup} fila(s) duplicadas de pedido se combinaran.` : ' sin pedidos duplicados.') : ' No encontre columna ID para deduplicar pedidos.';
+    }
+    if(guess.filterCol){
+      msg += ` ${removed} fila(s) de "${label}" descartadas.`;
+    } else {
+      msg += ` No encontre columna para filtrar ${label.toLowerCase()}.`;
+    }
+    statusEl.textContent = msg;
+    statusUpload.textContent = '';
+
+    celebrateMascot();
+    recompute();
+  }catch(err){
+    statusUpload.textContent = `Error leyendo "${file.name}": ` + err.message;
+    statusUpload.className = 'status-line err';
+  }
+}
+
+document.getElementById('dropUpload').addEventListener('click', (e)=>{
+  if(e.target.tagName!=='INPUT') document.getElementById('fileUpload').click();
+});
+document.getElementById('fileUpload').addEventListener('change', async ()=>{
+  const files = Array.from(document.getElementById('fileUpload').files);
+  for(const f of files){
+    await handleUpload(f); // secuencial: si los dos archivos fueran del mismo sistema, se procesan en orden y el ultimo gana
+  }
+});
+
+/* los selects de columnas siguen funcionando por dentro (aunque nunca se muestran) por
+   si en algun momento se vuelve a activar el panel .mapping */
+['A','B'].forEach(slotKey=>{
+  const mapEl = document.getElementById('map'+slotKey);
+  mapEl.querySelector('.colDate').addEventListener('change', (e)=>{ store[slotKey].dateCol = e.target.value; recompute(); });
+  mapEl.querySelector('.colVal').addEventListener('change', (e)=>{ store[slotKey].valCol = e.target.value; recompute(); });
+  mapEl.querySelector('.colRank').addEventListener('change', (e)=>{ store[slotKey].rankCol = e.target.value; recompute(); });
+});
+
+function celebrateMascot(){
+  const wrap = document.getElementById('mascotWrap');
+  if(!wrap) return;
+  wrap.classList.remove('celebrate');
+  void wrap.offsetWidth; // fuerza reflow para poder reiniciar la animacion
+  wrap.classList.add('celebrate');
+  const onEnd = (e)=>{
+    if(e.target !== wrap.querySelector('.mascot-float')) return;
+    wrap.classList.remove('celebrate');
+    wrap.removeEventListener('animationend', onEnd);
+  };
+  wrap.addEventListener('animationend', onEnd);
+}
+
+function recompute(){
+  const A = store.A, B = store.B;
+  if(!A.rows || !B.rows || !A.dateCol || !A.valCol || !B.dateCol || !B.valCol){
+    return;
+  }
+
+  /* el dedup se decide aqui, en vivo, segun la columna de valor que este activa ahora mismo
+     (no la que estaba activa cuando se subio el archivo) */
+  const bMoneyMode = isMoneyColumn(B.valCol);
+  let bRows = B.rows;
+  B.removedDup = 0;
+  if(bMoneyMode){
+    const dedup = dedupById(B.rows, B.idCol);
+    bRows = dedup.kept;
+    B.removedDup = dedup.removedDup;
+  }
+
+  A.byDate = buildByDate(A.rows, A.dateCol, A.valCol, A.horaCol);
+  B.byDate = buildByDate(bRows, B.dateCol, B.valCol, B.horaCol);
+  A.byRank = A.rankCol ? buildByRank(A.rows, A.rankCol, A.valCol) : {};
+  B.byRank = B.rankCol ? buildByRank(bRows, B.rankCol, B.valCol) : {};
+  /* tope de 180 prendas por vendedor por dia operativo — solo aplica a EFFI */
+  A.byDayRank = A.rankCol ? buildByDayAndRank(A.rows, A.dateCol, A.horaCol, A.rankCol, A.valCol) : {};
+
+  /* se guarda una copia sin repartir (cruda) antes de dividir el fin de semana — la usa la
+     vista acumulada privada de administradores para mostrar la ventana completa sin dividir. */
+  A.byDateRaw = {...A.byDate};
+  B.byDateRaw = {...B.byDate};
+
+  /* sabado (desde 7am) + domingo (+ lunes si es festivo, etc.) se suman y se reparten
+     en partes iguales entre esos dias — ver repartirFinDeSemana(). EFFI y Dropi se
+     reparten cada uno por su lado, nunca combinados. */
+  A.byDate = repartirFinDeSemana(A.byDate);
+  B.byDate = repartirFinDeSemana(B.byDate);
+  A.byDayRank = repartirFinDeSemanaVendedores(A.byDayRank);
+
+  const dates = Array.from(new Set([...Object.keys(A.byDate), ...Object.keys(B.byDate)])).sort();
+  if(!dates.length){
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('emptyState').textContent = 'No se encontraron fechas validas en los archivos.';
+    return;
+  }
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('snapshotBanner').style.display = 'none';
+  document.getElementById('kpis').classList.add('show');
+  document.getElementById('panels').classList.add('show');
+
+  const propiasSeries = dates.map(d => A.byDate[d] ?? 0);
+  const totalSeries   = dates.map(d => B.byDate[d] ?? 0);
+
+  const sumPropias = propiasSeries.reduce((a,b)=>a+b,0);
+  const sumTotal = totalSeries.reduce((a,b)=>a+b,0);
+
+  document.getElementById('kpiPropiasTotal').textContent = fmtUnits(sumPropias);
+  document.getElementById('kpiTotalTotal').textContent = fmtUnits(sumTotal);
+
+  /* "Total combinado" muestra solo el ultimo dia operativo con datos (no la suma de
+     todos los dias), para reflejar el corte diario de la meta de 200 prendas. */
+  const lastDate = dates[dates.length - 1];
+  const combinadoUltimoDia = (A.byDate[lastDate] ?? 0) + (B.byDate[lastDate] ?? 0);
+  document.getElementById('kpiCombinadoTotal').textContent = fmtUnits(combinadoUltimoDia);
+  const kpiCombinadoVar = document.getElementById('kpiCombinadoVar');
+  kpiCombinadoVar.textContent = `${fmtDateLabel(lastDate)} — ${combinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - combinadoUltimoDia)}`}`;
+  kpiCombinadoVar.className = 'sub ' + (combinadoUltimoDia >= META_COMBINADA ? 'up' : 'down');
+
+  document.getElementById('kpiPropiasVar').textContent = A.removed>0 ? `${A.removed} "cambios" descartados` : 'sin filas de cambios';
+  const dropiParts = [];
+  if(B.removedDup>0) dropiParts.push(`${B.removedDup} duplicados`);
+  if(B.removed>0) dropiParts.push(`${B.removed} cancelados`);
+  document.getElementById('kpiTotalVar').textContent = dropiParts.length ? dropiParts.join(' + ') + ' descartados' : 'sin cancelados';
+
+  const rankA = Object.entries(A.byRank).sort((a,b)=>b[1]-a[1]);
+  const rankB = Object.entries(B.byRank).sort((a,b)=>b[1]-a[1]);
+
+  if(rankA.length){
+    document.getElementById('kpiTopVendedor').textContent = rankA[0][0];
+    document.getElementById('kpiTopVendedorVal').textContent = fmtUnits(rankA[0][1]);
+  }
+  if(rankB.length){
+    document.getElementById('kpiTopTienda').textContent = rankB[0][0];
+    document.getElementById('kpiTopTiendaVal').textContent = fmtUnits(rankB[0][1]);
+  }
+
+  renderComboChartWithMonths(dates, A.byDate, B.byDate);
+  renderRankTable('rankVendedorBody', rankA, fmtUnits);
+  renderRankTable('rankTiendaBody', rankB, fmtUnits);
+  renderTable(dates, A.byDate, B.byDate);
+  renderMetasVendedores(A.byDayRank);
+
+  /* guarda cada dia operativo procesado en el historial local, para poder comparar meses despues */
+  upsertHistorialDays(dates, A.byDate, B.byDate);
+  renderHistorialMensual();
+
+  updateVistaAcumulada(dates, A.byDateRaw, B.byDateRaw);
+}
+
+/* ---------------- historial mensual (guardado local + exportable) ----------------
+   Cada vez que se procesa un excel con exito, se guarda (o actualiza) el total de EFFI
+   y Dropi de cada dia operativo en localStorage, para poder comparar meses aunque se
+   recargue la pagina o se use otro archivo despues. Se sobreescribe por dia (no se suma
+   acumulado) para que resubir el mismo dia no duplique el total. */
+const HISTORIAL_KEY = 'reporteVentasHistorial_v1';
+
+function loadHistorial(){
+  try{
+    const raw = localStorage.getItem(HISTORIAL_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveHistorial(hist){
+  try{ localStorage.setItem(HISTORIAL_KEY, JSON.stringify(hist)); }
+  catch(e){ /* almacenamiento lleno o bloqueado (modo privado) — se ignora silenciosamente */ }
+}
+function upsertHistorialDays(dates, effiByDate, dropiByDate){
+  const hist = loadHistorial();
+  dates.forEach(d=>{
+    const effi = effiByDate[d] ?? 0;
+    const dropi = dropiByDate[d] ?? 0;
+    hist[d] = { effi, dropi, combinado: effi + dropi };
+  });
+  saveHistorial(hist);
+}
+
+function monthKeyOf(iso){ return iso.slice(0,7); } // YYYY-MM
+const MES_NOMBRES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function monthLabelOf(key){
+  const [y,m] = key.split('-');
+  return MES_NOMBRES[parseInt(m,10)-1] + ' ' + y;
+}
+function monthsFromDates(dates){
+  return Array.from(new Set(dates.map(monthKeyOf))).sort();
+}
+/* llena un <select> de meses conservando la seleccion previa si sigue existiendo */
+function populateMonthSelect(selectEl, months, summaryLabel){
+  if(!selectEl) return;
+  const prev = selectEl.value;
+  selectEl.innerHTML = `<option value="">${summaryLabel}</option>` + months.map(m=>`<option value="${m}">${monthLabelOf(m)}</option>`).join('');
+  if(months.includes(prev)) selectEl.value = prev;
+}
+
+function computeHistorialByMonth(){
+  const hist = loadHistorial();
+  const days = Object.keys(hist).sort();
+  const byMonth = {};
+  days.forEach(d=>{
+    const mk = monthKeyOf(d);
+    if(!byMonth[mk]) byMonth[mk] = {effi:0, dropi:0, dias:0, diasCumplidos:0};
+    byMonth[mk].effi += hist[d].effi;
+    byMonth[mk].dropi += hist[d].dropi;
+    byMonth[mk].dias += 1;
+    if(hist[d].combinado >= META_COMBINADA) byMonth[mk].diasCumplidos += 1;
+  });
+  const months = Object.keys(byMonth).sort();
+  return { byMonth, months, hasData: days.length>0 };
+}
+
+let historialChart = null;
+let historialCache = { byMonth:{}, months:[] };
+
+function renderHistorialTable(){
+  const { byMonth, months } = historialCache;
+  const body = document.getElementById('historialMesBody');
+  const select = document.getElementById('historialMesSelect');
+  const th1 = document.getElementById('historialTh1');
+  const th5 = document.getElementById('historialTh5');
+  if(!body || !select) return;
+  const selected = select.value;
+
+  if(!selected){
+    /* resumen: un renglon acumulado por mes */
+    if(th1) th1.textContent = 'Mes';
+    if(th5) th5.textContent = 'Meta 200 cumplida';
+    if(!months.length){
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--paper-dim)">Sin historial guardado todavia — se guarda solo cada vez que proceses un dia con los dos excel.</td></tr>';
+    } else {
+      body.innerHTML = months.map(m=>{
+        const row = byMonth[m];
+        const total = row.effi + row.dropi;
+        return `<tr><td>${monthLabelOf(m)}</td><td>${fmtUnits(row.effi)}</td><td>${fmtUnits(row.dropi)}</td><td>${fmtUnits(total)}</td><td>${row.diasCumplidos}/${row.dias} dias</td></tr>`;
+      }).join('');
+    }
+  } else {
+    /* mes elegido: detalle dia a dia de ese mes */
+    if(th1) th1.textContent = 'Fecha';
+    if(th5) th5.textContent = 'Meta 200';
+    const hist = loadHistorial();
+    const daysInMonth = Object.keys(hist).filter(d=>monthKeyOf(d)===selected).sort();
+    if(!daysInMonth.length){
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--paper-dim)">sin datos ese mes</td></tr>';
+    } else {
+      body.innerHTML = daysInMonth.map(d=>{
+        const r = hist[d];
+        return `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(r.effi)}</td><td>${fmtUnits(r.dropi)}</td><td>${fmtUnits(r.combinado)}</td><td>${metaBadge(r.combinado, META_COMBINADA)}</td></tr>`;
+      }).join('');
+    }
+  }
+
+  renderHistorialChart();
+}
+
+/* grafico de "Historial y comparativo mensual": en "Todos los meses" muestra una barra por
+   mes (resumen), igual que antes. Al elegir un mes en el select, se invierte: el select pasa
+   a ser la "lista de meses" y el grafico muestra el dia a dia de ESE mes (barras EFFI+Dropi
+   apiladas), con dos lineas punteadas de referencia — la meta de vendedor (180) y la meta
+   combinada (200) — para ver de un vistazo que dias las alcanzan. */
+function renderHistorialChart(){
+  const { byMonth, months } = historialCache;
+  const select = document.getElementById('historialMesSelect');
+  const selectedMonth = select ? select.value : '';
+  const canvas = document.getElementById('chartHistorial');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if(historialChart){ historialChart.destroy(); historialChart = null; }
+
+  const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
+  const gridColor = 'rgba(63,232,224,0.08)';
+
+  if(!selectedMonth){
+    if(!months.length) return;
+    historialChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: months.map(monthLabelOf),
+        datasets:[
+          { label:'Unidades EFFI', data: months.map(m=>byMonth[m].effi), backgroundColor:'#3FE8E0', borderRadius:4 },
+          { label:'Unidades Dropi', data: months.map(m=>byMonth[m].dropi), backgroundColor:'#4C8DFF', borderRadius:4 }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        scales:{
+          x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false} },
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor} }
+        }
+      }
+    });
+  } else {
+    const hist = loadHistorial();
+    const daysInMonth = Object.keys(hist).filter(d=>monthKeyOf(d)===selectedMonth).sort();
+    if(!daysInMonth.length) return;
+    const effiVals = daysInMonth.map(d=> hist[d].effi||0);
+    const dropiVals = daysInMonth.map(d=> hist[d].dropi||0);
+    historialChart = new Chart(ctx, {
+      data:{
+        labels: daysInMonth.map(fmtDateLabel),
+        datasets:[
+          { type:'bar', label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:3, stack:'total' },
+          { type:'bar', label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:3, stack:'total' },
+          { type:'line', label:`Meta vendedor (${META_VENDEDOR})`, data: daysInMonth.map(()=>META_VENDEDOR), borderColor:'#FFB454', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false },
+          { type:'line', label:`Meta combinada (${META_COMBINADA})`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        scales:{
+          x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false}, stacked:true },
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true }
+        }
+      }
+    });
+  }
+}
+
+function renderHistorialMensual(){
+  const { byMonth, months } = computeHistorialByMonth();
+  historialCache = { byMonth, months };
+  const select = document.getElementById('historialMesSelect');
+  if(!select) return;
+  const prevValue = select.value;
+  select.innerHTML = '<option value="">Todos los meses</option>' + months.map(m=>`<option value="${m}">${monthLabelOf(m)}</option>`).join('');
+  if(months.includes(prevValue)) select.value = prevValue;
+
+  renderHistorialTable();
+}
+
+/* --------- metas (topes) ---------
+   Vendedor: 180 prendas por dia operativo (EFFI).
+   Combinada: 200 prendas por dia operativo (EFFI + Dropi). */
+function metaBadge(valor, meta){
+  const cumplido = valor >= meta;
+  const texto = cumplido ? 'Cumplido' : `Faltan ${fmtUnits(meta - valor)}`;
+  return `<span style="color:${cumplido?'var(--cyan)':'var(--red)'}">${cumplido?'✔':'✖'} ${texto}</span>`;
+}
+
+let lastByDayRank = {};
+
+function renderMetasVendedores(byDayRank){
+  lastByDayRank = byDayRank || {};
+  const days = Object.keys(lastByDayRank);
+  const select = document.getElementById('metasMesSelect');
+  populateMonthSelect(select, monthsFromDates(days), 'Resumen mensual');
+  renderMetasBody();
+}
+
+function renderMetasBody(){
+  const body = document.getElementById('metasVendedorBody');
+  const select = document.getElementById('metasMesSelect');
+  const th1 = document.getElementById('metasTh1');
+  const th4 = document.getElementById('metasTh4');
+  if(!body) return;
+  const days = Object.keys(lastByDayRank);
+  const selectedMonth = select ? select.value : '';
+
+  if(!selectedMonth){
+    /* resumen: unidades acumuladas del mes por vendedor + en cuantos dias activos cumplio el tope diario */
+    if(th1) th1.textContent = 'Mes';
+    if(th4) th4.textContent = 'Dias ≥ 180';
+    const months = monthsFromDates(days);
+    if(!months.length){
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos</td></tr>';
+      return;
+    }
+    const rowsHtml = [];
+    months.forEach(mk=>{
+      const daysInMonth = days.filter(d=>monthKeyOf(d)===mk);
+      const totals = {};
+      daysInMonth.forEach(d=>{
+        Object.entries(lastByDayRank[d]).forEach(([vend, val])=>{
+          if(!totals[vend]) totals[vend] = { unidades:0, diasActivos:0, diasCumplidos:0 };
+          totals[vend].unidades += val;
+          totals[vend].diasActivos += 1;
+          if(val >= META_VENDEDOR) totals[vend].diasCumplidos += 1;
+        });
+      });
+      const entries = Object.entries(totals).sort((a,b)=>b[1].unidades - a[1].unidades);
+      entries.forEach(([vend, t], i)=>{
+        rowsHtml.push(`<tr><td>${i===0?monthLabelOf(mk):''}</td><td>${vend}</td><td>${fmtUnits(t.unidades)}</td><td>${t.diasCumplidos}/${t.diasActivos} dias</td></tr>`);
+      });
+    });
+    body.innerHTML = rowsHtml.join('');
+  } else {
+    /* mes elegido: detalle dia a dia (igual que antes) */
+    if(th1) th1.textContent = 'Dia';
+    if(th4) th4.textContent = 'Tope 180';
+    const daysInMonth = days.filter(d=>monthKeyOf(d)===selectedMonth).sort().reverse();
+    if(!daysInMonth.length){
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos ese mes</td></tr>';
+      return;
+    }
+    const rowsHtml = [];
+    daysInMonth.forEach(day=>{
+      const entries = Object.entries(lastByDayRank[day]).sort((a,b)=>b[1]-a[1]);
+      entries.forEach(([vend, val], i)=>{
+        rowsHtml.push(`<tr><td>${i===0?fmtDateLabel(day):''}</td><td>${vend}</td><td>${fmtUnits(val)}</td><td>${metaBadge(val, META_VENDEDOR)}</td></tr>`);
+      });
+    });
+    body.innerHTML = rowsHtml.join('');
+  }
+}
+
+const RANK_MEDALS = ['🥇','🥈','🥉'];
+function renderRankTable(bodyId, entries, fmt){
+  const body = document.getElementById(bodyId);
+  if(!entries.length){ body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--paper-dim)">sin datos</td></tr>'; return; }
+  const total = entries.reduce((a,[,v])=>a+v,0);
+  body.innerHTML = entries.slice(0,10).map(([name,val],i)=>{
+    const pct = total>0 ? (val/total*100).toFixed(1)+'%' : '—';
+    const rankLabel = RANK_MEDALS[i] || (i+1);
+    return `<tr><td><span class="rank-num">${rankLabel}</span>${name}</td><td>${fmt(val)}</td><td>${pct}</td></tr>`;
+  }).join('');
+}
+
+/* el grafico "Comparativo diario" solo muestra UN mes a la vez (botones arriba del grafico),
+   para que subir varios meses de historico no lo deje ilegible. Por defecto arranca en el
+   mes mas reciente con datos; los meses anteriores quedan a un clic de distancia. */
+let comboCache = { dates:[], effiByDate:{}, dropiByDate:{} };
+let comboSelectedMonth = null;
+function renderComboChartWithMonths(dates, effiByDate, dropiByDate){
+  comboCache = { dates, effiByDate, dropiByDate };
+  const months = monthsFromDates(dates);
+  if(!comboSelectedMonth || !months.includes(comboSelectedMonth)){
+    comboSelectedMonth = months[months.length-1] || null;
+  }
+  renderComboMonthPills(months);
+  renderComboChartForSelectedMonth();
+}
+function renderComboMonthPills(months){
+  const wrap = document.getElementById('comboMesPills');
+  if(!wrap) return;
+  wrap.innerHTML = months.map(m=>{
+    const active = m===comboSelectedMonth ? ' active' : '';
+    return `<button type="button" class="month-pill${active}" data-month="${m}">${monthLabelOf(m)}</button>`;
+  }).join('');
+  wrap.querySelectorAll('.month-pill').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      comboSelectedMonth = btn.dataset.month;
+      renderComboMonthPills(months);
+      renderComboChartForSelectedMonth();
+    });
+  });
+}
+function renderComboChartForSelectedMonth(){
+  const { dates, effiByDate, dropiByDate } = comboCache;
+  const monthDates = comboSelectedMonth ? dates.filter(d=>monthKeyOf(d)===comboSelectedMonth) : dates;
+  const propias = monthDates.map(d=> effiByDate[d] ?? 0);
+  const total = monthDates.map(d=> dropiByDate[d] ?? 0);
+  const subtitle = document.getElementById('comboSubtitle');
+  if(subtitle) subtitle.textContent = comboSelectedMonth ? `Comparativo diario — ${monthLabelOf(comboSelectedMonth)}` : 'Comparativo diario';
+  renderCharts(monthDates, propias, total);
+}
+
+function renderCharts(dates, propias, total){
+  const labels = dates.map(fmtDateLabel);
+  const ctxCombo = document.getElementById('chartCombo').getContext('2d');
+  if(comboChart) comboChart.destroy();
+
+  const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
+  const gridColor = 'rgba(63,232,224,0.08)';
+
+  comboChart = new Chart(ctxCombo, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {
+          label:'Unidades EFFI',
+          data:propias,
+          borderColor:'#3FE8E0',
+          backgroundColor:'rgba(63,232,224,0.14)',
+          tension:.3, fill:true, pointRadius:3, pointBackgroundColor:'#3FE8E0', borderWidth:2.5,
+          yAxisID:'y'
+        },
+        {
+          label:'Unidades Dropi',
+          data:total,
+          borderColor:'#4C8DFF',
+          backgroundColor:'rgba(76,141,255,0.12)',
+          tension:.3, fill:true, pointRadius:3, pointBackgroundColor:'#4C8DFF', borderWidth:2.5,
+          yAxisID:'y1'
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{color:gridColor} },
+        y:{ position:'left', ticks:{color:'#3FE8E0', font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor} },
+        y1:{ position:'right', ticks:{color:'#4C8DFF', font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+let lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
+
+/* effiByDate/dropiByDate son mapas {diaOperativo: unidades}, igual que A.byDate/B.byDate */
+function renderTable(dates, effiByDate, dropiByDate){
+  lastDetalle = { dates, effiByDate, dropiByDate };
+  const select = document.getElementById('detalleMesSelect');
+  populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
+  renderTableBody();
+}
+
+function renderTableBody(){
+  const { dates, effiByDate, dropiByDate } = lastDetalle;
+  const select = document.getElementById('detalleMesSelect');
+  const body = document.getElementById('tableBody');
+  const th1 = document.getElementById('tableTh1');
+  const th4 = document.getElementById('tableTh4');
+  if(!body) return;
+  const selectedMonth = select ? select.value : '';
+
+  if(!selectedMonth){
+    /* resumen: un renglon acumulado por mes */
+    if(th1) th1.textContent = 'Mes';
+    if(th4) th4.textContent = 'Meta 200';
+    const months = monthsFromDates(dates);
+    body.innerHTML = months.map(mk=>{
+      const daysInMonth = dates.filter(d=>monthKeyOf(d)===mk);
+      let effi=0, dropi=0, cumplidos=0;
+      daysInMonth.forEach(d=>{
+        const e = effiByDate[d]||0, dr = dropiByDate[d]||0;
+        effi += e; dropi += dr;
+        if(e+dr >= META_COMBINADA) cumplidos++;
+      });
+      return `<tr><td>${monthLabelOf(mk)}</td><td>${fmtUnits(effi)}</td><td>${fmtUnits(dropi)}</td><td>${cumplidos}/${daysInMonth.length} dias</td></tr>`;
+    }).join('');
+  } else {
+    /* mes elegido: detalle dia a dia (igual que antes) */
+    if(th1) th1.textContent = 'Fecha';
+    if(th4) th4.textContent = 'Meta 200';
+    const daysInMonth = dates.filter(d=>monthKeyOf(d)===selectedMonth);
+    body.innerHTML = daysInMonth.map(d=>{
+      const combinado = (effiByDate[d]||0) + (dropiByDate[d]||0);
+      return `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(effiByDate[d])}</td><td>${fmtUnits(dropiByDate[d])}</td><td>${metaBadge(combinado, META_COMBINADA)}</td></tr>`;
+    }).join('');
+  }
+
+  renderDetalleChart();
+}
+
+/* grafico de "Detalle por dia": barras EFFI+Dropi apiladas (para ver el total combinado de
+   un vistazo) mas una linea punteada en la meta de 200 — solo tiene sentido dia a dia, ya que
+   la meta es por dia operativo. En modo "Resumen mensual" (sin mes elegido) se muestra un
+   totalizado por mes sin la linea de meta. Comparte el mismo selector de mes que la tabla
+   (detalleMesSelect), asi que cambia junto con ella con un solo clic. */
+let detalleChart = null;
+function renderDetalleChart(){
+  const { dates, effiByDate, dropiByDate } = lastDetalle;
+  const select = document.getElementById('detalleMesSelect');
+  const selectedMonth = select ? select.value : '';
+  const canvas = document.getElementById('chartDetalle');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if(detalleChart){ detalleChart.destroy(); detalleChart = null; }
+
+  const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
+  const gridColor = 'rgba(63,232,224,0.08)';
+
+  if(!selectedMonth){
+    const months = monthsFromDates(dates);
+    if(!months.length) return;
+    const effiVals = months.map(mk=> dates.filter(d=>monthKeyOf(d)===mk).reduce((s,d)=>s+(effiByDate[d]||0),0));
+    const dropiVals = months.map(mk=> dates.filter(d=>monthKeyOf(d)===mk).reduce((s,d)=>s+(dropiByDate[d]||0),0));
+    detalleChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: months.map(monthLabelOf),
+        datasets:[
+          { label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:4 },
+          { label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:4 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        scales:{
+          x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false} },
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor} }
+        }
+      }
+    });
+  } else {
+    const daysInMonth = dates.filter(d=>monthKeyOf(d)===selectedMonth);
+    if(!daysInMonth.length) return;
+    const effiVals = daysInMonth.map(d=>effiByDate[d]||0);
+    const dropiVals = daysInMonth.map(d=>dropiByDate[d]||0);
+    detalleChart = new Chart(ctx, {
+      data:{
+        labels: daysInMonth.map(fmtDateLabel),
+        datasets:[
+          { type:'bar', label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:3, stack:'total' },
+          { type:'bar', label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:3, stack:'total' },
+          { type:'line', label:`Meta ${META_COMBINADA}`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        scales:{
+          x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false}, stacked:true },
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true }
+        }
+      }
+    });
+  }
+}
+
+/* ---------------- datos de EJEMPLO (solo detras del boton "Ver ejemplo", nunca se cargan solos) ---------------- */
+const SNAPSHOT = {
+  dates: ['2026-06-01'],
+  effiUnits: [99],
+  dropiValue: [20],
+  effiRemoved: 0,
+  dropiRemoved: 4,
+  dropiDupes: 0,
+  rankEffi: [
+    ["Lucenith Quintero Leon",24],["FUNNELISTH LANDING",23],["Isaac Salazar",13],
+    ["César Alfredo Aponte Artigas",10],["Juan manuel sanchez leon",9],["Nini Johana quintero leon",7],
+    ["Zaida Vanesa Meneses Chinchilla",5],["Santander Delgado",3],["JOSUE QUINTERO LEON",3],
+    ["DROPI - ROCKETFY",1],["miguel angel angarita ariza",1]
+  ],
+  rankDropi: [
+    ["Tiko",9],["Tienda Colombia",3],["DoviCenter",2],["Tienda Labarca",2],["(sin dato)",2],
+    ["Azaroma",1],["9428708",1]
+  ]
+};
+SNAPSHOT.byDayRank = { [SNAPSHOT.dates[0]]: Object.fromEntries(SNAPSHOT.rankEffi) };
+SNAPSHOT.effiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.effiByDate[d] = SNAPSHOT.effiUnits[i]; });
+SNAPSHOT.dropiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.dropiByDate[d] = SNAPSHOT.dropiValue[i]; });
+
+function loadSnapshot(){
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('kpis').classList.add('show');
+  document.getElementById('panels').classList.add('show');
+  document.getElementById('snapshotBanner').style.display = 'flex';
+
+  const sumPropias = SNAPSHOT.effiUnits.reduce((a,b)=>a+b,0);
+  const sumTotal = SNAPSHOT.dropiValue.reduce((a,b)=>a+b,0);
+  document.getElementById('kpiPropiasTotal').textContent = fmtUnits(sumPropias);
+  document.getElementById('kpiTotalTotal').textContent = fmtUnits(sumTotal);
+
+  const snapLastDate = SNAPSHOT.dates[SNAPSHOT.dates.length - 1];
+  const snapCombinadoUltimoDia = (SNAPSHOT.effiByDate[snapLastDate] ?? 0) + (SNAPSHOT.dropiByDate[snapLastDate] ?? 0);
+  document.getElementById('kpiCombinadoTotal').textContent = fmtUnits(snapCombinadoUltimoDia);
+  const snapKpiCombinadoVar = document.getElementById('kpiCombinadoVar');
+  snapKpiCombinadoVar.textContent = `${fmtDateLabel(snapLastDate)} — ${snapCombinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - snapCombinadoUltimoDia)}`}`;
+  snapKpiCombinadoVar.className = 'sub ' + (snapCombinadoUltimoDia >= META_COMBINADA ? 'up' : 'down');
+  document.getElementById('kpiPropiasVar').textContent = SNAPSHOT.effiRemoved>0 ? `${SNAPSHOT.effiRemoved} "cambios" descartados` : 'sin filas de cambios';
+  const snapDropiParts = [];
+  if(SNAPSHOT.dropiDupes>0) snapDropiParts.push(`${SNAPSHOT.dropiDupes} duplicados`);
+  if(SNAPSHOT.dropiRemoved>0) snapDropiParts.push(`${SNAPSHOT.dropiRemoved} cancelados`);
+  document.getElementById('kpiTotalVar').textContent = snapDropiParts.length ? snapDropiParts.join(' + ') + ' descartados' : 'sin cancelados';
+
+  if(SNAPSHOT.rankEffi.length){
+    document.getElementById('kpiTopVendedor').textContent = SNAPSHOT.rankEffi[0][0];
+    document.getElementById('kpiTopVendedorVal').textContent = fmtUnits(SNAPSHOT.rankEffi[0][1]);
+  }
+  if(SNAPSHOT.rankDropi.length){
+    document.getElementById('kpiTopTienda').textContent = SNAPSHOT.rankDropi[0][0];
+    document.getElementById('kpiTopTiendaVal').textContent = fmtUnits(SNAPSHOT.rankDropi[0][1]);
+  }
+
+  renderComboChartWithMonths(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+  renderRankTable('rankVendedorBody', SNAPSHOT.rankEffi, fmtUnits);
+  renderRankTable('rankTiendaBody', SNAPSHOT.rankDropi, fmtUnits);
+  renderTable(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+  renderMetasVendedores(SNAPSHOT.byDayRank);
+  updateVistaAcumulada(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+}
+
+function resetToEmptyState(){
+  document.getElementById('snapshotBanner').style.display = 'none';
+  document.getElementById('kpis').classList.remove('show');
+  document.getElementById('panels').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('emptyState').innerHTML =
+    '<b>Sube los dos excel para ver el reporte</b>EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>Los cancelados se descartan automaticamente.'+
+    '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
+  document.getElementById('viewExampleBtn').addEventListener('click', loadSnapshot);
+  store.A = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
+  store.B = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
+  const metasBody = document.getElementById('metasVendedorBody');
+  if(metasBody) metasBody.innerHTML = '';
+  vistaAcumuladaCache = [];
+  renderVistaAcumuladaTable();
+  comboSelectedMonth = null;
+  comboCache = { dates:[], effiByDate:{}, dropiByDate:{} };
+  const comboPills = document.getElementById('comboMesPills');
+  if(comboPills) comboPills.innerHTML = '';
+  lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
+  if(detalleChart){ detalleChart.destroy(); detalleChart = null; }
+  document.getElementById('slotUpload').classList.remove('filled');
+  document.getElementById('statusUpload').textContent = '';
+  ['A','B'].forEach(k=>{
+    document.getElementById('map'+k).classList.remove('show');
+    document.getElementById('status'+k).textContent = '';
+  });
+  const dropEl = document.getElementById('dropUpload');
+  dropEl.classList.remove('has-file');
+  dropEl.innerHTML = '<input type="file" id="fileUpload" accept=".xlsx,.xls,.csv" multiple><span class="dtext">Arrastra o toca para subir los excel (EFFI y Dropi)</span>';
+  document.getElementById('fileUpload').addEventListener('change', async ()=>{
+    const files = Array.from(document.getElementById('fileUpload').files);
+    for(const f of files){ await handleUpload(f); }
+  });
+  dropEl.addEventListener('click', (e)=>{ if(e.target.tagName!=='INPUT') document.getElementById('fileUpload').click(); });
+}
+
+document.getElementById('clearSnapshotBtn').addEventListener('click', resetToEmptyState);
+document.getElementById('viewExampleBtn').addEventListener('click', loadSnapshot);
+
+document.getElementById('historialMesSelect').addEventListener('change', renderHistorialTable);
+document.getElementById('detalleMesSelect').addEventListener('change', renderTableBody);
+document.getElementById('metasMesSelect').addEventListener('change', renderMetasBody);
+
+document.getElementById('adminUnlockBtn').addEventListener('click', tryUnlockAdmin);
+document.getElementById('adminPinInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryUnlockAdmin(); });
+document.getElementById('adminLockBtn').addEventListener('click', ()=>{
+  adminUnlocked = false;
+  document.getElementById('adminGate').style.display = 'flex';
+  document.getElementById('adminContent').style.display = 'none';
+  document.getElementById('vistaAcumuladaBody').innerHTML = '';
+});
+
+/* el historial es independiente de si hay datos cargados en esta sesion — se ve apenas se abre la pagina */
+renderHistorialMensual();
+</script>
+</body>
+</html>
