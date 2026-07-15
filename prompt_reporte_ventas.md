@@ -37,7 +37,7 @@ Sábado (desde las 7am) y domingo **ya no se dejan tal cual caen en el calendari
 - Fin de semana normal (el lunes siguiente no es festivo): sábado + domingo se dividen entre 2. Corte de la ventana: **lunes 8am** (el lunes arranca su propio turno normal).
 - Si el lunes siguiente **es festivo** (calendario oficial de Colombia): se suma también y se reparte entre 3 (sábado+domingo+lunes). Corte de la ventana: **martes 8am**. Si hay festivos consecutivos después del domingo, la ventana sigue creciendo hasta el primer día hábil (el divisor crece igual).
 - Un festivo entre semana que no está pegado a un fin de semana (no encadena hacia atrás hasta el domingo) **no** se reparte — día operativo normal.
-- Los festivos de Colombia se calculan en vivo con el algoritmo de Gauss/Meeus para la Pascua (`easterSundayDate()`), no es una lista fija: fechas fijas (1 ene, 1 may, 20 jul, 7 ago, 8 dic, 25 dic) + Ley Emiliani trasladadas al lunes siguiente (Reyes, San José, San Pedro y San Pablo, Asunción, Día de la Raza, Todos los Santos, Cartagena) + dependientes de Pascua (Jueves y Viernes Santo, Ascensión, Corpus Christi, Sagrado Corazón).
+- Los festivos de Colombia se calculan en vivo con el algoritmo de Gauss/Meeus para la Pascua (`easterSundayDate()`), no es una lista fija: fechas fijas (1 ene, 1 may, 20 jul, 7 ago, 8 dic, 25 dic) + Ley Emiliani trasladadas al lunes siguiente (Reyes, San José, San Pedro y San Pablo, Día de Nuestra Señora del Rosario de Chiquinquirá —festivo nuevo, Ley 2578 de 2026—, Asunción, Día de la Raza, Todos los Santos, Cartagena) + dependientes de Pascua (Jueves y Viernes Santo, Ascensión, Corpus Christi, Sagrado Corazón).
 - El reparto puede dar decimales (ej. 9 entre 2 días = 4.5 cada uno); se guarda exacto y se redondea solo al mostrarlo.
 
 ## Modo administrador "real" (sin repartir) — ya implementado
@@ -56,8 +56,10 @@ adminUnlocked` cuál alimenta el resto de funciones — todas heredan el modo au
 corromper lo que ve cualquier otra sesión — es el punto más delicado del cambio. El gráfico de
 Historial día a día (única vista que lee del historial persistido en vez de los datos en vivo)
 usa una función `collapseWindows()` que revierte el reparto solo para dibujar, sin tocar lo
-guardado. Verificado contra los excel reales: Dropi sábado 2026-07-11 (8 u. crudas) se ve como
-4+4 repartido para visitantes, y como una sola entrada de 8 u. en 07-11 para el admin.
+guardado. Verificado contra los excel reales: Dropi sábado 2026-07-11 (8 u. crudas) — con el lunes
+siguiente 07-13 festivo (Ley 2578 de 2026) la ventana se reparte entre 3 y se ve como 2,6667 +
+2,6667 + 2,6667 (07-11/07-12/07-13, redondeado a 3+3+3 en pantalla) para visitantes, y como una
+sola entrada de 8 u. en 07-11 para el admin.
 
 ## Vista acumulada privada (admin) — ya implementado
 
@@ -141,12 +143,12 @@ Robot azul/blanco/negro (`Pasted-20260712-091019.svg`) en el encabezado: flotaci
 ## Números de referencia para validar que no se rompió nada
 
 Con los excel de ejemplo de esta carpeta:
-- **Dropi**: 20 unidades totales (24 filas − 4 canceladas, sin deduplicar). 2026-07-09 (jueves) → 1. 2026-07-10 (viernes) → 11. 2026-07-11 es **sábado**: 8 unidades crudas, pero el lunes siguiente (07-13) no es festivo, así que se reparten entre 2 → **07-11 → 4** y **07-12 (domingo) → 4** (día nuevo por el reparto). Tienda líder total (no cambia con el reparto): "Tiko" con 9 unidades.
+- **Dropi**: 20 unidades totales (24 filas − 4 canceladas, sin deduplicar). 2026-07-09 (jueves) → 1. 2026-07-10 (viernes) → 11. 2026-07-11 es **sábado**: 8 unidades crudas; como el lunes siguiente (07-13) **sí es festivo** (Día de Nuestra Señora del Rosario de Chiquinquirá, Ley 2578 de 2026), la ventana se extiende a sábado+domingo+lunes y se reparte entre 3 → **07-11 → 2,6667**, **07-12 (domingo) → 2,6667** y **07-13 (lunes festivo) → 2,6667** (redondeado a 3 u. en pantalla; valor exacto guardado para que la suma cierre en 8). Tienda líder total (no cambia con el reparto): "Tiko" con 9 unidades.
 - **EFFI**: 99 unidades, todas en el día operativo 2026-07-10 (viernes, sin reparto). Vendedora líder: "Lucenith Quintero Leon" con 24 unidades (le faltan 156 para el tope de 180 — con esta muestra tan chica nadie llega al tope, es esperable, no es un bug).
 - **Combinado 2026-07-10**: EFFI 99 + Dropi 11 = 110 (faltan 90 para la meta de 200). Sin cambios por el reparto.
-- **KPI "Total combinado (último día)"**: el último día operativo con datos en esta muestra es 2026-07-12 (domingo, generado por el reparto): EFFI 0 + Dropi 4 = 4 u. (faltan 196 para la meta de 200) — distinto del combinado de 2026-07-10 (110 u.), que no es el último día.
+- **KPI "Total combinado (último día)"**: el último día operativo con datos en esta muestra es 2026-07-13 (lunes festivo, generado por el reparto — antes de la Ley 2578 de 2026 hubiera sido 2026-07-12): EFFI 0 + Dropi 2,6667 = 2,6667 u. (redondeado a 3 u. en pantalla; faltan ~197 para la meta de 200) — distinto del combinado de 2026-07-10 (110 u.), que no es el último día.
 - Prueba de bordes del turno: sábado 06:59am cae en el día operativo del viernes anterior; sábado 07:01am entra en la ventana de fin de semana (se reparte); lunes antes de las 8am cuenta como domingo (parte de la ventana); lunes 8:01am es su propio día normal (salvo que el lunes sea festivo).
-- Festivos de Colombia 2026 esperados (18 en total): 1 ene, 12 ene, 23 mar, 2 abr, 3 abr, 1 may, 18 may, 8 jun, 15 jun, 29 jun, 20 jul, 7 ago, 17 ago, 12 oct, 2 nov, 16 nov, 8 dic, 25 dic.
+- Festivos de Colombia 2026 esperados (19 en total): 1 ene, 12 ene, 23 mar, 2 abr, 3 abr, 1 may, 18 may, 8 jun, 15 jun, 29 jun, 13 jul (Chiquinquirá movido, Ley 2578 de 2026), 20 jul, 7 ago, 17 ago, 12 oct, 2 nov, 16 nov, 8 dic, 25 dic.
 
 ## Pendientes para más adelante (no hacer ahora salvo que se pida)
 

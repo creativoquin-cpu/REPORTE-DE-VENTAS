@@ -1273,8 +1273,9 @@ function festivosColombia(year){
   const fija = (m,d)=> set.add(isoOfDate(new Date(year,m-1,d)));
   fija(1,1); fija(5,1); fija(7,20); fija(8,7); fija(12,8); fija(12,25); // fijas, no se trasladan
   const emiliani = (m,d)=> set.add(isoOfDate(moveToNextMonday(new Date(year,m-1,d))));
-  emiliani(1,6); emiliani(3,19); emiliani(6,29); emiliani(8,15);
+  emiliani(1,6); emiliani(3,19); emiliani(6,29); emiliani(7,9); emiliani(8,15);
   emiliani(10,12); emiliani(11,1); emiliani(11,11); // Ley Emiliani: se trasladan al lunes siguiente
+  // 9 jul: Ntra. Sra. del Rosario de Chiquinquira (Ley 2578 de 2026)
   const easter = easterSundayDate(year);
   set.add(isoOfDate(addDays(easter,-3))); // Jueves Santo
   set.add(isoOfDate(addDays(easter,-2))); // Viernes Santo
