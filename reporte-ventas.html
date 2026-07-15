@@ -1327,7 +1327,17 @@ function miembrosDeVentana(sabadoIso){
   }
   return miembros;
 }
-/* reparte en partes iguales las unidades {isoDate: unidades} de cada fin de semana / festivo largo */
+/* reparte `total` (numero) en `n` partes enteras que suman exacto: floor para todos,
+   y +1 para los ULTIMOS `resto` elementos (el array de miembros de la ventana ya viene
+   en orden cronologico ascendente, asi que "ultimos" = los dias mas recientes de la ventana). */
+function repartirEntero(total, n){
+  const piso = Math.floor(total / n);
+  const resto = Math.round(total - piso*n); // entero 0..n-1
+  return Array.from({length:n}, (_,i)=> piso + (i >= n - resto ? 1 : 0));
+}
+/* reparte en partes ENTERAS (piso + residuo en los ultimos dias) las unidades
+   {isoDate: unidades} de cada fin de semana / festivo largo, para que la suma mostrada
+   siempre cierre exacto con el total real de la ventana (sin decimales). */
 function repartirFinDeSemana(byDateMap){
   const result = {...byDateMap};
   const vistos = new Set();
@@ -1337,12 +1347,20 @@ function repartirFinDeSemana(byDateMap){
     vistos.add(ventana);
     const miembros = miembrosDeVentana(ventana);
     const total = miembros.reduce((s,d)=> s + (byDateMap[d]||0), 0);
-    const promedio = total / miembros.length;
-    miembros.forEach(d=>{ result[d] = promedio; });
+    const partes = repartirEntero(total, miembros.length);
+    miembros.forEach((d,i)=>{ result[d] = partes[i]; });
   });
   return result;
 }
-/* igual que repartirFinDeSemana pero para el mapa {isoDate: {vendedor: unidades}} del tope de 180 */
+/* igual que repartirFinDeSemana pero para el mapa {isoDate: {vendedor: unidades}} del tope de 180.
+   Riesgo conocido (no es bug): el enterizado por vendedor aqui es independiente del enterizado
+   del total del dia en repartirFinDeSemana() -cada vendedor arrastra su propio residuo floor+resto-,
+   asi que en teoria el total de un dia sumando todos los vendedores de esta funcion podria diferir
+   en +-1 unidad del valor que da repartirFinDeSemana() para ese mismo dia, aunque ambos sigan
+   sumando exacto al total real de la ventana. Matematicamente esperable con floor+residuo no
+   lineal repartido de forma independiente. Hoy no es visible: el panel "Cumplimiento de
+   vendedores" que consume esto esta oculto (style="display:none"). Documentado por si se
+   reactiva el panel mas adelante. */
 function repartirFinDeSemanaVendedores(byDayRankMap){
   const result = {...byDayRankMap};
   const vistos = new Set();
@@ -1353,12 +1371,12 @@ function repartirFinDeSemanaVendedores(byDayRankMap){
     const miembros = miembrosDeVentana(ventana);
     const vendedores = new Set();
     miembros.forEach(d=>{ if(byDayRankMap[d]) Object.keys(byDayRankMap[d]).forEach(v=>vendedores.add(v)); });
-    const promedios = {};
+    miembros.forEach(d=>{ result[d] = {}; });
     vendedores.forEach(v=>{
-      const total = miembros.reduce((s,d)=> s + ((byDayRankMap[d]||{})[v]||0), 0);
-      promedios[v] = total / miembros.length;
+      const totalV = miembros.reduce((s,d)=> s + ((byDayRankMap[d]||{})[v]||0), 0);
+      const partesV = repartirEntero(totalV, miembros.length);
+      miembros.forEach((d,i)=>{ result[d][v] = partesV[i]; });
     });
-    miembros.forEach(d=>{ result[d] = promedios; });
   });
   return result;
 }
