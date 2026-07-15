@@ -10,12 +10,17 @@ Tengo en esta carpeta un reporte de ventas (`reporte-ventas.html`, tema neón/te
 
 **Ambas plataformas se miden en PRENDAS/UNIDADES por ahora, no en dinero.** El valor en pesos se retoma más adelante.
 
-- **EFFI**: suma la columna `Cantidad`. Excluye siempre las filas donde `Vendedor` = "Cambios". Ranking de vendedores = unidades por `Vendedor`.
+- **EFFI**: suma la columna `Cantidad`. Excluye siempre las filas donde `Vendedor` sea "Cambios", esté **vacío**, o sea exactamente "Miguel" (coincidencia exacta, sin tocar nombres compuestos como "miguel angel angarita ariza"). El filtro de vacío corrige un bug real donde una celda de Vendedor en blanco nunca se descartaba. Se evalúa **en vivo en cada `recompute()`**, no solo al subir el archivo, para corregir también filas ya guardadas de sesiones anteriores. Ranking de vendedores = unidades por `Vendedor`.
 - **Dropi**: suma la columna `Cantidad` (no `Total de la orden` todavía). Excluye `Estatus` = "Cancelado". Ranking de tiendas = unidades por `Tienda`. **No se deduplica por `ID`** cuando se suma `Cantidad` — cada fila es un producto distinto dentro del pedido. La deduplicación por `ID` solo se activa si la columna de valor activa es de dinero (`Total de la orden`); el helper `isMoneyColumn()` decide esto solo, en vivo, en cada `recompute()`.
 - Detección de columnas por nombre normalizado (sin tildes/mayúsculas), no por posición.
 - **Zona de subida única** (ya no hay una casilla por plataforma): un solo `<input type="file" multiple>` acepta el excel de EFFI y el de Dropi juntos o uno a la vez. `detectSystemFromHeaders(headers)` decide sola a cuál plataforma pertenece cada archivo, vía `handleUpload(file)`. Si un archivo no se puede identificar, se muestra un aviso de texto sin perder lo que ya estuviera cargado.
+- **Varios archivos del mismo sistema se acumulan, no se reemplazan**: si subes varios excel de EFFI (o de Dropi) que cubren distintos rangos de fechas, sus filas se suman todas en vez de que el último sobrescriba a los anteriores. Se descarta cualquier fila cuyo contenido sea idéntico a una ya cargada antes (por si dos archivos se solapan en fechas), comparando por `JSON.stringify(fila)` guardado en `store[slotKey]._seenRowHashes`. El estado de esa plataforma muestra cuántos archivos y filas lleva acumulados y cuántas filas duplicadas se ignoraron.
+- **Persistencia entre sesiones (`localStorage`, clave `reporteVentasRawData_v1`)**: el uso real es diario — cada día se sube solo el archivo nuevo de ese día, no se resube todo desde enero. `saveRawStore()` guarda las filas acumuladas tras cada carga exitosa; `loadRawStore()` las recupera solas al abrir la página (reconstruye `_seenRowHashes`) y dispara `recompute()` — la página ya no abre vacía si hay datos guardados de antes. No hay botón para borrar estos datos (se retiró a propósito). Independiente del resumen por día de "Historial y comparativo mensual" (clave aparte, `reporteVentasHistorial_v1`).
+- **Solo el administrador puede subir archivos**: la zona de subida (`#uploadZoneWrap`) está oculta detrás de la misma clave que la vista acumulada (un solo candado global, `#adminGate` al inicio de la página) — un visitante sin la clave nunca ve el input de archivo, solo el reporte ya calculado (o "esperando los datos del administrador" si no hay nada todavía). `tryUnlockAdmin()` revela ambas cosas a la vez; el botón "Cerrar modo administrador" las vuelve a ocultar.
+- **Pendiente: backend compartido en Google Sheets**, para que cualquiera que abra la URL vea los mismos datos desde su propio dispositivo (hoy `localStorage` es local a cada navegador). El script de Google Apps Script ya está escrito (`google-apps-script-backend.gs.txt` en esta carpeta, con instrucciones de despliegue incluidas) — falta que el cliente lo despliegue y dé la URL del Web App para conectarlo del lado de `reporte-ventas.html`.
 - **El panel de columnas detectadas (los `<select>` de fecha/cantidad/ranking) está oculto siempre, sin excepción**, incluso si la detección automática falla — en ese caso solo se ve un mensaje de error en texto. Los selects (`mapA`/`mapB`) se siguen poblando por dentro pero nunca se muestran.
 - Los dos totales (unidades EFFI, unidades Dropi) se muestran como KPIs separados. **Excepción explícita**: hay una tarjeta KPI adicional "Total combinado (último día)" (`kpiCombinadoTotal`) que sí cruza EFFI + Dropi, pero **solo del último día operativo con datos** (`dates[dates.length-1]`) — no es la suma de todo el rango subido. Incluye badge de si ese día cumplió o no la meta de 200. Es la única suma cruzada de las dos plataformas fuera del contexto de la meta combinada por día (ver abajo).
+- **Tarjeta KPI "Promedio diario (mes)"** (`kpiPromedioDiario`): promedio de prendas combinadas (EFFI+Dropi) por día operativo del mes del último día con datos. Se muestra con 1 decimal (`fmtUnitsAvg()`, ej. "29,8 u./día"). Hereda automáticamente el modo repartido/admin real sin código propio.
 
 ## Día operativo (turno, NO día calendario) — ya implementado
 
@@ -35,6 +40,25 @@ Sábado (desde las 7am) y domingo **ya no se dejan tal cual caen en el calendari
 - Los festivos de Colombia se calculan en vivo con el algoritmo de Gauss/Meeus para la Pascua (`easterSundayDate()`), no es una lista fija: fechas fijas (1 ene, 1 may, 20 jul, 7 ago, 8 dic, 25 dic) + Ley Emiliani trasladadas al lunes siguiente (Reyes, San José, San Pedro y San Pablo, Asunción, Día de la Raza, Todos los Santos, Cartagena) + dependientes de Pascua (Jueves y Viernes Santo, Ascensión, Corpus Christi, Sagrado Corazón).
 - El reparto puede dar decimales (ej. 9 entre 2 días = 4.5 cada uno); se guarda exacto y se redondea solo al mostrarlo.
 
+## Modo administrador "real" (sin repartir) — ya implementado
+
+Cuando el administrador está autenticado (`adminUnlocked === true`), **todo el reporte** (KPIs,
+Comparativo diario, ranking, Cumplimiento de vendedores, Detalle por día, Historial día a día)
+deja de mostrar la versión repartida y muestra cada día operativo tal cual se vendió de verdad:
+cada ventana de fin de semana/festivo aparece anclada en su primer día (sábado) con el total
+completo, sin dividir entre los días de la ventana — sin barras de rango de fechas especiales,
+misma lógica que ya usaba "Vista acumulada". Un visitante sin la clave sigue viendo siempre la
+versión repartida de toda la vida.
+
+`recompute()` calcula SIEMPRE ambas versiones (repartida y cruda) y elige con `const useRaw =
+adminUnlocked` cuál alimenta el resto de funciones — todas heredan el modo automáticamente. El
+**historial persistente (`localStorage`) siempre se guarda repartido**, nunca crudo, para no
+corromper lo que ve cualquier otra sesión — es el punto más delicado del cambio. El gráfico de
+Historial día a día (única vista que lee del historial persistido en vez de los datos en vivo)
+usa una función `collapseWindows()` que revierte el reparto solo para dibujar, sin tocar lo
+guardado. Verificado contra los excel reales: Dropi sábado 2026-07-11 (8 u. crudas) se ve como
+4+4 repartido para visitantes, y como una sola entrada de 8 u. en 07-11 para el admin.
+
 ## Vista acumulada privada (admin) — ya implementado
 
 Al final de la página, una segunda tabla oculta tras una clave (`ADMIN_PIN = "1234"`, cambiar esa
@@ -43,24 +67,71 @@ el total acumulado sin dividir** (Fecha inicio, Fecha fin, Día, # Días, Observ
 Ventas Dropi, Total del día, % EFFI, % Dropi) — igual al reporte interno real del negocio. Usa
 `A.byDateRaw`/`B.byDateRaw` (copia de `byDate` tomada antes de `repartirFinDeSemana()`). Mientras
 está bloqueada no se rellena el `<tbody>` (dato no queda expuesto en el DOM). No es seguridad real
-(no hay backend), solo un filtro visual como pidió el cliente para que esta vista no la vea
-cualquiera. Verificado 1 a 1 contra los reportes reales de junio del negocio.
+(no hay backend propio, aunque ver más abajo lo de Google Sheets), solo un filtro visual como pidió
+el cliente para que esta vista no la vea cualquiera. Verificado 1 a 1 contra los reportes reales de
+junio del negocio. **Comparte el mismo candado que la zona de subida de archivos** (ver regla de
+negocio arriba) — ya no tiene su propio campo de clave aparte, un solo `tryUnlockAdmin()` desbloquea
+las dos cosas juntas.
+
+## Backend compartido (Google Sheets) — script listo, falta desplegar y conectar
+
+Para que cualquiera que abra la URL del reporte vea los mismos datos desde su propio dispositivo
+(hoy cada navegador tiene su propio `localStorage`, aislado). Diseño: cada fila de EFFI/Dropi se
+guarda como JSON individual en su propia fila de una Google Sheet (pestañas `EFFI_rows` /
+`Dropi_rows`, no un solo bloque JSON gigante, para no toparse con límites de celda con meses de
+datos), más una pestaña `Meta` con las columnas detectadas y contadores. `doGet()` deja leer a
+cualquiera sin clave; `doPost()` solo escribe si el `pin` recibido coincide con `ADMIN_PIN`, y
+dedupea del lado del servidor igual que `handleUpload()` en el navegador.
+
+Código completo en `google-apps-script-backend.gs.txt` (con instrucciones de despliegue en un
+comentario al inicio). Falta: (1) que el cliente lo despliegue y entregue la URL del Web App, (2)
+conectar `reporte-ventas.html` a esa URL — cualquier visitante hace `fetch` al abrir la página en
+vez de depender solo de `localStorage`, y solo el administrador autenticado manda el `POST` con las
+filas nuevas tras cada carga. El `POST` debe ir con `Content-Type: text/plain;charset=utf-8` (no
+`application/json`) para evitar el preflight CORS que Apps Script no maneja bien.
 
 ## Topes / metas diarias — ya implementado
 
-- **180 prendas por vendedor por día operativo** (solo EFFI, tras excluir "Cambios"). Es una **sumatoria**: se suma TODO lo que ese vendedor vendió ese día operativo (todas sus líneas/productos), no se evalúa por línea ni por pedido individual. Se calcula con `buildByDayAndRank()` y se muestra en la tabla nueva **"Cumplimiento de vendedores"** (panel antes de "Detalle por día"): columnas Día, Vendedor, Unidades, Tope 180, con badge ✔ Cumplido / ✖ Faltan N.
-- **200 prendas combinadas por día operativo** (EFFI + Dropi sumados, ambos ya en unidades así que la suma es válida). También es una **sumatoria**: total EFFI del día + total Dropi del día. Se muestra como columna nueva "Meta 200" en la tabla **"Detalle por día"**, mismo tipo de badge.
-- Constantes `META_VENDEDOR = 180` y `META_COMBINADA = 200` al inicio del script — si el negocio cambia estos números, solo hay que tocar esas dos constantes.
+- **180 prendas por día operativo, META DE EQUIPO** (solo EFFI, tras excluir "Cambios"/vacío/"Miguel"). Ya NO se evalúa por vendedor individual: se suma TODO lo que vendió el equipo COMPLETO de EFFI ese día (todos los vendedores juntos) y ESE total se compara contra 180 — ejemplo: si Vendedor 1 vendió 3 y Vendedor 2 vendió 5, el total del día es 8, y eso es lo que se compara contra la meta. Se muestra en la tabla **"Cumplimiento de vendedores"** (panel antes de "Detalle por día"): el desglose por vendedor sigue visible (columna Unidades, informativa), pero el badge ✔/✖ ahora se pinta UNA sola vez por día (primera fila de ese día), evaluando `teamTotal` en vez del valor individual. En la vista resumen por mes, se cuenta `diasCumplidosEquipo` (días donde el total de equipo llegó a 180) en vez de días cumplidos por vendedor. Header de la columna: "Meta equipo (180)".
+- **200 prendas combinadas por día operativo** (EFFI + Dropi sumados, ambos ya en unidades así que la suma es válida). También es una **sumatoria**: total EFFI del día + total Dropi del día. Se muestra como columna nueva "Meta 200" en la tabla **"Detalle por día"**, mismo tipo de badge. Esta meta no cambió con el ajuste de arriba — sigue siendo combinada EFFI+Dropi, la de 180 es solo EFFI.
+- Constantes `META_VENDEDOR = 180` y `META_COMBINADA = 200` al inicio del script — si el negocio cambia estos números, solo hay que tocar esas dos constantes (el número de `META_VENDEDOR` no cambió, solo cómo se evalúa).
 
 ## Vistas (ya implementadas)
 
 - Comparativo diario: gráfico de línea con dos series (unidades EFFI vs. unidades Dropi por día operativo). **Solo muestra un mes a la vez** (arranca en el más reciente con datos) — botones tipo pastilla arriba del gráfico (`comboMesPills`) para saltar a meses anteriores con un clic, sin amontonar todo el histórico subido en una sola línea ilegible. Funciones: `renderComboChartWithMonths()`, `renderComboMonthPills()`, `renderComboChartForSelectedMonth()`.
 - KPIs de totales + variación (cambios/cancelados descartados) + una tarjeta "Total combinado (último día)" (EFFI + Dropi solo del último día operativo con datos, con badge de meta 200 cumplida/faltan). Grid responsivo (`repeat(auto-fit,minmax(170px,1fr))`) para que la 5ta tarjeta no rompa el layout.
 - Ranking completo de vendedores (EFFI) y de tiendas (Dropi), con medallas 🥇🥈🥉 en el top 3.
-- Tabla "Cumplimiento de vendedores" (tope 180) y tabla "Detalle por día" (con meta 200). "Detalle por día" tiene además un gráfico (`renderDetalleChart()`) arriba de la tabla: barras EFFI+Dropi apiladas por día con una línea punteada en la meta de 200, para ver de un vistazo qué días la cumplen — comparte el mismo selector de mes que la tabla (`detalleMesSelect`). En modo "Resumen mensual" el gráfico muestra barras por mes sin la línea de meta (la meta es diaria, no mensual).
+- Tabla "Cumplimiento de vendedores" (tope 180) y tabla "Detalle por día" (con meta 200). "Detalle por día" tiene además un gráfico (`renderDetalleChart()`) arriba de la tabla: barras EFFI+Dropi apiladas por día con una línea punteada en la meta de 200, para ver de un vistazo qué días la cumplen — comparte el mismo selector de mes que la tabla (`detalleMesSelect`). Encima de cada columna se dibuja el total del día (EFFI+Dropi) con el mismo plugin `stackedTotalLabelPlugin` que usa "Historial y comparativo mensual". En modo "Resumen mensual" el gráfico muestra barras por mes sin la línea de meta ni el total encima (la meta es diaria, no mensual).
 - **Agrupación por mes con detalle al seleccionar** (aplica a "Cumplimiento de vendedores", "Detalle por día" e "Historial y comparativo mensual"): por defecto cada tabla muestra un renglón acumulado por mes (unidades EFFI, unidades Dropi/tope, días cumplidos sobre días activos). Al elegir un mes en el `<select>` de esa tabla, cambia a ver el detalle día por día de ese mes. Cada tabla tiene su propio selector independiente (`metasMesSelect`, `detalleMesSelect`, `historialMesSelect`); la selección se conserva si el mes sigue existiendo tras recalcular. Pensado para cuando se sube un excel grande que abarca varios meses de una sola vez.
-- **"Historial y comparativo mensual"** (`renderHistorialChart()`) invierte el gráfico según el `<select>` de mes: en "Todos los meses" muestra una barra por mes (resumen); al elegir un mes, el gráfico pasa a mostrar el día a día de ESE mes (barras EFFI+Dropi apiladas) con dos líneas punteadas de referencia — meta de vendedor (180, naranja) y meta combinada (200, roja). Ya no tiene botones de "Descargar/Cargar historial"; el historial vive solo en `localStorage` del navegador.
-- Botón "Ver ejemplo" con datos ficticios — la página **no** carga datos de muestra automáticamente al abrir, abre vacía.
+- **"Historial y comparativo mensual"**: el gráfico (`renderHistorialChart()`) invierte según el `<select>` de mes: en "Todos los meses" muestra una barra por mes (resumen); al elegir un mes, pasa a mostrar el día a día de ESE mes (barras EFFI+Dropi apiladas) con dos líneas punteadas de referencia — meta de vendedor (180, naranja) y meta combinada (200, roja). Encima de cada columna se dibuja el total del día (EFFI+Dropi) vía un plugin propio de Chart.js (`stackedTotalLabelPlugin`, reutilizable). La **tabla** de abajo (`renderHistorialTable()`) es independiente del select y **siempre** muestra el resumen por mes (nunca detalle día a día) — el detalle diario solo vive en el gráfico. Ya no tiene botones de "Descargar/Cargar historial"; el historial vive solo en `localStorage` del navegador.
+  - **Cuidado con las líneas de meta y `stacked:true`**: cada dataset `type:'line'` de este gráfico necesita su propio `stack` id (`meta-vendedor-line`, `meta-combinada-line`) distinto del `stack:'total'` de las barras. Si dos líneas quedan sin `stack` propio en un eje con `stacked:true`, Chart.js las suma entre sí (bug real ya corregido: la línea de 200 se dibujaba en 380 = 180+200). Aplica la misma regla si se agrega alguna línea nueva a `renderDetalleChart()` día a día.
+  - El número que dibuja `stackedTotalLabelPlugin` encima de cada columna (vista día a día de "Historial" y de "Detalle por día") es solo el número, sin "u." al lado — se quitó a pedido del cliente por espacio/legibilidad. Los ejes Y y las tarjetas KPI sí siguen mostrando "u." normal; el cambio fue solo en esa etiqueta encima de la barra.
+  - **El select de Historial (`historialMesSelect`) abre siempre en el mes calendario de hoy** (`todayMonthKey()`, reloj del sistema — no el mes con más datos): si es julio, arranca en julio; si es marzo, en marzo. El mes actual aparece seleccionable aunque todavía no tenga datos (fila en ceros). Solo defaultea así la primera vez que se llena el select en la sesión; si el usuario cambia de mes, se respeta. Es exclusivo de este selector — los demás (combo, detalle, metas) no cambiaron.
+- **Botón "Ver ejemplo" usa datos REALES de referencia**, no inventados: 4 días operativos de los excel de esta carpeta (EFFI 99 u. el viernes 07-10; Dropi 1/11/4/4 en 07-09/07-10/07-11 sábado/07-12 domingo, ya repartido a mano en el objeto `SNAPSHOT`), para mostrar el reparto de fin de semana funcionando. La página **no** carga esto automáticamente al abrir. Abre vacía solo la primera vez; si ya hay excel acumulados guardados en este navegador, se recargan solos (ver "Persistencia entre sesiones" arriba).
+
+## Vista visitante bloqueada al mes actual (sin navegar meses) — ya implementado
+
+Un visitante sin la clave (`adminUnlocked === false`) ya no puede ver ni navegar a meses
+anteriores en ninguna parte del reporte: todo queda fijo en el mes calendario actual
+(`todayMonthKey()`, reloj del sistema). El administrador sigue viendo todo el histórico y puede
+cambiar de mes libremente, sin cambios respecto a como ya funcionaba.
+
+- Tarjetas KPI, "Comparativo diario" (`comboMesPills` se oculta para visitantes,
+  `resolveComboMonth()` fuerza `comboSelectedMonth` al mes de hoy en cada recálculo), "Detalle por
+  día" (`detalleMesSelect` oculto y fijo al mes de hoy) y "Cumplimiento de vendedores"
+  (`metasMesSelect` igual) quedan sin ninguna forma de cambiar de mes para el visitante — nunca ven
+  la vista "Resumen mensual" con el histórico completo.
+- "Ranking de vendedores"/"Ranking de tiendas" pasan de mostrar siempre todo el histórico a
+  mostrar solo el acumulado del mes actual para el visitante (reutiliza `rankAMes`/`rankBMes`, ya
+  calculados para las tarjetas KPI de Top vendedor/tienda). El admin sigue viendo el ranking
+  completo de siempre.
+- "Historial y comparativo mensual" (toda la sección: gráfico + tabla + su select) ahora es
+  **admin-only** — oculta por completo para visitantes, mismo patrón CSS que ya ocultaba la zona de
+  subida y "Vista acumulada" (`class="admin-content"`).
+- El botón "Ver ejemplo" queda exento de este bloqueo (bandera `vistaEjemploActiva`) — sigue
+  mostrando pastillas/selects/ranking completo para cualquiera que lo abra, sin importar el mes
+  real del calendario, porque `SNAPSHOT` es un dataset fijo de julio 2026 pensado para ilustrar el
+  reparto de fin de semana.
 
 ## Mascota
 

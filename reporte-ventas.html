@@ -522,16 +522,25 @@
   </header>
 
   <div class="snapshot-banner" id="snapshotBanner">
-    <div><b>Estas viendo datos de EJEMPLO</b><br>Numeros ilustrativos para mostrar como luce el reporte — no son ventas reales. Sube tus archivos para ver el reporte real.</div>
+    <div><b>Estas viendo datos de EJEMPLO</b><br>Numeros reales de referencia (los mismos excel de esta carpeta, incluido el sabado con reparto de fin de semana) — no son las ventas mas recientes. Sube tus archivos para ver el reporte actualizado.</div>
     <button id="clearSnapshotBtn" type="button">Salir del ejemplo</button>
   </div>
 
-  <section class="slots single">
+  <div class="admin-gate" id="adminGate">
+    <div class="lock-note">🔒 Solo el administrador puede subir archivos nuevos (y ver la vista acumulada, más abajo). Si eres el administrador, ingresa la clave.</div>
+    <div class="admin-pin-row">
+      <input type="password" id="adminPinInput" placeholder="Clave" autocomplete="off">
+      <button class="example-btn" id="adminUnlockBtn" type="button">Desbloquear</button>
+    </div>
+    <div class="admin-pin-error" id="adminPinError"></div>
+  </div>
+
+  <section class="slots single admin-content" id="uploadZoneWrap">
     <div class="slot" id="slotUpload" style="--tone:var(--cyan)">
       <div class="tag"><span class="dot"></span>EFFI + Dropi</div>
       <div class="title">Sube tus excel</div>
       <div class="desc">Sube el excel de EFFI (remisiones de venta) y el de Dropi (ordenes de productos) — juntos o uno a la vez. El sistema detecta solo cual archivo es cual por sus columnas.</div>
-      <div class="rule">Automatico: EFFI descarta Vendedor = "Cambios"; Dropi descarta Estatus = "Cancelado" y suma prendas (Cantidad) por pedido.</div>
+      <div class="rule">Automatico: EFFI descarta Vendedor = "Cambios", vacío o "Miguel"; Dropi descarta Estatus = "Cancelado" y suma prendas (Cantidad) por pedido.</div>
       <label class="drop" id="dropUpload">
         <input type="file" id="fileUpload" accept=".xlsx,.xls,.csv" multiple>
         <span class="dtext">Arrastra o toca para subir los excel (EFFI y Dropi)</span>
@@ -561,10 +570,9 @@
   </section>
 
   <div class="empty" id="emptyState">
-    <b>Sube los dos excel para ver el reporte</b>
-    EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>
-    Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>
-    Los cancelados se descartan automaticamente.
+    <b>Esperando los datos del administrador</b>
+    El administrador de este reporte aun no ha subido los excel de hoy.<br>
+    Vuelve a abrir esta pagina mas tarde, o si eres el administrador, ingresa la clave arriba.
     <div style="margin-top:18px;">
       <button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button>
     </div>
@@ -572,12 +580,12 @@
 
   <section class="kpis" id="kpis">
     <div class="kpi accent-cyan">
-      <div class="lab">Unidades EFFI (total)</div>
+      <div class="lab">Unidades EFFI (mes)</div>
       <div class="val" id="kpiPropiasTotal">—</div>
       <div class="sub" id="kpiPropiasVar">—</div>
     </div>
     <div class="kpi accent-blue">
-      <div class="lab">Unidades Dropi (total)</div>
+      <div class="lab">Unidades Dropi (mes)</div>
       <div class="val" id="kpiTotalTotal">—</div>
       <div class="sub" id="kpiTotalVar">—</div>
     </div>
@@ -587,12 +595,17 @@
       <div class="sub" id="kpiCombinadoVar">EFFI + Dropi</div>
     </div>
     <div class="kpi">
-      <div class="lab">Top vendedor EFFI</div>
+      <div class="lab">Promedio diario (mes)</div>
+      <div class="val" id="kpiPromedioDiario">—</div>
+      <div class="sub" id="kpiPromedioDiarioVar">EFFI + Dropi por día operativo</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Top vendedor EFFI (mes)</div>
       <div class="val" id="kpiTopVendedor">—</div>
       <div class="sub" id="kpiTopVendedorVal">—</div>
     </div>
     <div class="kpi">
-      <div class="lab">Top tienda Dropi</div>
+      <div class="lab">Top tienda Dropi (mes)</div>
       <div class="val" id="kpiTopTienda">—</div>
       <div class="sub" id="kpiTopTiendaVal">—</div>
     </div>
@@ -654,19 +667,19 @@
 
     <div class="panel">
       <div class="panel-head">
-        <div class="ph-title" style="--tone:var(--cyan)">Cumplimiento de vendedores<span>EFFI &bull; tope de 180 prendas por dia operativo (turno 8am-8am, sabado hasta las 7am)</span></div>
+        <div class="ph-title" style="--tone:var(--cyan)">Cumplimiento de vendedores<span>EFFI &bull; meta de equipo: 180 prendas por dia operativo (suma de todos los vendedores)</span></div>
         <select id="metasMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
       </div>
       <div class="table-wrap show">
         <table class="rank-table" style="--tone:var(--cyan)">
-          <thead><tr><th id="metasTh1" style="text-align:left">Mes</th><th style="text-align:left">Vendedor</th><th>Unidades</th><th id="metasTh4">Dias &ge; 180</th></tr></thead>
+          <thead><tr><th id="metasTh1" style="text-align:left">Mes</th><th style="text-align:left">Vendedor</th><th>Unidades</th><th id="metasTh4">Meta equipo (180)</th></tr></thead>
           <tbody id="metasVendedorBody"></tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <section style="margin-top:18px;">
+  <section style="margin-top:18px;" id="historialSection" class="admin-content">
     <div class="panel">
       <div class="panel-head">
         <div class="ph-title">Historial y comparativo mensual<span>Guardado automatico en este navegador, por dia operativo</span></div>
@@ -689,17 +702,9 @@
       <div class="panel-head">
         <div class="ph-title" style="--tone:#FFB454">🔒 Vista acumulada<span>Solo administradores &bull; ventanas de fin de semana/festivo sin repartir</span></div>
       </div>
-      <div class="admin-gate" id="adminGate">
-        <div class="lock-note">Esta vista muestra sabado+domingo(+festivo) como una sola fila con el total acumulado, sin dividir por dia. Es informacion interna: pide la clave a quien administra el reporte.</div>
-        <div class="admin-pin-row">
-          <input type="password" id="adminPinInput" placeholder="Clave" autocomplete="off">
-          <button class="example-btn" id="adminUnlockBtn" type="button">Desbloquear</button>
-        </div>
-        <div class="admin-pin-error" id="adminPinError"></div>
-      </div>
       <div class="admin-content" id="adminContent">
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-          <button class="example-btn" id="adminLockBtn" type="button">🔒 Ocultar de nuevo</button>
+          <button class="example-btn" id="adminLockBtn" type="button">🔒 Cerrar modo administrador</button>
         </div>
         <div class="table-wrap show">
           <table style="--tone:#FFB454">
@@ -744,6 +749,190 @@ const store = {
 };
 let comboChart=null;
 
+/* --------- persistencia de los excel acumulados (entre sesiones) ---------
+   El uso real es diario: cada dia se sube solo el excel nuevo de ese dia (no se resube todo
+   desde enero cada vez), y el reporte en vivo (KPIs, rankings, Detalle por dia, Cumplimiento
+   de vendedores, Vista acumulada admin) debe seguir mostrando TODO el historico acumulado, no
+   solo lo subido en la sesion actual. Por eso store.A.rows/store.B.rows (ya filtrados y
+   acumulados, ver handleUpload) se guardan en localStorage despues de cada carga exitosa, y se
+   recargan automaticamente al abrir la pagina — asi sobreviven a cerrar el navegador o
+   recargar. No se guardan los mapas derivados (byDate/byRank/byDayRank), esos se recalculan
+   solos en recompute(). */
+const RAW_DATA_KEY = 'reporteVentasRawData_v1';
+function saveRawStore(){
+  try{
+    const payload = {};
+    ['A','B'].forEach(k=>{
+      const s = store[k];
+      if(s.rows && s.rows.length){
+        payload[k] = {
+          rows: s.rows, headers: s.headers, dateCol: s.dateCol, horaCol: s.horaCol,
+          valCol: s.valCol, rankCol: s.rankCol, idCol: s.idCol, removed: s.removed, fileCount: s.fileCount
+        };
+      }
+    });
+    localStorage.setItem(RAW_DATA_KEY, JSON.stringify(payload));
+  }catch(e){ /* almacenamiento lleno o bloqueado (modo privado) — se ignora silenciosamente */ }
+}
+/* devuelve true si encontro y cargo algo guardado */
+function loadRawStore(){
+  let saved = null;
+  try{
+    const raw = localStorage.getItem(RAW_DATA_KEY);
+    saved = raw ? JSON.parse(raw) : null;
+  }catch(e){ saved = null; }
+  if(!saved) return false;
+  let any = false;
+  ['A','B'].forEach(k=>{
+    const s = saved[k];
+    if(s && Array.isArray(s.rows) && s.rows.length){
+      store[k].rows = s.rows;
+      store[k].headers = s.headers;
+      store[k].dateCol = s.dateCol;
+      store[k].horaCol = s.horaCol;
+      store[k].valCol = s.valCol;
+      store[k].rankCol = s.rankCol;
+      store[k].idCol = s.idCol;
+      store[k].removed = s.removed || 0;
+      store[k].fileCount = s.fileCount || 0;
+      const seen = new Set();
+      s.rows.forEach(r=> seen.add(rowHash(r)));
+      store[k]._seenRowHashes = seen;
+      if(store[k].headers){
+        populateSelects(k, store[k].headers, {dateCol:store[k].dateCol, valCol:store[k].valCol, rankCol:store[k].rankCol});
+      }
+      const statusEl = document.getElementById('status'+k);
+      if(statusEl){
+        statusEl.textContent = `Cargado desde este navegador: ${store[k].fileCount} archivo(s), ${store[k].rows.length} fila(s) acumuladas.`;
+        statusEl.className = 'status-line ok';
+      }
+      any = true;
+    }
+  });
+  if(any){
+    document.getElementById('slotUpload').classList.add('filled');
+    document.getElementById('dropUpload').classList.add('has-file');
+    const statusUpload = document.getElementById('statusUpload');
+    if(statusUpload) statusUpload.textContent = 'Datos cargados automaticamente desde este navegador — sube el archivo de hoy para sumarlo.';
+  }
+  return any;
+}
+
+/* --------- sincronizacion con el backend de Google Sheets (google-apps-script-backend.gs.txt) ---------
+   Ademas de localStorage (por navegador), los datos se comparten via un backend de Apps Script ya
+   desplegado, para que varios dispositivos/administradores vean lo mismo. Nunca debe romper el
+   flujo normal de la pagina si el backend falla o no responde. */
+async function fetchRemoteStore(){
+  try{
+    const res = await fetch(SHEETS_BACKEND_URL, {method:'GET'});
+    try{
+      return await res.json();
+    }catch(e){
+      console.warn('No se pudo interpretar la respuesta del backend de Sheets.', e);
+      return null;
+    }
+  }catch(e){
+    console.warn('No se pudo contactar al backend de Sheets.', e);
+    return null;
+  }
+}
+
+/* fusiona lo que devuelve el backend dentro de store[k], sin pisar mapeos de columnas ya activos
+   en esta sesion. removed/fileCount: el remoto manda (se sobrescribe, no se suma) cuando el
+   backend tenga datos para ese sistema. Devuelve true si agrego alguna fila nueva. */
+function mergeRemoteIntoStore(remoteData){
+  let any = false;
+  ['A','B'].forEach(k=>{
+    const remote = remoteData[k];
+    if(!remote || !Array.isArray(remote.rows) || !remote.rows.length) return;
+
+    const seenHashes = store[k]._seenRowHashes || new Set();
+    if(!store[k].rows) store[k].rows = [];
+    let addedCount = 0;
+    remote.rows.forEach(r=>{
+      const hash = rowHash(r);
+      if(seenHashes.has(hash)) return;
+      seenHashes.add(hash);
+      store[k].rows.push(r);
+      addedCount++;
+    });
+    store[k]._seenRowHashes = seenHashes;
+
+    /* metadatos de columnas: solo si esta sesion todavia no los tiene, para no pisar lo que el
+       administrador ya tenga activo. */
+    if(!store[k].headers){
+      store[k].headers = remote.headers;
+      store[k].dateCol = remote.dateCol;
+      store[k].horaCol = remote.horaCol;
+      store[k].valCol = remote.valCol;
+      store[k].rankCol = remote.rankCol;
+      store[k].idCol = remote.idCol;
+      if(store[k].headers){
+        populateSelects(k, store[k].headers, {dateCol:store[k].dateCol, valCol:store[k].valCol, rankCol:store[k].rankCol});
+      }
+    }
+
+    /* el remoto manda para removed/fileCount — se sobrescribe, no se suma. */
+    store[k].removed = remote.removed || 0;
+    store[k].fileCount = remote.fileCount || 0;
+
+    const statusEl = document.getElementById('status'+k);
+    if(statusEl){
+      statusEl.textContent = `Cargado desde el servidor: ${store[k].fileCount} archivo(s), ${store[k].rows.length} fila(s) acumuladas.`;
+      statusEl.className = 'status-line ok';
+    }
+    if(addedCount>0) any = true;
+  });
+  if(any){
+    document.getElementById('slotUpload').classList.add('filled');
+    document.getElementById('dropUpload').classList.add('has-file');
+    const statusUpload = document.getElementById('statusUpload');
+    if(statusUpload) statusUpload.textContent = 'Datos sincronizados automaticamente desde el servidor — sube el archivo de hoy para sumarlo.';
+  }
+  return any;
+}
+
+async function syncFromBackendOnLoad(){
+  const remote = await fetchRemoteStore();
+  if(!remote) return;
+  if(mergeRemoteIntoStore(remote)){
+    saveRawStore();
+    recompute();
+  }
+}
+
+/* envia al backend solo las filas nuevas de esta subida (no todo el store) — el servidor dedup
+   de nuevo por su lado con JSON.stringify exacto. Nunca debe lanzar hacia quien la llama. */
+async function syncRawRowsToBackend(slotKey, newRowsForServer, removedDelta){
+  try{
+    const res = await fetch(SHEETS_BACKEND_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        pin: ADMIN_PIN,
+        system: slotKey,
+        newRows: newRowsForServer,
+        headers: store[slotKey].headers,
+        dateCol: store[slotKey].dateCol,
+        horaCol: store[slotKey].horaCol,
+        valCol: store[slotKey].valCol,
+        rankCol: store[slotKey].rankCol,
+        idCol: store[slotKey].idCol,
+        removedDelta
+      })
+    });
+    try{
+      return await res.json();
+    }catch(e){
+      console.warn('No se pudo interpretar la respuesta del backend de Sheets al sincronizar.', e);
+      return null;
+    }
+  }catch(e){
+    console.warn('No se pudo sincronizar con el backend de Sheets.', e);
+    return null;
+  }
+}
+
 /* pistas de columnas por sistema */
 const HINTS = {
   A: { // EFFI
@@ -751,7 +940,10 @@ const HINTS = {
     val:   [/^cantidad$/i, /cantidad/i, /venta|monto|importe/i],
     rank:  [/^vendedor$/i, /vendedor/i],
     filterCol: [/^vendedor$/i, /vendedor/i],
-    filterBad: /^cambios?$/i
+    /* "Cambios" (siempre); "Miguel" a secas (coincidencia EXACTA, no toca a vendedores con
+       nombre completo que contengan "miguel", como "miguel angel angarita ariza") — filas con
+       Vendedor vacio se descartan aparte, via el parametro dropEmpty de applyAutoFilter. */
+    filterBad: /^cambios?$|^miguel$/i
   },
   B: { // Dropi — por ahora medimos en prendas (Cantidad); el valor en dinero (Total de la orden) se afina mas adelante
     date:  [/^fecha$/i, h=>/fecha/i.test(h) && !/reporte|novedad|soluci|guia|movimiento|indemniz/i.test(h), /fecha/i],
@@ -828,6 +1020,12 @@ function fmtMoney(n){
 function fmtUnits(n){
   if(n===null||n===undefined||isNaN(n)) return '—';
   return n.toLocaleString('es-CO', {maximumFractionDigits:0}) + ' u.';
+}
+/* igual que fmtUnits pero con 1 decimal — para promedios, donde redondear a entero
+   escondería la parte fraccionaria que le da sentido al numero (ej. 36.5 u./dia). */
+function fmtUnitsAvg(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  return n.toLocaleString('es-CO', {minimumFractionDigits:1, maximumFractionDigits:1}) + ' u./día';
 }
 function fmtDateLabel(iso){
   const [y,m,d]=iso.split('-');
@@ -944,13 +1142,17 @@ function readFile(file){
   });
 }
 
-function applyAutoFilter(rows, filterCol, badRegex){
+/* dropEmpty: si es true, tambien descarta filas donde filterCol quede vacio despues de
+   normalizar (antes NO pasaba — "if(s && badRegex.test(s))" nunca entraba con s vacio, asi
+   que una fila con Vendedor en blanco se contaba como venta valida por error). Solo se activa
+   para EFFI (Vendedor vacio se descarta); Dropi conserva su comportamiento de siempre. */
+function applyAutoFilter(rows, filterCol, badRegex, dropEmpty){
   if(!filterCol) return {kept: rows, removed: 0};
   const kept = [];
   let removed = 0;
   rows.forEach(r=>{
     const s = normalizeStr(r[filterCol]);
-    if(s && badRegex.test(s)) removed++;
+    if((dropEmpty && !s) || (s && badRegex.test(s))) removed++;
     else kept.push(r);
   });
   return {kept, removed};
@@ -987,6 +1189,19 @@ function buildByDate(rows, dateCol, valCol, horaCol){
     map[bd] = (map[bd]||0) + num;
   });
   return map;
+}
+
+/* filtra filas por el mes calendario de su dia operativo — usado para que las tarjetas KPI de
+   arriba (Unidades EFFI/Dropi, Top vendedor/tienda) se limiten al mes elegido en "Comparativo
+   diario" en vez de sumar todos los meses subidos. */
+function filterRowsByMonth(rows, dateCol, horaCol, monthKey){
+  if(!monthKey) return rows;
+  return rows.filter(r=>{
+    let dt = toDateObj(r[dateCol]);
+    if(horaCol) dt = combineDateAndHora(dt, r[horaCol]);
+    const bd = businessDayISO(dt);
+    return bd && monthKeyOf(bd) === monthKey;
+  });
 }
 
 function buildByRank(rows, rankCol, valCol){
@@ -1147,6 +1362,27 @@ function repartirFinDeSemanaVendedores(byDayRankMap){
   return result;
 }
 
+/* inversa de repartirFinDeSemana(): recibe un mapa {iso: unidades} YA repartido (como el que
+   queda guardado en el historial persistente, que siempre se guarda repartido) y reconstruye
+   la version "real" sin repartir, sumando cada ventana en su primer dia (sabado) y quitando
+   los demas dias miembro — funciona porque el reparto conserva la suma total de la ventana.
+   La usa el modo administrador "ver real" para el grafico de Historial dia a dia, que lee del
+   historial persistente en vez de A.byDate/B.byDate directamente. */
+function collapseWindows(byDateMap){
+  const result = {};
+  const vistos = new Set();
+  Object.keys(byDateMap).sort().forEach(iso=>{
+    const ventana = ventanaFinDeSemanaDe(iso);
+    if(!ventana){ result[iso] = byDateMap[iso]; return; }
+    if(vistos.has(ventana)) return;
+    vistos.add(ventana);
+    const miembros = miembrosDeVentana(ventana);
+    const total = miembros.reduce((s,d)=> s + (byDateMap[d]||0), 0);
+    result[miembros[0]] = total;
+  });
+  return result;
+}
+
 /* --------- vista acumulada (privada, solo administradores) ---------
    Misma agrupacion por ventana (ventanaFinDeSemanaDe/miembrosDeVentana) que repartirFinDeSemana(),
    pero en vez de dividir el total entre los dias, lo deja como UNA sola fila con el acumulado
@@ -1195,7 +1431,18 @@ function buildVistaAcumulada(dates, effiByDateRaw, dropiByDateRaw){
 
 /* clave para desbloquear la vista acumulada — cambiar este valor si se necesita otra clave */
 const ADMIN_PIN = '1234';
+/* backend de Google Sheets (google-apps-script-backend.gs.txt) ya desplegado — no se toca ese
+   archivo. Sirve para que varios dispositivos/administradores compartan los mismos datos subidos,
+   ademas de localStorage por navegador. */
+const SHEETS_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec';
+/* hash consistente de una fila para deduplicar — usado en loadRawStore(), handleUpload() y
+   mergeRemoteIntoStore(), siempre el mismo criterio en los tres lugares. */
+function rowHash(row){ return JSON.stringify(row); }
 let adminUnlocked = false;
+/* true solo mientras esta activo el dataset ilustrativo fijo de "Ver ejemplo" (SNAPSHOT) — se
+   excluye del bloqueo de vista de visitante (mes actual forzado, pastillas/selects ocultos,
+   ranking recortado a mes actual, "Historial" oculto) porque no son datos reales. */
+let vistaEjemploActiva = false;
 let vistaAcumuladaCache = [];
 function updateVistaAcumulada(dates, effiByDateRaw, dropiByDateRaw){
   vistaAcumuladaCache = buildVistaAcumulada(dates, effiByDateRaw||{}, dropiByDateRaw||{});
@@ -1214,6 +1461,28 @@ function renderVistaAcumuladaTable(){
     return `<tr><td style="text-align:left">${fmtDateLabel(r.fechaInicio)}</td><td style="text-align:left">${fmtDateLabel(r.fechaFin)}</td><td>${r.dia}</td><td>${r.numDias}</td>${obs}<td>${fmtUnits(r.effi)}</td><td>${fmtUnits(r.dropi)}</td><td>${fmtUnits(r.total)}</td><td>${r.pctEffi.toFixed(0)}%</td><td>${r.pctDropi.toFixed(0)}%</td></tr>`;
   }).join('');
 }
+/* el mensaje del estado vacio cambia segun quien lo ve: al administrador se le invita a subir
+   los excel; a un visitante sin la clave se le avisa que espere a que el administrador los suba
+   (nunca se le muestra la zona de carga). */
+function emptyStateHTML(){
+  if(adminUnlocked){
+    return '<b>Sube los dos excel para ver el reporte</b>EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>Los cancelados se descartan automaticamente.'+
+      '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
+  }
+  return '<b>Esperando los datos del administrador</b>El administrador de este reporte aun no ha subido los excel de hoy.<br>Vuelve a abrir esta pagina mas tarde, o si eres el administrador, ingresa la clave arriba.'+
+    '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
+}
+function refreshEmptyStateMessage(){
+  const el = document.getElementById('emptyState');
+  if(!el || el.style.display === 'none') return; // no molestar si ya hay un reporte visible
+  el.innerHTML = emptyStateHTML();
+  const btn = document.getElementById('viewExampleBtn');
+  if(btn) btn.addEventListener('click', loadSnapshot);
+}
+
+/* un solo candado de administrador controla dos cosas a la vez: la zona de subida de excel
+   (#uploadZoneWrap) y la vista acumulada (#adminContent) — un visitante sin la clave nunca
+   ve ninguna de las dos, solo el reporte ya calculado. */
 function tryUnlockAdmin(){
   const input = document.getElementById('adminPinInput');
   const err = document.getElementById('adminPinError');
@@ -1223,8 +1492,14 @@ function tryUnlockAdmin(){
     input.value = '';
     err.textContent = '';
     document.getElementById('adminGate').style.display = 'none';
+    document.getElementById('uploadZoneWrap').style.display = 'grid';
     document.getElementById('adminContent').style.display = 'block';
+    document.getElementById('historialSection').style.display = 'block';
     renderVistaAcumuladaTable();
+    refreshEmptyStateMessage();
+    /* al entrar en modo admin, todo el reporte cambia a la version "real" sin repartir —
+       recompute() decide esto solo mirando adminUnlocked. */
+    recompute();
   } else {
     err.textContent = 'Clave incorrecta.';
   }
@@ -1268,16 +1543,37 @@ async function handleUpload(file){
        no una sola vez al subir el archivo (si no, cambiar la columna manualmente a "Total de la
        orden" mas adelante no reactivaria la deduplicacion y se repetiria el bug original). */
     const filterBad = slotKey==='B' ? HINTS.B.filterBad : HINTS.A.filterBad;
-    const {kept, removed} = applyAutoFilter(rows, guess.filterCol, filterBad);
+    const {kept, removed} = applyAutoFilter(rows, guess.filterCol, filterBad, slotKey==='A');
 
-    store[slotKey].rows = kept;
+    /* se ACUMULA con lo que ya hubiera de este mismo sistema (EFFI o Dropi), en vez de
+       reemplazarlo — asi se pueden subir varios excel que cubran distintos rangos de fechas
+       (ej. exportaciones separadas por mes porque el sistema de origen tiene un limite de
+       filas/fechas por descarga). Para no duplicar si dos archivos se solapan en fechas, se
+       descarta cualquier fila cuyo contenido (todas las columnas) sea identico a una ya
+       cargada antes — funciona tanto para un archivo repetido por error como para un rango
+       de fechas que se repite entre dos archivos distintos. */
+    const seenHashes = store[slotKey]._seenRowHashes || new Set();
+    const merged = (store[slotKey].rows || []).slice();
+    let addedCount = 0, dupCount = 0;
+    const newlyAddedRows = [];
+    kept.forEach(r=>{
+      const hash = rowHash(r);
+      if(seenHashes.has(hash)){ dupCount++; return; }
+      seenHashes.add(hash);
+      merged.push(r);
+      newlyAddedRows.push(r);
+      addedCount++;
+    });
+    store[slotKey]._seenRowHashes = seenHashes;
+    store[slotKey].fileCount = (store[slotKey].fileCount || 0) + 1;
+    store[slotKey].rows = merged;
     store[slotKey].headers = headers;
     store[slotKey].dateCol = guess.dateCol;
     store[slotKey].horaCol = guess.horaCol;
     store[slotKey].valCol = guess.valCol;
     store[slotKey].rankCol = guess.rankCol;
     store[slotKey].idCol = guess.idCol;
-    store[slotKey].removed = removed;
+    store[slotKey].removed = (store[slotKey].removed || 0) + removed;
     store[slotKey].removedDup = 0; // se recalcula en recompute() segun la columna de valor activa
 
     populateSelects(slotKey, headers, guess); // queda poblado pero oculto, no se muestra nunca
@@ -1285,7 +1581,7 @@ async function handleUpload(file){
     document.getElementById('slotUpload').classList.add('filled');
     document.getElementById('dropUpload').classList.add('has-file');
 
-    const label = slotKey==='A' ? 'Cambios' : 'Cancelados';
+    const label = slotKey==='A' ? 'Cambios/vacío/Miguel' : 'Cancelados';
     let msg = `"${file.name}" — `;
     if(!guess.dateCol || !guess.valCol){
       msg += 'no pude detectar todas las columnas automaticamente en este archivo.';
@@ -1303,8 +1599,23 @@ async function handleUpload(file){
     } else {
       msg += ` No encontre columna para filtrar ${label.toLowerCase()}.`;
     }
+    if(store[slotKey].fileCount > 1){
+      msg += ` Acumulado de ${store[slotKey].fileCount} archivos: ${store[slotKey].rows.length} filas`;
+      msg += dupCount>0 ? ` (${dupCount} fila(s) identicas a otro archivo, ignoradas).` : '.';
+    }
     statusEl.textContent = msg;
     statusUpload.textContent = '';
+
+    saveRawStore();
+
+    if(adminUnlocked && newlyAddedRows.length){
+      const syncResult = await syncRawRowsToBackend(slotKey, newlyAddedRows, removed);
+      if(syncResult && syncResult.ok){
+        statusEl.textContent += ` Sincronizado con el servidor: ${syncResult.addedCount} fila(s) nueva(s).`;
+      } else {
+        statusEl.textContent += ' (No se pudo sincronizar con el servidor — los datos quedaron guardados solo en este navegador.)';
+      }
+    }
 
     celebrateMascot();
     recompute();
@@ -1320,7 +1631,7 @@ document.getElementById('dropUpload').addEventListener('click', (e)=>{
 document.getElementById('fileUpload').addEventListener('change', async ()=>{
   const files = Array.from(document.getElementById('fileUpload').files);
   for(const f of files){
-    await handleUpload(f); // secuencial: si los dos archivos fueran del mismo sistema, se procesan en orden y el ultimo gana
+    await handleUpload(f); // secuencial: si varios archivos son del mismo sistema, sus filas se acumulan (ver handleUpload)
   }
 });
 
@@ -1348,6 +1659,7 @@ function celebrateMascot(){
 }
 
 function recompute(){
+  vistaEjemploActiva = false; // recompute() siempre trabaja con datos reales del store, nunca con SNAPSHOT
   const A = store.A, B = store.B;
   if(!A.rows || !B.rows || !A.dateCol || !A.valCol || !B.dateCol || !B.valCol){
     return;
@@ -1364,24 +1676,49 @@ function recompute(){
     B.removedDup = dedup.removedDup;
   }
 
-  A.byDate = buildByDate(A.rows, A.dateCol, A.valCol, A.horaCol);
+  /* filtro de Vendedor de EFFI (Cambios, vacio, "Miguel" exacto) evaluado EN VIVO aqui, no
+     solo al subir el archivo — asi corrige tambien filas que ya estuvieran guardadas de antes
+     de esta regla (ej. datos de meses anteriores ya acumulados en localStorage, subidos cuando
+     el filtro todavia no descartaba vacios/Miguel). Mismo patron que el dedup de Dropi arriba. */
+  let aRows = A.rows;
+  A.removedLive = 0;
+  if(A.rankCol){
+    const filtroVendedor = applyAutoFilter(A.rows, A.rankCol, HINTS.A.filterBad, true);
+    aRows = filtroVendedor.kept;
+    A.removedLive = filtroVendedor.removed;
+  }
+
+  A.byDate = buildByDate(aRows, A.dateCol, A.valCol, A.horaCol);
   B.byDate = buildByDate(bRows, B.dateCol, B.valCol, B.horaCol);
-  A.byRank = A.rankCol ? buildByRank(A.rows, A.rankCol, A.valCol) : {};
+  A.byRank = A.rankCol ? buildByRank(aRows, A.rankCol, A.valCol) : {};
   B.byRank = B.rankCol ? buildByRank(bRows, B.rankCol, B.valCol) : {};
   /* tope de 180 prendas por vendedor por dia operativo — solo aplica a EFFI */
-  A.byDayRank = A.rankCol ? buildByDayAndRank(A.rows, A.dateCol, A.horaCol, A.rankCol, A.valCol) : {};
+  A.byDayRank = A.rankCol ? buildByDayAndRank(aRows, A.dateCol, A.horaCol, A.rankCol, A.valCol) : {};
 
   /* se guarda una copia sin repartir (cruda) antes de dividir el fin de semana — la usa la
-     vista acumulada privada de administradores para mostrar la ventana completa sin dividir. */
+     vista acumulada privada de administradores, y ahora tambien el "modo admin real" de
+     abajo, para mostrar cada dia operativo tal cual se vendio, sin promediar entre dias. */
   A.byDateRaw = {...A.byDate};
   B.byDateRaw = {...B.byDate};
+  A.byDayRankRaw = {...A.byDayRank};
 
   /* sabado (desde 7am) + domingo (+ lunes si es festivo, etc.) se suman y se reparten
      en partes iguales entre esos dias — ver repartirFinDeSemana(). EFFI y Dropi se
-     reparten cada uno por su lado, nunca combinados. */
-  A.byDate = repartirFinDeSemana(A.byDate);
-  B.byDate = repartirFinDeSemana(B.byDate);
-  A.byDayRank = repartirFinDeSemanaVendedores(A.byDayRank);
+     reparten cada uno por su lado, nunca combinados. Esta version repartida se calcula
+     SIEMPRE (es la regla de negocio vigente y la unica que se guarda en el historial
+     persistente compartido) independientemente de si el admin esta viendo la version cruda. */
+  const A_rep = repartirFinDeSemana(A.byDate);
+  const B_rep = repartirFinDeSemana(B.byDate);
+  const rank_rep = repartirFinDeSemanaVendedores(A.byDayRank);
+
+  /* "modo admin real": el administrador autenticado (adminUnlocked) ve cada dia operativo
+     tal cual se vendio de verdad, SIN repartir sabado/domingo/festivo entre si — en TODAS
+     las tablas y graficos, no solo en Vista acumulada. Un visitante sin la clave sigue
+     viendo siempre la version repartida de toda la vida, sin cambios. */
+  const useRaw = adminUnlocked;
+  A.byDate = useRaw ? A.byDateRaw : A_rep;
+  B.byDate = useRaw ? B.byDateRaw : B_rep;
+  A.byDayRank = useRaw ? A.byDayRankRaw : rank_rep;
 
   const dates = Array.from(new Set([...Object.keys(A.byDate), ...Object.keys(B.byDate)])).sort();
   if(!dates.length){
@@ -1395,53 +1732,98 @@ function recompute(){
   document.getElementById('kpis').classList.add('show');
   document.getElementById('panels').classList.add('show');
 
-  const propiasSeries = dates.map(d => A.byDate[d] ?? 0);
-  const totalSeries   = dates.map(d => B.byDate[d] ?? 0);
+  /* Las tarjetas KPI de arriba (Unidades EFFI/Dropi, Total combinado, Promedio diario, Top
+     vendedor/tienda) se limitan al MES seleccionado — el mismo que usan las pastillas de
+     "Comparativo diario" (comboSelectedMonth), resuelto aqui mismo para que ambos compartan
+     exactamente el mismo mes. Por defecto es el mes calendario de HOY (ver resolveComboMonth);
+     si el usuario cambia de mes con las pastillas, las tarjetas cambian con el grafico. */
+  resolveComboMonth(dates);
+  const datesDelMesKpi = dates.filter(d => monthKeyOf(d) === comboSelectedMonth);
 
-  const sumPropias = propiasSeries.reduce((a,b)=>a+b,0);
-  const sumTotal = totalSeries.reduce((a,b)=>a+b,0);
+  const sumPropias = datesDelMesKpi.reduce((s,d)=> s + (A.byDate[d] ?? 0), 0);
+  const sumTotal = datesDelMesKpi.reduce((s,d)=> s + (B.byDate[d] ?? 0), 0);
 
   document.getElementById('kpiPropiasTotal').textContent = fmtUnits(sumPropias);
   document.getElementById('kpiTotalTotal').textContent = fmtUnits(sumTotal);
 
-  /* "Total combinado" muestra solo el ultimo dia operativo con datos (no la suma de
-     todos los dias), para reflejar el corte diario de la meta de 200 prendas. */
-  const lastDate = dates[dates.length - 1];
-  const combinadoUltimoDia = (A.byDate[lastDate] ?? 0) + (B.byDate[lastDate] ?? 0);
+  /* "Total combinado" muestra solo el ultimo dia operativo CON DATOS DENTRO DEL MES elegido
+     (no el ultimo dia de todo el historico), para que coincida con lo que se esta filtrando. */
+  const lastDate = datesDelMesKpi[datesDelMesKpi.length - 1];
+  const combinadoUltimoDia = lastDate ? (A.byDate[lastDate] ?? 0) + (B.byDate[lastDate] ?? 0) : 0;
   document.getElementById('kpiCombinadoTotal').textContent = fmtUnits(combinadoUltimoDia);
   const kpiCombinadoVar = document.getElementById('kpiCombinadoVar');
-  kpiCombinadoVar.textContent = `${fmtDateLabel(lastDate)} — ${combinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - combinadoUltimoDia)}`}`;
+  kpiCombinadoVar.textContent = lastDate
+    ? `${fmtDateLabel(lastDate)} — ${combinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - combinadoUltimoDia)}`}`
+    : `${monthLabelOf(comboSelectedMonth)} — sin datos todavia`;
   kpiCombinadoVar.className = 'sub ' + (combinadoUltimoDia >= META_COMBINADA ? 'up' : 'down');
 
-  document.getElementById('kpiPropiasVar').textContent = A.removed>0 ? `${A.removed} "cambios" descartados` : 'sin filas de cambios';
+  /* "Promedio diario (mes)" — prendas combinadas (EFFI+Dropi) por dia operativo, del mismo mes
+     que ya filtran las demas tarjetas de arriba (antes se derivaba del ultimo dia con datos de
+     TODO el historico; ahora usa directamente comboSelectedMonth para que las tarjetas queden
+     consistentes entre si). Hereda el modo repartido/real automaticamente porque usa
+     A.byDate/B.byDate, ya elegidos mas arriba segun adminUnlocked. */
+  const sumaMesCombinado = datesDelMesKpi.reduce((s,d)=> s + (A.byDate[d] ?? 0) + (B.byDate[d] ?? 0), 0);
+  const promedioDiario = datesDelMesKpi.length ? sumaMesCombinado / datesDelMesKpi.length : 0;
+  document.getElementById('kpiPromedioDiario').textContent = fmtUnitsAvg(promedioDiario);
+  document.getElementById('kpiPromedioDiarioVar').textContent = `${monthLabelOf(comboSelectedMonth)} — ${datesDelMesKpi.length} ${datesDelMesKpi.length===1?'dia':'dias'} con datos`;
+
+  /* A.removed = descartadas al subir el archivo (Cambios/vacio/Miguel, con el filtro ya
+     actualizado); A.removedLive = las que el filtro en vivo de arriba tuvo que atrapar recien
+     ahora porque ya estaban guardadas de antes de esta regla (ej. vacios/Miguel de meses
+     pasados). Se suman para que el KPI refleje el total real descartado, venga de donde venga.
+     OJO: estos conteos de descartadas/canceladas siguen siendo el TOTAL HISTORICO (no por mes)
+     — Dropi descarta los cancelados antes de guardarlos (en handleUpload), asi que no queda
+     registro de en que mes cayo cada uno para poder filtrarlos despues. */
+  const totalDescartadasA = (A.removed||0) + (A.removedLive||0);
+  document.getElementById('kpiPropiasVar').textContent = totalDescartadasA>0 ? `${totalDescartadasA} fila(s) descartadas en total (cambios/vacío/Miguel)` : 'sin filas descartadas';
   const dropiParts = [];
   if(B.removedDup>0) dropiParts.push(`${B.removedDup} duplicados`);
   if(B.removed>0) dropiParts.push(`${B.removed} cancelados`);
-  document.getElementById('kpiTotalVar').textContent = dropiParts.length ? dropiParts.join(' + ') + ' descartados' : 'sin cancelados';
+  document.getElementById('kpiTotalVar').textContent = dropiParts.length ? dropiParts.join(' + ') + ' descartados en total' : 'sin cancelados';
 
+  /* Rankings COMPLETOS (todo el historico) — alimentan las tablas "Ranking completo de
+     vendedores/tiendas" mas abajo, que NO se filtran por mes (son un listado aparte). */
   const rankA = Object.entries(A.byRank).sort((a,b)=>b[1]-a[1]);
   const rankB = Object.entries(B.byRank).sort((a,b)=>b[1]-a[1]);
 
-  if(rankA.length){
-    document.getElementById('kpiTopVendedor').textContent = rankA[0][0];
-    document.getElementById('kpiTopVendedorVal').textContent = fmtUnits(rankA[0][1]);
-  }
-  if(rankB.length){
-    document.getElementById('kpiTopTienda').textContent = rankB[0][0];
-    document.getElementById('kpiTopTiendaVal').textContent = fmtUnits(rankB[0][1]);
-  }
+  /* Top vendedor EFFI / Top tienda Dropi de las tarjetas KPI SI se filtran por el mes elegido
+     (a diferencia del ranking completo de arriba) — se recalculan aparte a partir de las filas
+     ya filtradas (aRows/bRows), quedandose solo con las del mes. */
+  const aRowsMes = filterRowsByMonth(aRows, A.dateCol, A.horaCol, comboSelectedMonth);
+  const bRowsMes = filterRowsByMonth(bRows, B.dateCol, B.horaCol, comboSelectedMonth);
+  const rankAMes = A.rankCol ? Object.entries(buildByRank(aRowsMes, A.rankCol, A.valCol)).sort((a,b)=>b[1]-a[1]) : [];
+  const rankBMes = B.rankCol ? Object.entries(buildByRank(bRowsMes, B.rankCol, B.valCol)).sort((a,b)=>b[1]-a[1]) : [];
+
+  document.getElementById('kpiTopVendedor').textContent = rankAMes.length ? rankAMes[0][0] : 'sin datos';
+  document.getElementById('kpiTopVendedorVal').textContent = rankAMes.length ? fmtUnits(rankAMes[0][1]) : `${monthLabelOf(comboSelectedMonth)}`;
+  document.getElementById('kpiTopTienda').textContent = rankBMes.length ? rankBMes[0][0] : 'sin datos';
+  document.getElementById('kpiTopTiendaVal').textContent = rankBMes.length ? fmtUnits(rankBMes[0][1]) : `${monthLabelOf(comboSelectedMonth)}`;
 
   renderComboChartWithMonths(dates, A.byDate, B.byDate);
-  renderRankTable('rankVendedorBody', rankA, fmtUnits);
-  renderRankTable('rankTiendaBody', rankB, fmtUnits);
+  /* ranking completo (todo el historico) solo para el administrador autenticado; un visitante
+     sin la clave ve el ranking recortado al mes calendario de hoy (rankAMes/rankBMes, ya
+     calculados arriba para las tarjetas KPI "Top vendedor"/"Top tienda"). */
+  renderRankTable('rankVendedorBody', adminUnlocked ? rankA : rankAMes, fmtUnits);
+  renderRankTable('rankTiendaBody', adminUnlocked ? rankB : rankBMes, fmtUnits);
   renderTable(dates, A.byDate, B.byDate);
   renderMetasVendedores(A.byDayRank);
 
-  /* guarda cada dia operativo procesado en el historial local, para poder comparar meses despues */
-  upsertHistorialDays(dates, A.byDate, B.byDate);
+  /* el historial persistente (localStorage, compartido entre sesiones) SIEMPRE guarda la
+     version repartida — si guardara la version cruda mientras el admin esta en "modo real",
+     corromperia los datos que ve cualquier otra sesion/visitante despues. Por eso usa
+     A_rep/B_rep aqui, nunca A.byDate/B.byDate (que puede estar en modo crudo ahora mismo). */
+  const datesRep = Array.from(new Set([...Object.keys(A_rep), ...Object.keys(B_rep)])).sort();
+  upsertHistorialDays(datesRep, A_rep, B_rep);
   renderHistorialMensual();
 
-  updateVistaAcumulada(dates, A.byDateRaw, B.byDateRaw);
+  /* Vista acumulada siempre se calcula desde los datos crudos, independiente del modo actual
+     (ya mostraba lo mismo que ahora ve el admin en el resto de tablas). Se le pasa la union de
+     fechas crudas + repartidas para no perder ninguna ventana sin importar en que dia cayeron
+     las ventas reales. */
+  const datesUnion = Array.from(new Set([
+    ...Object.keys(A.byDateRaw), ...Object.keys(B.byDateRaw), ...datesRep
+  ])).sort();
+  updateVistaAcumulada(datesUnion, A.byDateRaw, B.byDateRaw);
 }
 
 /* ---------------- historial mensual (guardado local + exportable) ----------------
@@ -1472,6 +1854,13 @@ function upsertHistorialDays(dates, effiByDate, dropiByDate){
 }
 
 function monthKeyOf(iso){ return iso.slice(0,7); } // YYYY-MM
+/* mes calendario de HOY (reloj del sistema, no dia operativo) — usado para que "Historial y
+   comparativo mensual" abra siempre en el mes que se esta viviendo ahora mismo (si es julio,
+   abre en julio), sin importar cual sea el mes mas reciente con datos subidos. */
+function todayMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
 const MES_NOMBRES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 function monthLabelOf(key){
   const [y,m] = key.split('-');
@@ -1507,42 +1896,26 @@ function computeHistorialByMonth(){
 let historialChart = null;
 let historialCache = { byMonth:{}, months:[] };
 
+/* la tabla de "Historial y comparativo mensual" siempre muestra el resumen por mes (nunca
+   el detalle dia a dia) — el detalle diario ahora solo vive en el grafico de arriba
+   (renderHistorialChart()), que si reacciona al select de mes. */
 function renderHistorialTable(){
   const { byMonth, months } = historialCache;
   const body = document.getElementById('historialMesBody');
-  const select = document.getElementById('historialMesSelect');
   const th1 = document.getElementById('historialTh1');
   const th5 = document.getElementById('historialTh5');
-  if(!body || !select) return;
-  const selected = select.value;
+  if(!body) return;
 
-  if(!selected){
-    /* resumen: un renglon acumulado por mes */
-    if(th1) th1.textContent = 'Mes';
-    if(th5) th5.textContent = 'Meta 200 cumplida';
-    if(!months.length){
-      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--paper-dim)">Sin historial guardado todavia — se guarda solo cada vez que proceses un dia con los dos excel.</td></tr>';
-    } else {
-      body.innerHTML = months.map(m=>{
-        const row = byMonth[m];
-        const total = row.effi + row.dropi;
-        return `<tr><td>${monthLabelOf(m)}</td><td>${fmtUnits(row.effi)}</td><td>${fmtUnits(row.dropi)}</td><td>${fmtUnits(total)}</td><td>${row.diasCumplidos}/${row.dias} dias</td></tr>`;
-      }).join('');
-    }
+  if(th1) th1.textContent = 'Mes';
+  if(th5) th5.textContent = 'Meta 200 cumplida';
+  if(!months.length){
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--paper-dim)">Sin historial guardado todavia — se guarda solo cada vez que proceses un dia con los dos excel.</td></tr>';
   } else {
-    /* mes elegido: detalle dia a dia de ese mes */
-    if(th1) th1.textContent = 'Fecha';
-    if(th5) th5.textContent = 'Meta 200';
-    const hist = loadHistorial();
-    const daysInMonth = Object.keys(hist).filter(d=>monthKeyOf(d)===selected).sort();
-    if(!daysInMonth.length){
-      body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--paper-dim)">sin datos ese mes</td></tr>';
-    } else {
-      body.innerHTML = daysInMonth.map(d=>{
-        const r = hist[d];
-        return `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(r.effi)}</td><td>${fmtUnits(r.dropi)}</td><td>${fmtUnits(r.combinado)}</td><td>${metaBadge(r.combinado, META_COMBINADA)}</td></tr>`;
-      }).join('');
-    }
+    body.innerHTML = months.map(m=>{
+      const row = byMonth[m];
+      const total = row.effi + row.dropi;
+      return `<tr><td>${monthLabelOf(m)}</td><td>${fmtUnits(row.effi)}</td><td>${fmtUnits(row.dropi)}</td><td>${fmtUnits(total)}</td><td>${row.diasCumplidos}/${row.dias} dias</td></tr>`;
+    }).join('');
   }
 
   renderHistorialChart();
@@ -1588,27 +1961,42 @@ function renderHistorialChart(){
     });
   } else {
     const hist = loadHistorial();
-    const daysInMonth = Object.keys(hist).filter(d=>monthKeyOf(d)===selectedMonth).sort();
+    /* el historial persistente siempre se guarda repartido (regla de negocio canonica); si el
+       admin esta viendo el modo "real", se reconstruye aqui la version sin repartir solo para
+       dibujar el grafico — no se toca lo guardado en localStorage. */
+    let effiHist = {}, dropiHist = {};
+    Object.keys(hist).forEach(d=>{ effiHist[d] = hist[d].effi||0; dropiHist[d] = hist[d].dropi||0; });
+    if(adminUnlocked){
+      effiHist = collapseWindows(effiHist);
+      dropiHist = collapseWindows(dropiHist);
+    }
+    const daysInMonth = Array.from(new Set([...Object.keys(effiHist), ...Object.keys(dropiHist)]))
+      .filter(d=>monthKeyOf(d)===selectedMonth).sort();
     if(!daysInMonth.length) return;
-    const effiVals = daysInMonth.map(d=> hist[d].effi||0);
-    const dropiVals = daysInMonth.map(d=> hist[d].dropi||0);
+    const effiVals = daysInMonth.map(d=> effiHist[d]||0);
+    const dropiVals = daysInMonth.map(d=> dropiHist[d]||0);
     historialChart = new Chart(ctx, {
       data:{
         labels: daysInMonth.map(fmtDateLabel),
         datasets:[
           { type:'bar', label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:3, stack:'total' },
           { type:'bar', label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:3, stack:'total' },
-          { type:'line', label:`Meta vendedor (${META_VENDEDOR})`, data: daysInMonth.map(()=>META_VENDEDOR), borderColor:'#FFB454', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false },
-          { type:'line', label:`Meta combinada (${META_COMBINADA})`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
+          { type:'line', label:`Meta vendedor (${META_VENDEDOR})`, data: daysInMonth.map(()=>META_VENDEDOR), borderColor:'#FFB454', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, stack:'meta-vendedor-line' },
+          { type:'line', label:`Meta combinada (${META_COMBINADA})`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, stack:'meta-combinada-line' }
         ]
       },
+      plugins:[stackedTotalLabelPlugin],
       options:{
         responsive:true,
         maintainAspectRatio:false,
-        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        layout:{ padding:{ top:16 } },
+        plugins:{
+          legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } },
+          stackedTotalLabel:{ barIndices:[0,1] }
+        },
         scales:{
           x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false}, stacked:true },
-          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true }
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true, grace:'12%' }
         }
       }
     });
@@ -1617,12 +2005,29 @@ function renderHistorialChart(){
 
 function renderHistorialMensual(){
   const { byMonth, months } = computeHistorialByMonth();
-  historialCache = { byMonth, months };
+
+  /* el mes calendario de HOY siempre aparece como opcion seleccionable, aunque todavia no
+     tenga ningun dia guardado en el historial (queda con ceros) — asi el select puede
+     defaultear a el sin importar si ya se subieron datos de este mes. */
+  const todayKey = todayMonthKey();
+  if(!byMonth[todayKey]) byMonth[todayKey] = {effi:0, dropi:0, dias:0, diasCumplidos:0};
+  const monthsConHoy = Array.from(new Set([...months, todayKey])).sort();
+
+  historialCache = { byMonth, months: monthsConHoy };
   const select = document.getElementById('historialMesSelect');
   if(!select) return;
   const prevValue = select.value;
-  select.innerHTML = '<option value="">Todos los meses</option>' + months.map(m=>`<option value="${m}">${monthLabelOf(m)}</option>`).join('');
-  if(months.includes(prevValue)) select.value = prevValue;
+  const esPrimeraVezQueSeLlena = select.options.length === 0;
+  select.innerHTML = '<option value="">Todos los meses</option>' + monthsConHoy.map(m=>`<option value="${m}">${monthLabelOf(m)}</option>`).join('');
+  if(monthsConHoy.includes(prevValue) && prevValue !== ''){
+    select.value = prevValue;
+  } else if(esPrimeraVezQueSeLlena){
+    /* al abrir la pagina, arranca directo en el mes calendario que se esta viviendo ahora
+       (si es julio, abre en julio; si es marzo, en marzo), no en "Todos los meses". Si el
+       usuario cambia de mes despues a mano, esa eleccion se respeta en los recalculos
+       siguientes (rama de arriba). */
+    select.value = todayKey;
+  }
 
   renderHistorialTable();
 }
@@ -1642,7 +2047,18 @@ function renderMetasVendedores(byDayRank){
   lastByDayRank = byDayRank || {};
   const days = Object.keys(lastByDayRank);
   const select = document.getElementById('metasMesSelect');
-  populateMonthSelect(select, monthsFromDates(days), 'Resumen mensual');
+  if(!adminUnlocked && !vistaEjemploActiva){
+    /* visitante sin clave: el select queda fijo en el mes de hoy y oculto -nunca puede caer en
+       "Resumen mensual" (historico completo). El mes de hoy se incluye en la lista aunque no
+       tenga datos todavia, igual que ya hace resolveComboMonth/todayMonthKey en el combo. */
+    const todayKey = todayMonthKey();
+    const monthsConHoy = Array.from(new Set([...monthsFromDates(days), todayKey])).sort();
+    populateMonthSelect(select, monthsConHoy, 'Resumen mensual');
+    if(select){ select.value = todayKey; select.style.display = 'none'; }
+  } else {
+    populateMonthSelect(select, monthsFromDates(days), 'Resumen mensual');
+    if(select) select.style.display = '';
+  }
   renderMetasBody();
 }
 
@@ -1656,9 +2072,12 @@ function renderMetasBody(){
   const selectedMonth = select ? select.value : '';
 
   if(!selectedMonth){
-    /* resumen: unidades acumuladas del mes por vendedor + en cuantos dias activos cumplio el tope diario */
+    /* resumen: unidades acumuladas del mes por vendedor (informativo) + en cuantos dias del
+       mes cumplio el EQUIPO completo la meta de 180 (suma de TODOS los vendedores ese dia
+       operativo, no evaluada vendedor por vendedor). Se muestra una sola vez por mes, en la
+       primera fila (mismo patron de colapso que la columna "Mes"). */
     if(th1) th1.textContent = 'Mes';
-    if(th4) th4.textContent = 'Dias ≥ 180';
+    if(th4) th4.textContent = 'Meta equipo (180)';
     const months = monthsFromDates(days);
     if(!months.length){
       body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos</td></tr>';
@@ -1668,24 +2087,30 @@ function renderMetasBody(){
     months.forEach(mk=>{
       const daysInMonth = days.filter(d=>monthKeyOf(d)===mk);
       const totals = {};
+      let diasCumplidosEquipo = 0;
       daysInMonth.forEach(d=>{
-        Object.entries(lastByDayRank[d]).forEach(([vend, val])=>{
-          if(!totals[vend]) totals[vend] = { unidades:0, diasActivos:0, diasCumplidos:0 };
+        const entriesDia = Object.entries(lastByDayRank[d]);
+        const teamTotal = entriesDia.reduce((s,[,val])=>s+val, 0);
+        if(teamTotal >= META_VENDEDOR) diasCumplidosEquipo += 1;
+        entriesDia.forEach(([vend, val])=>{
+          if(!totals[vend]) totals[vend] = { unidades:0 };
           totals[vend].unidades += val;
-          totals[vend].diasActivos += 1;
-          if(val >= META_VENDEDOR) totals[vend].diasCumplidos += 1;
         });
       });
       const entries = Object.entries(totals).sort((a,b)=>b[1].unidades - a[1].unidades);
+      const equipoTexto = `${diasCumplidosEquipo}/${daysInMonth.length} dias`;
       entries.forEach(([vend, t], i)=>{
-        rowsHtml.push(`<tr><td>${i===0?monthLabelOf(mk):''}</td><td>${vend}</td><td>${fmtUnits(t.unidades)}</td><td>${t.diasCumplidos}/${t.diasActivos} dias</td></tr>`);
+        rowsHtml.push(`<tr><td>${i===0?monthLabelOf(mk):''}</td><td>${vend}</td><td>${fmtUnits(t.unidades)}</td><td>${i===0?equipoTexto:''}</td></tr>`);
       });
     });
     body.innerHTML = rowsHtml.join('');
   } else {
-    /* mes elegido: detalle dia a dia (igual que antes) */
+    /* mes elegido: detalle dia a dia — el badge de meta ahora es de EQUIPO (suma de TODOS los
+       vendedores ese dia operativo, no evaluada vendedor por vendedor), mostrado una sola vez
+       por dia en la primera fila (mismo patron de colapso que ya usa la columna "Dia"). Las
+       filas individuales conservan su columna "Unidades" (informativa). */
     if(th1) th1.textContent = 'Dia';
-    if(th4) th4.textContent = 'Tope 180';
+    if(th4) th4.textContent = 'Meta equipo (180)';
     const daysInMonth = days.filter(d=>monthKeyOf(d)===selectedMonth).sort().reverse();
     if(!daysInMonth.length){
       body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos ese mes</td></tr>';
@@ -1694,8 +2119,10 @@ function renderMetasBody(){
     const rowsHtml = [];
     daysInMonth.forEach(day=>{
       const entries = Object.entries(lastByDayRank[day]).sort((a,b)=>b[1]-a[1]);
+      const teamTotal = entries.reduce((s,[,val])=>s+val, 0);
       entries.forEach(([vend, val], i)=>{
-        rowsHtml.push(`<tr><td>${i===0?fmtDateLabel(day):''}</td><td>${vend}</td><td>${fmtUnits(val)}</td><td>${metaBadge(val, META_VENDEDOR)}</td></tr>`);
+        const metaCell = i===0 ? metaBadge(teamTotal, META_VENDEDOR) : '';
+        rowsHtml.push(`<tr><td>${i===0?fmtDateLabel(day):''}</td><td>${vend}</td><td>${fmtUnits(val)}</td><td>${metaCell}</td></tr>`);
       });
     });
     body.innerHTML = rowsHtml.join('');
@@ -1715,22 +2142,50 @@ function renderRankTable(bodyId, entries, fmt){
 }
 
 /* el grafico "Comparativo diario" solo muestra UN mes a la vez (botones arriba del grafico),
-   para que subir varios meses de historico no lo deje ilegible. Por defecto arranca en el
-   mes mas reciente con datos; los meses anteriores quedan a un clic de distancia. */
+   para que subir varios meses de historico no lo deje ilegible. Las tarjetas KPI de arriba
+   (Unidades EFFI/Dropi, Total combinado, Promedio diario, Top vendedor/tienda) comparten este
+   MISMO mes seleccionado — un solo control para todo. */
 let comboCache = { dates:[], effiByDate:{}, dropiByDate:{} };
 let comboSelectedMonth = null;
+/* resuelve/valida comboSelectedMonth y devuelve la lista de meses a mostrar en las pastillas.
+   Arranca siempre en el mes calendario de HOY (todayMonthKey(), reloj del sistema — igual que
+   ya hace "Historial") la primera vez, inyectandolo en la lista aunque todavia no tenga datos;
+   si el usuario ya eligio un mes a mano y ese mes sigue existiendo, se respeta. Se llama tanto
+   desde recompute() (para que las tarjetas KPI usen el mismo mes ya resuelto) como desde
+   renderComboChartWithMonths() (idempotente si ya se resolvio antes). */
+function resolveComboMonth(dates){
+  const months = monthsFromDates(dates);
+  const todayKey = todayMonthKey();
+  const monthsConHoy = months.includes(todayKey) ? months : [...months, todayKey].sort();
+  if(!adminUnlocked && !vistaEjemploActiva){
+    /* visitante sin clave: la vista queda bloqueada SIEMPRE al mes calendario de hoy, sin poder
+       navegar a otro mes (las pastillas ademas quedan ocultas, ver renderComboMonthPills). No es
+       solo el default de la primera vez -se fuerza en cada llamada, incluso si el usuario ya
+       habia elegido otro mes antes de que se activara este modo. */
+    comboSelectedMonth = todayKey;
+    return monthsConHoy;
+  }
+  if(!comboSelectedMonth || !monthsConHoy.includes(comboSelectedMonth)){
+    comboSelectedMonth = todayKey;
+  }
+  return monthsConHoy;
+}
 function renderComboChartWithMonths(dates, effiByDate, dropiByDate){
   comboCache = { dates, effiByDate, dropiByDate };
-  const months = monthsFromDates(dates);
-  if(!comboSelectedMonth || !months.includes(comboSelectedMonth)){
-    comboSelectedMonth = months[months.length-1] || null;
-  }
-  renderComboMonthPills(months);
+  const monthsConHoy = resolveComboMonth(dates);
+  renderComboMonthPills(monthsConHoy);
   renderComboChartForSelectedMonth();
 }
 function renderComboMonthPills(months){
   const wrap = document.getElementById('comboMesPills');
   if(!wrap) return;
+  if(!adminUnlocked && !vistaEjemploActiva){
+    /* visitante sin clave: sin pastillas -la vista ya quedo fijada al mes de hoy en resolveComboMonth. */
+    wrap.innerHTML = '';
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
   wrap.innerHTML = months.map(m=>{
     const active = m===comboSelectedMonth ? ' active' : '';
     return `<button type="button" class="month-pill${active}" data-month="${m}">${monthLabelOf(m)}</button>`;
@@ -1738,8 +2193,17 @@ function renderComboMonthPills(months){
   wrap.querySelectorAll('.month-pill').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       comboSelectedMonth = btn.dataset.month;
-      renderComboMonthPills(months);
-      renderComboChartForSelectedMonth();
+      /* las tarjetas KPI de arriba comparten este mismo mes — hay que recalcularlas junto con
+         el grafico, no solo redibujar el grafico. Con datos reales cargados, recompute() hace
+         las dos cosas de una vez (y vuelve a pintar las pastillas via renderComboChartWithMonths).
+         En modo "Ver ejemplo" (SNAPSHOT) no hay filas crudas que recalcular — ahi solo se
+         refresca el grafico, como antes. */
+      if(store.A.rows && store.B.rows){
+        recompute();
+      } else {
+        renderComboMonthPills(months);
+        renderComboChartForSelectedMonth();
+      }
     });
   });
 }
@@ -1752,6 +2216,38 @@ function renderComboChartForSelectedMonth(){
   if(subtitle) subtitle.textContent = comboSelectedMonth ? `Comparativo diario — ${monthLabelOf(comboSelectedMonth)}` : 'Comparativo diario';
   renderCharts(monthDates, propias, total);
 }
+
+/* plugin de Chart.js reutilizable: dibuja el total (suma de los datasets de barra indicados,
+   ej. EFFI+Dropi apilados) encima de cada columna. Se activa pasando
+   plugins:{ stackedTotalLabel:{ barIndices:[0,1] } } en las options del chart y agregando
+   `plugins:[stackedTotalLabelPlugin]` al config del Chart. */
+const stackedTotalLabelPlugin = {
+  id: 'stackedTotalLabel',
+  afterDatasetsDraw(chart, args, pluginOpts){
+    const indices = (pluginOpts && pluginOpts.barIndices) || [];
+    if(!indices.length) return;
+    const meta0 = chart.getDatasetMeta(indices[0]);
+    if(!meta0 || !meta0.data || !meta0.data.length) return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = "600 10px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = '#EAF6F7';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    meta0.data.forEach((bar, i)=>{
+      let total = 0;
+      indices.forEach(di=>{ total += (chart.data.datasets[di].data[i] || 0); });
+      if(total<=0) return;
+      let topY = Infinity;
+      indices.forEach(di=>{
+        const m = chart.getDatasetMeta(di);
+        if(m && m.data && m.data[i]) topY = Math.min(topY, m.data[i].y);
+      });
+      if(isFinite(topY)) ctx.fillText(String(Math.round(total)), bar.x, topY - 4);
+    });
+    ctx.restore();
+  }
+};
 
 function renderCharts(dates, propias, total){
   const labels = dates.map(fmtDateLabel);
@@ -1803,7 +2299,17 @@ let lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
 function renderTable(dates, effiByDate, dropiByDate){
   lastDetalle = { dates, effiByDate, dropiByDate };
   const select = document.getElementById('detalleMesSelect');
-  populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
+  if(!adminUnlocked && !vistaEjemploActiva){
+    /* visitante sin clave: mismo bloqueo que metasMesSelect -fijo en el mes de hoy, oculto,
+       nunca "Resumen mensual". */
+    const todayKey = todayMonthKey();
+    const monthsConHoy = Array.from(new Set([...monthsFromDates(dates), todayKey])).sort();
+    populateMonthSelect(select, monthsConHoy, 'Resumen mensual');
+    if(select){ select.value = todayKey; select.style.display = 'none'; }
+  } else {
+    populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
+    if(select) select.style.display = '';
+  }
   renderTableBody();
 }
 
@@ -1900,12 +2406,17 @@ function renderDetalleChart(){
           { type:'line', label:`Meta ${META_COMBINADA}`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
         ]
       },
+      plugins:[stackedTotalLabelPlugin],
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
+        layout:{ padding:{ top:16 } },
+        plugins:{
+          legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } },
+          stackedTotalLabel:{ barIndices:[0,1] }
+        },
         scales:{
           x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false}, stacked:true },
-          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true }
+          y:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor}, stacked:true, grace:'12%' }
         }
       }
     });
@@ -1913,10 +2424,16 @@ function renderDetalleChart(){
 }
 
 /* ---------------- datos de EJEMPLO (solo detras del boton "Ver ejemplo", nunca se cargan solos) ---------------- */
+/* datos REALES de los excel actuales de esta carpeta (no inventados) — 4 dias operativos
+   consecutivos para que el ejemplo muestre el reparto de fin de semana en accion: EFFI 99 u.
+   todas el viernes 2026-07-10; Dropi 1 (jue 07-09) + 11 (vie 07-10) + 8 crudas el sabado
+   07-11, que como el lunes 07-13 no es festivo se reparten entre 2 -> 07-11=4 y 07-12
+   (domingo, dia nuevo por el reparto)=4. Mismos numeros de referencia documentados en
+   CLAUDE.md — coincide con lo que ve cualquiera que suba estos mismos excel. */
 const SNAPSHOT = {
-  dates: ['2026-06-01'],
-  effiUnits: [99],
-  dropiValue: [20],
+  dates: ['2026-07-09','2026-07-10','2026-07-11','2026-07-12'],
+  effiUnits: [0, 99, 0, 0],
+  dropiValue: [1, 11, 4, 4],
   effiRemoved: 0,
   dropiRemoved: 4,
   dropiDupes: 0,
@@ -1931,11 +2448,14 @@ const SNAPSHOT = {
     ["Azaroma",1],["9428708",1]
   ]
 };
-SNAPSHOT.byDayRank = { [SNAPSHOT.dates[0]]: Object.fromEntries(SNAPSHOT.rankEffi) };
+/* todo el EFFI real cayo el viernes 07-10 (no en dates[0], que ahora es 07-09) — se referencia
+   la fecha explicita para no depender del orden del array. */
+SNAPSHOT.byDayRank = { '2026-07-10': Object.fromEntries(SNAPSHOT.rankEffi) };
 SNAPSHOT.effiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.effiByDate[d] = SNAPSHOT.effiUnits[i]; });
 SNAPSHOT.dropiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.dropiByDate[d] = SNAPSHOT.dropiValue[i]; });
 
 function loadSnapshot(){
+  vistaEjemploActiva = true;
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('kpis').classList.add('show');
   document.getElementById('panels').classList.add('show');
@@ -1952,6 +2472,14 @@ function loadSnapshot(){
   const snapKpiCombinadoVar = document.getElementById('kpiCombinadoVar');
   snapKpiCombinadoVar.textContent = `${fmtDateLabel(snapLastDate)} — ${snapCombinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - snapCombinadoUltimoDia)}`}`;
   snapKpiCombinadoVar.className = 'sub ' + (snapCombinadoUltimoDia >= META_COMBINADA ? 'up' : 'down');
+
+  const snapMonthKey = monthKeyOf(snapLastDate);
+  const snapDiasDelMes = SNAPSHOT.dates.filter(d => monthKeyOf(d) === snapMonthKey);
+  const snapSumaMes = snapDiasDelMes.reduce((s,d)=> s + (SNAPSHOT.effiByDate[d] ?? 0) + (SNAPSHOT.dropiByDate[d] ?? 0), 0);
+  const snapPromedioDiario = snapDiasDelMes.length ? snapSumaMes / snapDiasDelMes.length : 0;
+  document.getElementById('kpiPromedioDiario').textContent = fmtUnitsAvg(snapPromedioDiario);
+  document.getElementById('kpiPromedioDiarioVar').textContent = `${monthLabelOf(snapMonthKey)} — ${snapDiasDelMes.length} ${snapDiasDelMes.length===1?'dia':'dias'} con datos`;
+
   document.getElementById('kpiPropiasVar').textContent = SNAPSHOT.effiRemoved>0 ? `${SNAPSHOT.effiRemoved} "cambios" descartados` : 'sin filas de cambios';
   const snapDropiParts = [];
   if(SNAPSHOT.dropiDupes>0) snapDropiParts.push(`${SNAPSHOT.dropiDupes} duplicados`);
@@ -1976,13 +2504,12 @@ function loadSnapshot(){
 }
 
 function resetToEmptyState(){
+  vistaEjemploActiva = false;
   document.getElementById('snapshotBanner').style.display = 'none';
   document.getElementById('kpis').classList.remove('show');
   document.getElementById('panels').classList.remove('show');
   document.getElementById('emptyState').style.display = 'block';
-  document.getElementById('emptyState').innerHTML =
-    '<b>Sube los dos excel para ver el reporte</b>EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>Los cancelados se descartan automaticamente.'+
-    '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
+  document.getElementById('emptyState').innerHTML = emptyStateHTML();
   document.getElementById('viewExampleBtn').addEventListener('click', loadSnapshot);
   store.A = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
   store.B = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
@@ -2010,6 +2537,10 @@ function resetToEmptyState(){
     for(const f of files){ await handleUpload(f); }
   });
   dropEl.addEventListener('click', (e)=>{ if(e.target.tagName!=='INPUT') document.getElementById('fileUpload').click(); });
+
+  /* "Salir del ejemplo" (y "Borrar datos guardados") pasan por aqui: si todavia queda algo
+     guardado en localStorage, se vuelve a cargar de una vez en vez de dejar la pagina vacia. */
+  if(loadRawStore()) recompute();
 }
 
 document.getElementById('clearSnapshotBtn').addEventListener('click', resetToEmptyState);
@@ -2024,12 +2555,23 @@ document.getElementById('adminPinInput').addEventListener('keydown', (e)=>{ if(e
 document.getElementById('adminLockBtn').addEventListener('click', ()=>{
   adminUnlocked = false;
   document.getElementById('adminGate').style.display = 'flex';
+  document.getElementById('uploadZoneWrap').style.display = 'none';
   document.getElementById('adminContent').style.display = 'none';
+  document.getElementById('historialSection').style.display = 'none';
   document.getElementById('vistaAcumuladaBody').innerHTML = '';
+  refreshEmptyStateMessage();
+  /* al salir del modo admin, todo el reporte vuelve a la version repartida de siempre. */
+  recompute();
 });
 
 /* el historial es independiente de si hay datos cargados en esta sesion — se ve apenas se abre la pagina */
 renderHistorialMensual();
+
+/* al abrir la pagina: si ya hay excel acumulados guardados de sesiones anteriores (uso diario:
+   cada dia se sube solo el archivo nuevo), se cargan solos y se muestra el reporte de una vez,
+   en vez de abrir vacia. Si no hay nada guardado todavia, se deja el estado vacio de siempre. */
+if(loadRawStore()) recompute();
+syncFromBackendOnLoad();
 </script>
 </body>
 </html>

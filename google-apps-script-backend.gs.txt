@@ -1,0 +1,211 @@
+/*
+Reporte de Ventas — backend compartido (Google Apps Script + Google Sheets)
+============================================================================
+QUE HACE ESTO
+Convierte una Google Sheet en la base de datos central del reporte: cuando el
+administrador sube un excel en reporte-ventas.html, las filas nuevas se mandan
+aqui y quedan guardadas en la Sheet. Cualquiera que abra la URL del reporte
+(desde su propio computador o celular) lee esos mismos datos — ya no depende
+de localStorage de cada navegador.
+
+Guarda cada fila de EFFI/Dropi como un JSON en su propia fila de la hoja
+(pestañas "EFFI_rows" y "Dropi_rows"), no como un solo bloque gigante — así
+no hay problema aunque se acumulen meses y meses de datos. Una pestaña aparte
+"Meta" guarda las columnas detectadas (fecha/cantidad/vendedor) y contadores.
+
+INSTRUCCIONES DE DESPLIEGUE (una sola vez, no se repite despues)
+1. Ve a https://sheets.google.com y crea una hoja de calculo en blanco.
+   Nombrala como quieras, ej. "Reporte de Ventas - Datos".
+2. Dentro de la hoja: menu Extensiones > Apps Script.
+3. Borra TODO el codigo de ejemplo que trae por defecto (function myFunction...)
+   y pega aqui TODO este archivo completo, de la primera a la ultima linea.
+4. Si quieres una clave distinta a "1234", cambiala en la linea de ADMIN_PIN
+   mas abajo — pero tiene que quedar EXACTAMENTE igual a la constante
+   ADMIN_PIN que ya existe en reporte-ventas.html (te aviso donde esta).
+5. Arriba a la derecha: boton "Implementar" > "Nueva implementacion".
+   - Icono de engranaje > Tipo: "Aplicacion web".
+   - Descripcion: lo que quieras, ej. "backend reporte ventas".
+   - Ejecutar como: "Yo" (tu cuenta de Google).
+   - Quien tiene acceso: "Cualquier usuario" (asi cualquiera que abra el
+     reporte puede LEER los datos; nadie puede ESCRIBIR sin la clave del
+     paso 4, eso se valida adentro del script).
+   - Boton "Implementar".
+6. La primera vez, Google va a pedir autorizar permisos (es tu propia hoja,
+   es normal): "Revisar permisos" > elige tu cuenta > "Avanzado" > "Ir a
+   [nombre del proyecto] (no seguro)" > "Permitir".
+7. Te va a dar una URL larga que termina en /exec — esa es la URL de tu
+   "Aplicacion web". Copiala y pasamela para conectar reporte-ventas.html
+   con esta hoja (ultimo paso, lo hago yo).
+8. Si en el futuro cambias el codigo de este script, hay que volver a
+   "Implementar" > "Gestionar implementaciones" > icono de lapiz > cambiar
+   version a "Nueva version" > "Implementar", para que los cambios apliquen
+   (si no, sigue corriendo la version vieja aunque edites el codigo).
+============================================================================
+*/
+
+const ADMIN_PIN = '1234'; // debe coincidir EXACTO con ADMIN_PIN en reporte-ventas.html
+
+const SHEET_ROWS = { A: 'EFFI_rows', B: 'Dropi_rows' };
+const SHEET_META = 'Meta';
+
+function getOrCreateSheet_(name){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if(!sh){
+    sh = ss.insertSheet(name);
+  }
+  return sh;
+}
+
+function getMetaSheet_(){
+  const sh = getOrCreateSheet_(SHEET_META);
+  if(sh.getLastRow() === 0){
+    sh.appendRow(['system','headers_json','dateCol','horaCol','valCol','rankCol','idCol','removed','fileCount']);
+  }
+  return sh;
+}
+
+function readMeta_(system){
+  const sh = getMetaSheet_();
+  const data = sh.getDataRange().getValues();
+  for(let i=1; i<data.length; i++){
+    if(data[i][0] === system){
+      return {
+        headers: data[i][1] ? JSON.parse(data[i][1]) : null,
+        dateCol: data[i][2] || null,
+        horaCol: data[i][3] || null,
+        valCol: data[i][4] || null,
+        rankCol: data[i][5] || null,
+        idCol: data[i][6] || null,
+        removed: Number(data[i][7]) || 0,
+        fileCount: Number(data[i][8]) || 0,
+        _row: i + 1
+      };
+    }
+  }
+  return null;
+}
+
+function writeMeta_(system, meta){
+  const sh = getMetaSheet_();
+  const existing = readMeta_(system);
+  const rowValues = [
+    system,
+    JSON.stringify(meta.headers || []),
+    meta.dateCol || '',
+    meta.horaCol || '',
+    meta.valCol || '',
+    meta.rankCol || '',
+    meta.idCol || '',
+    meta.removed || 0,
+    meta.fileCount || 0
+  ];
+  if(existing){
+    sh.getRange(existing._row, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sh.appendRow(rowValues);
+  }
+}
+
+function readRows_(system){
+  const sh = getOrCreateSheet_(SHEET_ROWS[system]);
+  const lastRow = sh.getLastRow();
+  if(lastRow === 0) return [];
+  const values = sh.getRange(1, 1, lastRow, 1).getValues();
+  const rows = [];
+  values.forEach(r=>{
+    if(r[0]){
+      try{ rows.push(JSON.parse(r[0])); }catch(e){ /* fila corrupta o vacia, se ignora */ }
+    }
+  });
+  return rows;
+}
+
+/* agrega filas nuevas al final de la pestaña, descartando cualquiera que ya exista
+   (comparando el JSON completo de la fila) — mismo criterio de "duplicado exacto"
+   que ya usa reporte-ventas.html del lado del navegador. */
+function appendRowsDeduped_(system, newRows){
+  const sh = getOrCreateSheet_(SHEET_ROWS[system]);
+  const lastRow = sh.getLastRow();
+  const existingHashes = new Set();
+  if(lastRow > 0){
+    const values = sh.getRange(1, 1, lastRow, 1).getValues();
+    values.forEach(r=>{ if(r[0]) existingHashes.add(r[0]); });
+  }
+  const toAppend = [];
+  let addedCount = 0, dupCount = 0;
+  newRows.forEach(row=>{
+    const json = JSON.stringify(row);
+    if(existingHashes.has(json)){ dupCount++; return; }
+    existingHashes.add(json);
+    toAppend.push([json]);
+    addedCount++;
+  });
+  if(toAppend.length){
+    sh.getRange(lastRow + 1, 1, toAppend.length, 1).setValues(toAppend);
+  }
+  return { addedCount, dupCount, totalRows: lastRow + toAppend.length };
+}
+
+/* GET: cualquiera puede leer el estado actual (EFFI + Dropi acumulados) — es lo que usa
+   la pagina para mostrar el reporte a cualquier visitante, sin necesitar la clave. */
+function doGet(e){
+  const result = {};
+  ['A', 'B'].forEach(system=>{
+    const meta = readMeta_(system) || {};
+    const rows = readRows_(system);
+    if(rows.length){
+      result[system] = {
+        rows: rows,
+        headers: meta.headers || (rows[0] ? Object.keys(rows[0]) : []),
+        dateCol: meta.dateCol || null,
+        horaCol: meta.horaCol || null,
+        valCol: meta.valCol || null,
+        rankCol: meta.rankCol || null,
+        idCol: meta.idCol || null,
+        removed: meta.removed || 0,
+        fileCount: meta.fileCount || 0
+      };
+    }
+  });
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* POST: solo escribe si viene la clave correcta (ADMIN_PIN) — asi solo el administrador
+   autenticado en la pagina puede agregar datos nuevos a la hoja compartida. */
+function doPost(e){
+  try{
+    const body = JSON.parse(e.postData.contents);
+    if(body.pin !== ADMIN_PIN){
+      return jsonOut_({ ok:false, error:'Clave incorrecta.' });
+    }
+    const system = body.system;
+    if(system !== 'A' && system !== 'B'){
+      return jsonOut_({ ok:false, error:'Sistema invalido (debe ser A o B).' });
+    }
+    const newRows = Array.isArray(body.newRows) ? body.newRows : [];
+    const { addedCount, dupCount, totalRows } = appendRowsDeduped_(system, newRows);
+
+    const prevMeta = readMeta_(system) || {};
+    writeMeta_(system, {
+      headers: body.headers || prevMeta.headers || [],
+      dateCol: body.dateCol || prevMeta.dateCol,
+      horaCol: body.horaCol || prevMeta.horaCol,
+      valCol: body.valCol || prevMeta.valCol,
+      rankCol: body.rankCol || prevMeta.rankCol,
+      idCol: body.idCol || prevMeta.idCol,
+      removed: (prevMeta.removed || 0) + (Number(body.removedDelta) || 0),
+      fileCount: (prevMeta.fileCount || 0) + 1
+    });
+
+    return jsonOut_({ ok:true, addedCount, dupCount, totalRows });
+  }catch(err){
+    return jsonOut_({ ok:false, error: String(err) });
+  }
+}
+
+function jsonOut_(obj){
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
