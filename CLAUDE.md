@@ -2,6 +2,8 @@
 
 Página web sin backend (`reporte-ventas.html`) que carga dos Excel — **EFFI** (`Reporte de conceptos de remisiones de venta *.xlsx`) y **Dropi** (`ordenes_productos_*.xlsx`) — y calcula ventas, KPIs y rankings en el navegador (SheetJS + Chart.js por CDN). Tema visual neón/terminal. Mascota animada en el encabezado (`Pasted-20260712-091019.svg`).
 
+**Deploy**: repo en GitHub (`creativoquin-cpu/REPORTE-DE-VENTAS`), publicado en Vercel (`https://reporte-ventas-two.vercel.app/`) con auto-deploy en cada push a `main`. El repo nunca tuvo `index.html` — el archivo real es `reporte-ventas.html`. `vercel.json` (raíz del repo) tiene un `rewrite` de `/` → `/reporte-ventas.html` para que la raíz del dominio sirva el reporte (sin este archivo, la raíz devuelve 404 NOT_FOUND de Vercel, como pasó el 14 de julio de 2026 tras el primer deploy disparado por git). No se debe borrar `vercel.json` ni renombrar `reporte-ventas.html` sin actualizar ese rewrite.
+
 ## Flujo de trabajo obligatorio para cualquier cambio
 
 Siempre que haya que **crear o modificar** algo en este proyecto, sigue este orden — no lo saltes:
