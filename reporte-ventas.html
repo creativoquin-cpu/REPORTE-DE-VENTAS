@@ -584,7 +584,7 @@
   <section class="panels" id="panels">
     <div class="panel">
       <div class="panel-head">
-        <div class="ph-title">Detalle por dia<span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
+        <div class="ph-title"><span id="detalleTituloUsuario">Detalle por dia</span><span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
         <select id="detalleMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
       </div>
       <div class="chart-wrap" style="height:220px;"><canvas id="chartDetalle"></canvas></div>
@@ -594,6 +594,21 @@
             <tr id="tableHeadRow"><th id="tableTh1">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4">Meta 200</th></tr>
           </thead>
           <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel admin-content" id="detallePanelAdmin">
+      <div class="panel-head">
+        <div class="ph-title">Detalle por dia (administrador)<span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
+      </div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="chartDetalleAdmin"></canvas></div>
+      <div class="table-wrap show" id="tableWrapAdmin">
+        <table>
+          <thead>
+            <tr id="tableHeadRowAdmin"><th id="tableTh1Admin">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4Admin">Meta 200</th></tr>
+          </thead>
+          <tbody id="tableBodyAdmin"></tbody>
         </table>
       </div>
     </div>
@@ -1476,6 +1491,7 @@ function tryUnlockAdmin(){
     document.getElementById('uploadZoneWrap').style.display = 'grid';
     document.getElementById('adminContent').style.display = 'block';
     document.getElementById('historialSection').style.display = 'block';
+    document.getElementById('detallePanelAdmin').style.display = 'block';
     renderVistaAcumuladaTable();
     refreshEmptyStateMessage();
     /* al entrar en modo admin, todo el reporte cambia a la version "real" sin repartir —
@@ -2324,15 +2340,41 @@ function renderCharts(dates, propias, total){
   });
 }
 
+/* ---------------- Detalle por dia: dos vistas en paralelo ----------------
+   panelKey 'usuario'  -> siempre combinado (EFFI+Dropi en una columna/serie),
+                          es el panel que ve TODO visitante y que el admin ve
+                          etiquetado "Detalle por dia (usuario)".
+   panelKey 'admin'    -> siempre separado (EFFI/Dropi en columnas/series
+                          propias), solo se renderiza si adminUnlocked===true,
+                          panel oculto por completo (.admin-content) para
+                          cualquiera sin la clave. */
+const DETALLE_PANEL_CONFIG = {
+  usuario: {
+    combinedView: true,
+    headRowId: 'tableHeadRow', th1Id: 'tableTh1', th4Id: 'tableTh4',
+    bodyId: 'tableBody', canvasId: 'chartDetalle'
+  },
+  admin: {
+    combinedView: false,
+    headRowId: 'tableHeadRowAdmin', th1Id: 'tableTh1Admin', th4Id: 'tableTh4Admin',
+    bodyId: 'tableBodyAdmin', canvasId: 'chartDetalleAdmin'
+  }
+};
+
 let lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
 
-/* effiByDate/dropiByDate son mapas {diaOperativo: unidades}, igual que A.byDate/B.byDate */
+/* effiByDate/dropiByDate son mapas {diaOperativo: unidades}, igual que A.byDate/B.byDate.
+   El selector de mes (detalleMesSelect) es UNICO y compartido por los dos paneles. */
 function renderTable(dates, effiByDate, dropiByDate){
   lastDetalle = { dates, effiByDate, dropiByDate };
   const select = document.getElementById('detalleMesSelect');
+
+  const usuarioTitleEl = document.getElementById('detalleTituloUsuario');
+  if(usuarioTitleEl) usuarioTitleEl.textContent = adminUnlocked ? 'Detalle por dia (usuario)' : 'Detalle por dia';
+
   if(!adminUnlocked){
-    /* visitante sin clave: mismo bloqueo que metasMesSelect -fijo en el mes de hoy, oculto,
-       nunca "Resumen mensual". */
+    /* visitante sin clave: mismo bloqueo de siempre -fijo en el mes de hoy, select oculto,
+       nunca "Resumen mensual". Solo existe el panel 'usuario' para visitante. */
     const todayKey = todayMonthKey();
     const monthsConHoy = Array.from(new Set([...monthsFromDates(dates), todayKey])).sort();
     populateMonthSelect(select, monthsConHoy, 'Resumen mensual');
@@ -2341,32 +2383,31 @@ function renderTable(dates, effiByDate, dropiByDate){
     populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
     if(select) select.style.display = '';
   }
-  renderTableBody();
+
+  renderTableBody('usuario');
+  if(adminUnlocked) renderTableBody('admin');
 }
 
-function renderTableBody(){
+function renderTableBody(panelKey){
+  const cfg = DETALLE_PANEL_CONFIG[panelKey];
   const { dates, effiByDate, dropiByDate } = lastDetalle;
   const select = document.getElementById('detalleMesSelect');
-  const body = document.getElementById('tableBody');
+  const body = document.getElementById(cfg.bodyId);
   if(!body) return;
   const selectedMonth = select ? select.value : '';
+  const combinedView = cfg.combinedView;
 
-  /* visitante sin clave: "Detalle por dia" muestra unidades EFFI+Dropi combinadas en una sola
-     columna (no separadas), igual criterio que el resto de la vista visitante. Admin ve las dos
-     columnas de siempre, sin cambios. */
-  const combinedView = !adminUnlocked;
-  const headRow = document.getElementById('tableHeadRow');
+  const headRow = document.getElementById(cfg.headRowId);
   if(headRow){
     headRow.innerHTML = combinedView
-      ? `<th id="tableTh1">Mes</th><th id="tableTh3">Unidades totales</th><th id="tableTh4">Meta 200</th>`
-      : `<th id="tableTh1">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4">Meta 200</th>`;
+      ? `<th id="${cfg.th1Id}">Mes</th><th>Unidades totales</th><th id="${cfg.th4Id}">Meta 200</th>`
+      : `<th id="${cfg.th1Id}">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="${cfg.th4Id}">Meta 200</th>`;
   }
-  /* headRow.innerHTML fue reemplazado, asi que hay que volver a tomar los nodos tableTh1/tableTh4 */
-  const th1 = document.getElementById('tableTh1');
-  const th4 = document.getElementById('tableTh4');
+  /* headRow.innerHTML fue reemplazado, asi que hay que volver a tomar los nodos th1/th4 */
+  const th1 = document.getElementById(cfg.th1Id);
+  const th4 = document.getElementById(cfg.th4Id);
 
   if(!selectedMonth){
-    /* resumen: un renglon acumulado por mes */
     if(th1) th1.textContent = 'Mes';
     if(th4) th4.textContent = 'Meta 200';
     const months = monthsFromDates(dates);
@@ -2383,7 +2424,6 @@ function renderTableBody(){
         : `<tr><td>${monthLabelOf(mk)}</td><td>${fmtUnits(effi)}</td><td>${fmtUnits(dropi)}</td><td>${cumplidos}/${daysInMonth.length} dias</td></tr>`;
     }).join('');
   } else {
-    /* mes elegido: detalle dia a dia (igual que antes) */
     if(th1) th1.textContent = 'Fecha';
     if(th4) th4.textContent = 'Meta 200';
     const daysInMonth = dates.filter(d=>monthKeyOf(d)===selectedMonth);
@@ -2395,29 +2435,23 @@ function renderTableBody(){
     }).join('');
   }
 
-  renderDetalleChart();
+  renderDetalleChart(panelKey);
 }
 
-/* grafico de "Detalle por dia": barras EFFI+Dropi apiladas (para ver el total combinado de
-   un vistazo) mas una linea punteada en la meta de 200 — solo tiene sentido dia a dia, ya que
-   la meta es por dia operativo. En modo "Resumen mensual" (sin mes elegido) se muestra un
-   totalizado por mes sin la linea de meta. Comparte el mismo selector de mes que la tabla
-   (detalleMesSelect), asi que cambia junto con ella con un solo clic. */
-let detalleChart = null;
-function renderDetalleChart(){
+const detalleCharts = { usuario:null, admin:null };
+function renderDetalleChart(panelKey){
+  const cfg = DETALLE_PANEL_CONFIG[panelKey];
   const { dates, effiByDate, dropiByDate } = lastDetalle;
   const select = document.getElementById('detalleMesSelect');
   const selectedMonth = select ? select.value : '';
-  const canvas = document.getElementById('chartDetalle');
+  const canvas = document.getElementById(cfg.canvasId);
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  if(detalleChart){ detalleChart.destroy(); detalleChart = null; }
+  if(detalleCharts[panelKey]){ detalleCharts[panelKey].destroy(); detalleCharts[panelKey] = null; }
 
   const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
   const gridColor = 'rgba(63,232,224,0.08)';
-  /* visitante sin clave: mismo criterio combinado que renderTableBody -una sola serie EFFI+Dropi
-     en vez de dos. Admin ve las dos series de siempre, sin cambios. */
-  const combinedView = !adminUnlocked;
+  const combinedView = cfg.combinedView;
 
   if(!selectedMonth){
     const months = monthsFromDates(dates);
@@ -2430,12 +2464,9 @@ function renderDetalleChart(){
           { label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:4 },
           { label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:4 }
         ];
-    detalleChart = new Chart(ctx, {
+    detalleCharts[panelKey] = new Chart(ctx, {
       type:'bar',
-      data:{
-        labels: months.map(monthLabelOf),
-        datasets
-      },
+      data:{ labels: months.map(monthLabelOf), datasets },
       options:{
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
@@ -2460,11 +2491,8 @@ function renderDetalleChart(){
           { type:'bar', label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:3, stack:'total' },
           { type:'line', label:`Meta ${META_COMBINADA}`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
         ];
-    detalleChart = new Chart(ctx, {
-      data:{
-        labels: daysInMonth.map(fmtDateLabel),
-        datasets
-      },
+    detalleCharts[panelKey] = new Chart(ctx, {
+      data:{ labels: daysInMonth.map(fmtDateLabel), datasets },
       plugins:[stackedTotalLabelPlugin],
       options:{
         responsive:true, maintainAspectRatio:false,
@@ -2482,8 +2510,10 @@ function renderDetalleChart(){
   }
 }
 
-document.getElementById('historialMesSelect').addEventListener('change', renderHistorialTable);
-document.getElementById('detalleMesSelect').addEventListener('change', renderTableBody);
+document.getElementById('detalleMesSelect').addEventListener('change', ()=>{
+  renderTableBody('usuario');
+  if(adminUnlocked) renderTableBody('admin');
+});
 document.getElementById('metasMesSelect').addEventListener('change', renderMetasBody);
 
 document.getElementById('adminUnlockBtn').addEventListener('click', tryUnlockAdmin);
@@ -2494,6 +2524,7 @@ document.getElementById('adminLockBtn').addEventListener('click', ()=>{
   document.getElementById('uploadZoneWrap').style.display = 'none';
   document.getElementById('adminContent').style.display = 'none';
   document.getElementById('historialSection').style.display = 'none';
+  document.getElementById('detallePanelAdmin').style.display = 'none';
   document.getElementById('vistaAcumuladaBody').innerHTML = '';
   refreshEmptyStateMessage();
   /* al salir del modo admin, todo el reporte vuelve a la version repartida de siempre. */
