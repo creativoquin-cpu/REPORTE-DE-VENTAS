@@ -24,6 +24,19 @@
   .estadoNube.nube-mal  { background:#fdf3ec; color:#b7791f; border-color:#f3ddc2; }
   .estadoNube.nube-sinc { background:#eef4fc; color:#2a5ea6; border-color:#cfe0f5; }
 
+  /* Por defecto se ve el login y el panel queda oculto: así no hay ni una
+     fracción de segundo en la que se alcance a ver el panel sin sesión.
+     iniciarSesionUI() decide, apenas carga, cuál de los dos se queda. */
+  .cajaLogin { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:14px; }
+  #wrap { display:none; }
+  .loginBox { background:#fff; border:1px solid var(--linea); border-radius:12px;
+              padding:26px 24px; width:100%; max-width:320px; }
+  .loginBox input { width:100%; padding:8px 10px; border:1px solid var(--linea);
+              border-radius:8px; font-size:14px; margin-top:4px; }
+  .loginBox button { width:100%; margin-top:16px; }
+  button.salir { background:none; color:var(--gris); font-weight:600; font-size:12px;
+              padding:3px 8px; margin-left:6px; text-decoration:underline; }
+
   .nav { display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--linea); flex-wrap:wrap; }
   .nav button { background:none; color:var(--gris); border:0; border-bottom:3px solid transparent;
                 padding:8px 14px; font-size:14px; font-weight:600; cursor:pointer; border-radius:0; }
@@ -137,9 +150,25 @@
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <h1>Quin — Administrador <span id="estadoNube" class="estadoNube"></span></h1>
+<div id="loginNube" class="cajaLogin">
+  <form id="formLogin" class="loginBox">
+    <h1 style="margin-bottom:2px">Quin — Administrador</h1>
+    <p class="sub">Iniciá sesión para entrar.</p>
+    <label class="tit">Correo</label>
+    <input type="email" id="loginCorreo" autocomplete="username" required>
+    <label class="tit">Contraseña</label>
+    <input type="password" id="loginClave" autocomplete="current-password" required>
+    <button type="submit" id="btnLogin">Entrar</button>
+    <div class="estado" id="loginEstado"></div>
+  </form>
+</div>
+
+<div class="wrap" id="wrap">
+
+  <h1>Quin — Administrador <span id="estadoNube" class="estadoNube"></span>
+    <button id="btnLogout" class="salir" style="display:none">Cerrar sesión</button>
+  </h1>
   <p class="sub">Consolida las ventas de Dropi y Effi en prendas. Solo el administrador entra aquí.</p>
 
   <div class="nav">
@@ -553,13 +582,16 @@ function sincronizarNube(ll, d){
     sincronizarTabla("dias_manuales", "fecha", filasDeDiasManuales(d));
   }
 }
-function reintentarPendientes(){
-  if (!sb || !hayPendientes) return;
-  hayPendientes = false;
+function subirTodoLoLocal(){
   sincronizarNube(LLAVE_JOR, jornadas);
   sincronizarNube(LLAVE_MET, metas);
   sincronizarNube(LLAVE_MES, mesesCerrados);
   sincronizarNube(LLAVE_AJU, ajustesGuardados || { diasManuales:diasManuales, descartarNovedad:descartarNovedad });
+}
+function reintentarPendientes(){
+  if (!sb || !hayPendientes) return;
+  hayPendientes = false;
+  subirTodoLoLocal();
 }
 if (typeof window !== "undefined" && window.addEventListener) {
   window.addEventListener("online", reintentarPendientes);
@@ -648,6 +680,52 @@ function cargarNube(){
     }
     marcarEstadoNube("nube-ok", "guardado en la nube");
   });
+}
+// ####################################################################
+//  LOGIN (Supabase Auth) — paso 9.2
+//  Sin sesión, la app muestra solo la pantalla de entrar y no toca nada
+//  del panel. Con sesión, Supabase ya manda el permiso de administrador
+//  en cada pedido y jornadas/ajustes/meses cerrados suben y bajan de la
+//  nube de verdad (antes de esto, esas tres tablas quedaban bloqueadas
+//  por la propia base — ver nota en el bloque NUBE de arriba).
+//  Si no hay Supabase (por ejemplo en las pruebas automáticas), la app
+//  se comporta exactamente igual que antes del paso 9.2: sin login.
+// ####################################################################
+function mostrarLogin(mostrar){
+  var login = document.getElementById("loginNube"), panel = document.getElementById("wrap");
+  if (login) login.style.display = mostrar ? "flex" : "none";
+  if (panel) panel.style.display = mostrar ? "none" : "block";
+}
+function textoErrorLogin(msg){
+  if (/invalid login credentials/i.test(msg || "")) return "Correo o contraseña incorrectos";
+  return "No se pudo entrar: " + msg;
+}
+function iniciarSesionUI(){
+  if (!sb) { mostrarLogin(false); return; }
+  function alCambiarSesion(sesion){
+    mostrarLogin(!sesion);
+    var salir = document.getElementById("btnLogout");
+    if (salir) salir.style.display = sesion ? "" : "none";
+    // Al iniciar sesión: primero baja y mezcla lo de la nube (gana lo más
+    // reciente), y recién después sube lo local — así lo que ya tenías
+    // guardado en este equipo desde antes del login también queda en la
+    // nube, no solo lo que guardes de ahora en más.
+    if (sesion) cargarNube().then(subirTodoLoLocal);
+  }
+  sb.auth.getSession().then(function(r){ alCambiarSesion(r.data && r.data.session); });
+  sb.auth.onAuthStateChange(function(_evento, sesion){ alCambiarSesion(sesion); });
+  formLogin.addEventListener("submit", function(e){
+    e.preventDefault();
+    var estado = document.getElementById("loginEstado");
+    estado.textContent = "Entrando…"; estado.className = "estado";
+    sb.auth.signInWithPassword({
+      email: loginCorreo.value.trim(), password: loginClave.value
+    }).then(function(r){
+      if (r.error) { estado.innerHTML = '<span class="err">' + esc(textoErrorLogin(r.error.message)) + "</span>"; return; }
+      loginClave.value = ""; estado.textContent = "";
+    });
+  });
+  btnLogout.addEventListener("click", function(){ sb.auth.signOut(); });
 }
 function hoyTexto(){
   var f=new Date();
@@ -2593,6 +2671,7 @@ pintarMetas();
 pintarCierre(autoCerrarMeses());
 renderCongelado({}, null);
 cargarNube(); // pinta al toque con lo local (arriba); esto llega después y refresca solo
+iniciarSesionUI(); // decide si se ve el panel o la pantalla de entrar (paso 9.2)
 </script>
 </body>
 </html>
