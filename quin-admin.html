@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quin — Administrador</title>
+<link rel="manifest" href="manifest-admin.json">
+<link rel="icon" href="iconos/favicon-32.png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="theme-color" content="#17C3C3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quin Admin">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2695,6 +2701,15 @@ pintarCierre(autoCerrarMeses());
 renderCongelado({}, null);
 cargarNube(); // pinta al toque con lo local (arriba); esto llega después y refresca solo
 iniciarSesionUI(); // decide si se ve el panel o la pantalla de entrar (paso 9.2)
+
+// Instalar como app (paso 9.4). Solo funciona una vez publicada la página
+// con https (o en localhost); por file:// el navegador no deja registrar
+// el service worker, así que acá simplemente no hace nada — no rompe nada.
+if (typeof navigator !== "undefined" && navigator.serviceWorker) {
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
 </script>
 </body>
 </html>
