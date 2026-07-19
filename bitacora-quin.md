@@ -1,19 +1,20 @@
 # Bitácora Quin — registro de la construcción
 
-> Resumen compacto de lo hecho, lo decidido y lo que falta. Se lee junto con `jornada-quin-cowork.md` (la fuente de verdad). Última actualización: 18-jul-2026.
+> Resumen compacto de lo hecho, lo decidido y lo que falta. Se lee junto con `jornada-quin-cowork.md` (la fuente de verdad). Última actualización: 18-jul-2026 (pasos 14 a 17: metas, cierre mensual, vista del vendedor e imágenes para WhatsApp).
 
 ---
 
 ## Estado actual
 
-**Un solo archivo funcionando: `quin-admin.html`.** Se abre con doble clic. Todo lo construido es del lado **administrador**.
+**Un solo archivo funcionando: `quin-admin.html`.** Se abre con doble clic. Cuatro pestañas son del **administrador** y la quinta es la **vista del vendedor** (por ahora vive aquí como vista previa; se separará con el login del paso 9).
 
-Tiene tres pestañas:
+Tiene cinco pestañas:
 
-1. **Cargar y validar** — sube los dos Excel, elige qué cuenta, marca días no laborables, muestra la tabla día por día (real y repartida), congela jornadas.
-2. **Tablero del mes** — indicadores del resumen, dos gráficas con línea de meta, rankings.
+1. **Cargar y validar** — sube los dos Excel, elige qué cuenta, marca días no laborables, fija las metas del equipo, cierra y reabre los meses, muestra la tabla día por día (real y repartida), congela jornadas.
+2. **Tablero del mes** — indicadores del resumen, dos gráficas con línea de meta, rankings y el botón de imagen para WhatsApp.
 3. **Calendario** — calendario tipo Excel con selección por rango para comparativos internos.
 4. **Comparativo** — mes a mes con gráfica de evolución y variaciones.
+5. **Vista del vendedor** — lo que ve un vendedor: cómo va el equipo y el ranking con solo puesto y nombre, bloqueado al mes en curso.
 
 Archivos eliminados por quedar contenidos en él: `motor-quin.html`, `tablero-quin.html`, y el `CLAUDE.md` del intento anterior.
 
@@ -37,6 +38,10 @@ Archivos del intento viejo que **no se tocan**: `reporte-ventas.html`, `prompt_r
 | **11. Una sola vista por mes** | La pestaña 1 dejó de tener dos listas (archivo cargado + historial): ahora hay un solo bloque **Jornadas**, un mes plegable por fila, y dentro un calendario del mes donde cada día muestra su cifra y su estado. Tocar un día sin cerrar lo marca; tocar uno cerrado abre su detalle con el botón de reabrir. Atajos por mes, leyenda de colores y barra con *Cerrar seleccionadas (N)*. En pantalla ancha el calendario y el detalle van lado a lado; la página subió de 960 a 1200 px | Con historial de enero, junio y julio y un archivo de 4 días de julio: abre julio, marca y desmarca días, «marcar las 2 sin cerrar» deja 2, cerrar agrega la jornada, tocar un día cerrado abre su detalle y reabrir lo saca del historial. No quedó rastro de las listas viejas. |
 | **10. Historial compacto** | Las dos listas de la pestaña 1 se pliegan por mes. La de jornadas del archivo abre en el mes del último día cargado, con atajos por mes. El historial guardado ya no es una tabla de 188 filas: cada mes es un bloque con su mini calendario; al tocar un día se abre su detalle (oficial, última revisión, diferencia, cerrada el) con el botón de reabrir. El mes que abre por defecto es el del último día cargado, o el de hoy, o el último con historial. Los días con revisión llevan una marca dorada. Se quitó el botón *Cerrar todas las jornadas* | Con historial de enero, febrero y julio y un archivo cargado de julio: abre julio en las dos listas, el mini calendario muestra solo los días cerrados, tocar el 5-jul abre su detalle y reabrirlo lo saca del historial; «marcar este mes» deja 3 seleccionadas. |
 | **9. Cerrar en lote** | La lista de jornadas del archivo se agrupa por mes y trae atajos *marcar todas / ninguna / solo las sin cerrar*, botón **Cerrar seleccionadas (N)** que se activa solo si hay algo marcado. (El botón *Cerrar todas* se retiró en el paso 10 por petición del dueño.) | Con 8 y 9-ene cerradas y 10, 11-ene y 1-feb pendientes: encabezado «5 días, 3 sin cerrar», separadores enero/febrero, cerrar seleccionada agrega solo el 10-ene, cerrar todas agrega las 2 restantes y el 8-ene queda sin fotos nuevas. |
+| **17. Imagen para WhatsApp** (§13, §19 paso 7) | Un botón en el tablero descarga un PNG vertical 1080×1920 con el informe **del día**: el total del día en grande (con «meta cumplida» o cuánto faltó), tres cuadros —**Propias (Effi)**, **Dropi** y **promedio del mes por día**— y debajo el mes completo día por día, con la cantidad encima de cada barra, la fecha debajo, el día reportado resaltado y la **línea de meta rotulada con su valor**. Lleva a Quino incrustado en el archivo. Nunca lleva VS ni nombres de personas. El día es **el último cargado** y el mes es el que se está registrando, sin importar qué mes tenga elegido el tablero | 57 pruebas automáticas con un lienzo falso que anota cada trazo. Con julio (200/200/150/71/24): el día reportado es el 19-jul con 48 (40 propias + 8 Dropi, que cuadran con el total), promedio del mes 129, «Faltaron 152 para la meta», el mes suma 645 y las barras 200/200/150/47/48 vuelven a sumar 645. Un día de 210 con meta 200 dice «Meta cumplida». Con la meta cambiada a mitad de mes, la línea roja cambia de altura y se rotula en el día correcto. Con 31 días nada se sale del lienzo, salen las 31 cantidades y las 31 fechas, y las 31 barras no se traslapan. Mirando junio en el tablero, la imagen sigue siendo de julio. |
+| **16. Vista del vendedor** (§19 paso 6) | Pestaña 5, bloqueada al **mes en curso** y **sin filtro por vendedor**: mientras no exista el login (paso 9) la app no sabe quién está mirando, así que no muestra datos personales de nadie. Quedan dos bloques: cómo va el **equipo** en propias (total, promedio, días en meta, mejor día y gráfica repartida con línea de meta) y el **ranking del mes**, solo con puesto y nombre. Sin columna de prendas y sin gráfica de comparación entre vendedores. No ve Dropi, ni tiendas, ni el total Effi+Dropi, ni las ventas reales sin repartir, ni comparativos, ni calendario, ni un solo botón | 40 pruebas automáticas sobre el archivo real. Con Ana 320, Beto 210 y Caro 105 en julio: el equipo da 635 propias en 5 días, promedio 127, 2 de 5 días en meta y mejor día 200. El bloque sáb+dom (71 y 24) sale repartido 47/48 sin cambiar el total. **Ninguna de las tres cifras individuales aparece en la vista**, comprobado buscándolas en todo el texto. Con la meta de propias cambiada a 100 el 15-jul, los días en meta suben a 3. Con solo bosquejo funciona y avisa; en un mes sin ventas lo dice sin romperse. Se reverificaron las cuatro pestañas del admin: mismos números. |
+| **15. Cierre mensual automático** | Panel *Cierre mensual* en la pestaña 1. Al abrir la app, todo mes que ya pasó y todavía no se había cerrado se **cierra solo** y su resumen queda **sellado** (total, días, propias/Dropi, promedio, mejor y peor día, rankings y días en meta). El sello no cambia aunque después entre un reporte tarde: la app avisa la diferencia («hoy hay +100 prendas frente al sello») en el panel, en el tablero y en el comparativo. Botón **Reabrir** para incluir lo que llegó tarde y **Cerrar ahora** para volver a sellar; el mes en curso también se puede cerrar a mano. Un mes reabierto **no** se vuelve a cerrar solo. Todo queda en una traza (qué pasó, con qué total, cuándo y quién). Solo entran jornadas cerradas: el bosquejo nunca toca el sello | 50 pruebas automáticas corriendo el archivo real con la fecha del computador simulada. Con junio (3 días, 600) y julio (2 días, 350) al 18-jul: junio se cierra solo en 600, julio no. Entra un día tarde de junio (+100): el sello sigue en 600 y los tres avisos aparecen. Reabrir y volver a cerrar lo deja en 700 con 4 días y la traza en orden *automático → reabierto → a mano*. Al saltar a agosto, julio se cierra solo pero junio reabierto se queda abierto. Cancelar el aviso no cierra nada. Se reverificaron metas, tablero, calendario, comparativo y jornadas: mismos números. |
+| **14. Metas editables con historial sellado** | Panel *Metas del equipo* en la pestaña 1: muestra la meta vigente (total y propias), permite cambiarla indicando **desde qué día aplica**, y guarda cada cambio en un historial que no se borra (desde, total, propias, qué cambió, cuándo y quién). Los días anteriores conservan la meta que tenían. Se pueden dejar metas **programadas** a futuro (y quitarlas mientras no entren en vigencia); si se guardan dos para la misma fecha, manda la registrada después y la anterior queda visible como *reemplazada*. El tablero usa la meta de cada día: la línea roja de las dos gráficas es **escalonada**, el tooltip dice «meta 200 (faltan 50)», el eje sube hasta la meta más alta y hay dos KPIs nuevos, *Días en meta total* y *Días en meta propias*. Valida que la meta de propias no supere la total, que el total sea mayor que cero y que el cambio realmente cambie algo | 49 pruebas automáticas corriendo el archivo real en un navegador simulado (no solo leyendo el código). Con cambio el 16-jul de 200/160 a 240/150 y jornadas de 190/210/200/240/250: *Días en meta total* da 4 de 5 y *propias* 2 de 5, la leyenda dice «Meta 200–240», el tooltip del 14-jul compara contra 200 y el del 17-jul contra 240, y el total del mes sigue en 1.090. Con meta constante se comporta igual que antes. Se reverificó que jornadas, calendario y comparativo siguen dando los mismos números. |
 | **5. Tablero (parcial)** | Total del mes, promedio, propias/Dropi con %, ventas de hoy, jornadas cerradas, mejor y peor jornada con fecha, dos gráficas con meta y número sobre la barra, rankings del mes, selector de mes | Junio real (29 días del PDF): 6.773 prendas, promedio 234, 60% propias, mejor 315 sáb 20-jun, peor 139 sáb 27-jun. Las dos gráficas suman igual. |
 
 ---
@@ -59,20 +64,33 @@ Archivos del intento viejo que **no se tocan**: `reporte-ventas.html`, `prompt_r
 
 8. **Toda la entrada de datos es del administrador.** El vendedor solo consulta. *(§10)*
 
+9. **El sello mensual cuenta solo jornadas cerradas.** El bosquejo (días cargados del Excel sin cerrar) nunca entra al resumen sellado del mes. Confirmado por el dueño. *(§9)*
+
+10. **El comparativo sigue mostrando las cifras vivas**, con el sello anotado al lado y un aviso cuando difieren, en vez de reemplazar el número por el sellado. Confirmado por el dueño. *(§9)*
+
+11. **El vendedor no ve cifras de nadie**, solo puesto y nombre. Se probó una gráfica VS sin números y el dueño también la descartó: la pestaña quedó sin ninguna comparación entre personas. Corrige el §10, que contemplaba el VS top 10.
+
+12. **La vista del vendedor no tiene filtro por vendedor.** Se probó con un selector *Ver como* y el dueño lo descartó: mientras no exista el login (paso 9) la app no sabe quién mira, así que la pestaña quedó solo con cifras del equipo. Lo personal se retoma con el login.
+
+13. **La imagen de WhatsApp lleva las cifras repartidas** (como las ve el vendedor) e **incluye los días cargados aunque no estén cerrados**, con un aviso al pie cuando los hay. Confirmado por el dueño.
+
+14. **La imagen siempre es del último día cargado y del mes que se está registrando**, no del mes elegido en el tablero, para que no se mande por error la de un mes viejo. Pedido por el dueño al ver la primera versión.
+
+15. **Una sola imagen, encabezada por el día.** Se empezó con dos (Total y Propias, ambas mensuales) y el dueño las cambió por una sola con el total del día en grande y los cuadros de propias, Dropi y promedio. Corrige el §13, que pedía dos formatos mensuales.
+
+16. **La vista del vendedor queda bloqueada al mes en curso** y vive por ahora como pestaña 5 del mismo archivo. Se separará cuando exista el login.
+
 ---
 
 ## Pendientes
 
 **Para cerrar el administrador**
 
-- Cierre mensual automático el día 1, con opción de reabrir *(§9)*
-- Metas editables con registro histórico sellado por día *(§12)*
+Ninguno: el lado del administrador quedó completo.
 
 **Siguientes pasos del plan**
 
-- Vista del vendedor *(§19 paso 6)*
-- Imágenes para WhatsApp con Quino *(§19 paso 7)*
-- Estética Quino usando `Jornada Quin.html` como referencia *(§19 paso 8)*
+- Estética Quino usando `Jornada Quin.html` como referencia *(§19 paso 8)* — **va de último y se hace en Antigravity**, no aquí, para que no se altere lo que ya funciona.
 - Login de dos roles + Supabase + PWA *(§19 paso 9)*
 
 **Cosas sueltas anotadas**

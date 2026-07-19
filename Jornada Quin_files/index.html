@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<!-- saved from url=(0413)https://ce22mzszgsjfv7jw.canvacode.com/codelet/eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..ve8Bv3oMFZqV5ze2.9VOVevp6b5wWctUKW2WuY8Vbf9dOXSgZo9K96otQPA6F9gBPxeUMKd9s-PcLCpGJlQD5CFdnTSLzBttQIAraMqqoxnrNvbk1hJ5cbhAw4FJvPHd_EZlP4v5O0ycwAL9igQOqTJVG1IwsskVuWTxTbAEotKA6px1DWj0U0OXkkcIFQaEH3zkstC7-w8v21_tN6kFQfErT59_M0t2MGLpCI6sAVa5sbNv96ue0F3pS9g.KgK621MuO-iKLv29447E0g/index.html?pin_id=041eba39fd4c1987931947a9e908baec -->
+<html lang="es" style="height: auto; --vh: 7.68px; overflow: visible; scrollbar-width: none; font-size: clamp(12px, 10.2241px + 0.4228vw, 16px);"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script src="./telemetry_sdk.js.descarga"></script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jornada Quin</title>
+  <meta name="theme-color" content="#17C3C3">
+  <script src="./3.4.17"></script>
+  <script src="./lucide.min.js.descarga"></script>
+  <script src="./html2canvas.min.js.descarga"></script>
+  <link href="./css2" rel="stylesheet">
+  <style>
+    :root {
+      --cyan: #17c3c3;
+      --cyan-dark: #078f94;
+      --ink: #091315;
+      --muted: #607174;
+      --paper: #f4f8f7;
+      --line: #dce8e6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: "DM Sans", sans-serif; color: var(--ink); }
+    button, input { font: inherit; }
+    button { touch-action: manipulation; }
+    .app-shell { width: 100%; overflow: hidden; }
+    .screen {
+      width: 100%;
+      min-height: calc(100 * min(var(--vh, 1vh), 1vh));
+      padding: 22px 16px 54px;
+      position: relative;
+    }
+    .content { width: 100%; max-width: 1180px; margin: 0 auto; position: relative; z-index: 2; }
+    .soft-card {
+      border: 1px solid rgba(9,19,21,.08);
+      border-radius: 24px;
+      box-shadow: 0 16px 40px rgba(9,19,21,.08);
+    }
+    .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .kpi { min-height: 138px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+    .kpi-value { font-size: clamp(1.8rem, 8vw, 3rem); font-weight: 900; line-height: .95; letter-spacing: -.06em; }
+    .eyebrow { font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .chart-box { height: 260px; padding: 20px 12px 14px; position: relative; }
+    .chart-area { height: 185px; display: flex; align-items: flex-end; gap: 7px; position: relative; padding-top: 15px; }
+    .goal-line {
+      position: absolute; left: 0; right: 0; bottom: 82%;
+      border-top: 2px dashed #091315; z-index: 1;
+    }
+    .goal-label { position: absolute; right: 0; bottom: calc(82% + 4px); font-size: 10px; font-weight: 800; }
+    .bar-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 5px; z-index: 2; }
+    .bar-value { font-size: 10px; font-weight: 800; }
+    .bar { width: 72%; min-width: 14px; max-width: 34px; border-radius: 9px 9px 3px 3px; box-shadow: inset 0 -8px 14px rgba(0,0,0,.08); }
+    .bar-label { font-size: 10px; color: var(--muted); font-weight: 700; }
+    .rank-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .rank-row:last-child { border: 0; }
+    .rank-pos { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: #e8fafa; font-weight: 900; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 5px; }
+    .calendar-head { text-align: center; font-size: 11px; font-weight: 800; color: var(--muted); padding: 6px 0; }
+    .day {
+      min-height: 62px; border: 1px solid var(--line); border-radius: 11px; padding: 6px;
+      text-align: left; background: white; transition: .16s ease; position: relative;
+    }
+    .day:hover { border-color: var(--cyan); transform: translateY(-1px); }
+    .day.selected { background: #bdf4f1; border: 2px solid var(--cyan-dark); }
+    .day.range-edge { background: var(--ink); color: white; }
+    .day.blank { visibility: hidden; }
+    .day-num { display: block; font-size: 11px; font-weight: 800; }
+    .day-total { display: block; margin-top: 7px; font-size: 13px; font-weight: 900; }
+    .story {
+      width: min(100%, 430px); aspect-ratio: 9 / 16; margin: 0 auto; border-radius: 32px;
+      overflow: hidden; position: relative; padding: 28px 24px; display: flex; flex-direction: column;
+      border: 2px solid #071113; box-shadow: 0 28px 70px rgba(0,0,0,.24);
+    }
+    .story-mascot { position: absolute; right: -22px; top: 95px; width: 48%; height: 235px; object-fit: contain; filter: drop-shadow(0 15px 18px rgba(0,0,0,.18)); }
+    .story-chart { margin-top: auto; height: 245px; border-radius: 22px; padding: 18px 12px 12px; position: relative; }
+    .story-bars { height: 180px; display: flex; align-items: flex-end; gap: 7px; position: relative; }
+    .story-bar-col { flex: 1; display: flex; height: 100%; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; z-index: 2; }
+    .story-bar { width: 70%; border-radius: 8px 8px 2px 2px; }
+    .story-goal { position: absolute; left: 0; right: 0; border-top: 2px dashed currentColor; z-index: 1; }
+    .decor-grid {
+      position: absolute; inset: 0; opacity: .18; pointer-events: none;
+      background-image: linear-gradient(#17c3c3 1px, transparent 1px), linear-gradient(90deg,#17c3c3 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(to bottom, black, transparent 70%);
+    }
+    .focusable:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 3px solid #ffd84d; outline-offset: 3px;
+    }
+    .toast { transform: translateY(12px); opacity: 0; pointer-events: none; transition: .2s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (min-width: 760px) {
+      .screen { padding: 34px 28px 70px; }
+      .admin-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .two-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+      .analysis-layout { display: grid; grid-template-columns: 1.4fr .8fr; gap: 18px; }
+      .day { min-height: 76px; }
+    }
+    @media (max-width: 460px) {
+      .story { padding: 22px 18px; border-radius: 24px; }
+      .story-mascot { top: 88px; height: 180px; }
+      .day { min-height: 54px; padding: 4px; }
+      .day-total { font-size: 11px; }
+    }
+  </style>
+  <script src="./data_sdk.js.descarga" type="text/javascript"></script>
+  <script src="./resizing_sdk.js.descarga" type="text/javascript"></script>
+ <style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-8{inset:2rem}.-right-16{right:-4rem}.-top-16{top:-4rem}.bottom-5{bottom:1.25rem}.left-1\/2{left:50%}.z-10{z-index:10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-7{margin-top:1.75rem}.mt-8{margin-top:2rem}.mt-9{margin-top:2.25rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.h-11{height:2.75rem}.h-14{height:3.5rem}.h-16{height:4rem}.h-48{height:12rem}.h-5{height:1.25rem}.h-64{height:16rem}.h-fit{height:-moz-fit-content;height:fit-content}.h-full{height:100%}.min-h-64{min-height:16rem}.w-11{width:2.75rem}.w-14{width:3.5rem}.w-16{width:4rem}.w-48{width:12rem}.w-64{width:16rem}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-lg{max-width:32rem}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.place-items-center{place-items:center}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-10{gap:2.5rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-8{gap:2rem}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.border-2{border-width:2px}.border{border-width:1px}.border-black{--tw-border-opacity:1;border-color:rgb(0 0 0 / var(--tw-border-opacity, 1))}.border-slate-200{--tw-border-opacity:1;border-color:rgb(226 232 240 / var(--tw-border-opacity, 1))}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-cyan-300{--tw-bg-opacity:1;background-color:rgb(103 232 249 / var(--tw-bg-opacity, 1))}.bg-cyan-300\/30{background-color:rgb(103 232 249 / 0.3)}.bg-cyan-400{--tw-bg-opacity:1;background-color:rgb(34 211 238 / var(--tw-bg-opacity, 1))}.bg-slate-100{--tw-bg-opacity:1;background-color:rgb(241 245 249 / var(--tw-bg-opacity, 1))}.bg-slate-200{--tw-bg-opacity:1;background-color:rgb(226 232 240 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/20{background-color:rgb(255 255 255 / 0.2)}.object-contain{object-fit:contain}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.text-left{text-align:left}.text-center{text-align:center}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-black{font-weight:900}.font-bold{font-weight:700}.leading-none{line-height:1}.leading-relaxed{line-height:1.625}.tracking-\[-\.04em\]{letter-spacing:-.04em}.tracking-\[-\.05em\]{letter-spacing:-.05em}.tracking-\[-\.06em\]{letter-spacing:-.06em}.tracking-\[-\.07em\]{letter-spacing:-.07em}.tracking-\[-\.08em\]{letter-spacing:-.08em}.text-black{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.text-cyan-300{--tw-text-opacity:1;color:rgb(103 232 249 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-40{opacity:0.4}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.blur-3xl{--tw-blur:blur(64px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:-translate-y-0\.5:hover{--tw-translate-y:-0.125rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.focus\:border-cyan-500:focus{--tw-border-opacity:1;border-color:rgb(6 182 212 / var(--tw-border-opacity, 1))}@media (min-width: 640px){.sm\:h-20{height:5rem}.sm\:h-80{height:20rem}.sm\:w-20{width:5rem}.sm\:w-80{width:20rem}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:p-6{padding:1.5rem}.sm\:p-7{padding:1.75rem}.sm\:p-8{padding:2rem}}@media (min-width: 768px){.md\:mt-0{margin-top:0px}}@media (min-width: 1024px){.lg\:mx-0{margin-left:0px;margin-right:0px}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:grid-cols-\[\.8fr_1\.2fr\]{grid-template-columns:.8fr 1.2fr}.lg\:text-left{text-align:left}}</style></head>
+ <body data-template-id="__page-root" style="background-image: linear-gradient(rgb(244, 248, 247), rgb(244, 248, 247)) !important; background-clip: border-box !important; background-size: 100vw 100vh !important;">
+  <div class="app-shell">
+   <main>
+    <section id="login-screen" data-template-id="login-section" class="canva-section screen flex items-center" style="background-image: radial-gradient(rgb(199, 250, 245), rgb(244, 248, 247)) !important; background-clip: border-box !important;">
+     <div class="decor-grid"></div>
+     <div class="content grid lg:grid-cols-2 gap-8 items-center">
+      <div class="text-center lg:text-left">
+       <div class="relative inline-block">
+        <div class="absolute inset-8 rounded-full bg-cyan-300 blur-3xl opacity-40"></div><img data-template-id="login-mascot" loading="lazy" class="canva-image relative w-64 h-64 sm:w-80 sm:h-80 object-contain mx-auto" alt="Quino, robot blanco amigable con detalles turquesa" src="./4a36a52703954bd0f5cc9936530d6b7f.png">
+       </div>
+       <p data-template-id="login-kicker" class="canva-text eyebrow mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important; letter-spacing: 0.12rem !important;">CONTROL DIARIO DE VENTAS</p>
+       <h1 data-template-id="login-title" class="canva-text font-black tracking-[-.07em] leading-none mt-3" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 3.625rem !important;" data-canva-font-size="3.625rem">Jornada Quin</h1>
+       <p data-template-id="login-subtitle" class="canva-text max-w-lg mt-4 leading-relaxed mx-auto lg:mx-0" data-canva-font-size="1.125rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1.125rem !important;">Todas las ventas de la agencia, claras y reunidas en un solo lugar.</p>
+      </div>
+      <form id="login-form" data-template-id="login-card" class="canva-card soft-card p-6 sm:p-8" novalidate="" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <div class="flex items-center gap-3 mb-6"><span class="w-11 h-11 rounded-2xl bg-black text-white grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="scan-face" class="lucide lucide-scan-face"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><path d="M9 9h.01"></path><path d="M15 9h.01"></path></svg></span>
+        <div>
+         <h2 data-template-id="access-title" class="canva-text font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5rem !important;" data-canva-font-size="1.5rem">Entrar al mockup</h2>
+         <p data-template-id="access-note" class="canva-text mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 0.875rem !important;" data-canva-font-size="0.875rem">Selecciona la experiencia que quieres presentar.</p>
+        </div>
+       </div><label data-template-id="user-label" for="demo-user" class="canva-text block font-bold mb-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;" data-canva-font-size="1rem">Usuario de demostración</label> <input id="demo-user" data-template-id="user-input" class="canva-input w-full rounded-2xl border-2 border-slate-200 px-4 py-3 bg-white focus:border-cyan-500" autocomplete="off" placeholder="Ej. Laura Gómez" data-canva-font-size="1rem" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">
+       <fieldset class="mt-5"><legend data-template-id="role-label" class="canva-text font-bold mb-3" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;" data-canva-font-size="1rem">Rol</legend>
+        <div class="grid grid-cols-2 gap-3"><button id="role-admin" data-role="admin" type="button" class="role-btn focusable rounded-2xl border-2 border-black bg-black text-white p-4 text-left"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shield-check" class="lucide lucide-shield-check mb-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg> <span data-template-id="admin-role" class="canva-text block font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;" data-canva-font-size="1rem">Administrador</span> </button> <button id="role-vendor" data-role="vendor" type="button" class="role-btn focusable rounded-2xl border-2 border-slate-200 bg-white p-4 text-left"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="shirt" class="lucide lucide-shirt mb-3"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg> <span data-template-id="vendor-role" class="canva-text block font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;" data-canva-font-size="1rem">Vendedor</span> </button>
+        </div>
+       </fieldset><button data-template-id="enter-button" type="submit" class="canva-button w-full mt-6 rounded-2xl px-5 py-4 font-black flex justify-center items-center gap-2 shadow-lg hover:-translate-y-0.5 transition" style="background-image: linear-gradient(rgb(23, 195, 195), rgb(23, 195, 195)) !important; background-clip: border-box !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important;"> <span data-template-id="enter-button-text" class="canva-text" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;" data-canva-font-size="1rem">Abrir jornada</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg> </button>
+       <p data-template-id="security-note" class="canva-text text-center mt-4 leading-relaxed" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 0.75rem !important;" data-canva-font-size="0.75rem">Vista de presentación: no solicita ni almacena contraseñas.</p>
+      </form>
+     </div>
+    </section>
+    <section id="admin-screen" data-template-id="admin-section" class="canva-section screen" style="background-image: linear-gradient(rgb(244, 248, 247), rgb(244, 248, 247)) !important; background-clip: border-box !important;">
+     <div class="content">
+      <header data-template-id="admin-header" class="canva-header soft-card p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <div class="flex items-center gap-4"><img data-template-id="admin-mascot" loading="lazy" class="canva-image w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-2xl" alt="Quino, robot blanco amigable con detalles turquesa" src="./4a36a52703954bd0f5cc9936530d6b7f.png">
+        <div>
+         <p data-template-id="admin-eyebrow" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">PANEL ADMINISTRADOR</p>
+         <h2 data-template-id="admin-title" class="canva-text font-black tracking-[-.05em]" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.125rem !important;" data-canva-font-size="2.125rem">Agencia Quin</h2>
+         <p data-template-id="admin-date" class="canva-text mt-1" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Sábado, 18 de julio de 2026</p>
+        </div>
+       </div><button id="to-vendor" data-template-id="view-vendor-button" class="canva-button rounded-2xl px-4 py-3 font-bold flex items-center gap-2" style="background-image: linear-gradient(rgb(9, 19, 21), rgb(9, 19, 21)) !important; background-clip: border-box !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important;"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span data-template-id="view-vendor-text" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Ver pantalla vendedor</span> </button>
+      </header>
+      <section class="mt-8" aria-labelledby="admin-overview-title">
+       <div class="flex items-end justify-between gap-4 mb-4">
+        <div>
+         <p data-template-id="overview-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">JORNADA ACTUAL</p>
+         <h2 id="admin-overview-title" data-template-id="overview-title" class="canva-text font-black tracking-[-.04em] mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.125rem !important;" data-canva-font-size="2.125rem">Resumen del día</h2>
+        </div><span data-template-id="live-tag" class="canva-tag rounded-full px-3 py-2 font-bold" data-canva-font-size="1rem" style="background-image: linear-gradient(rgb(215, 250, 245), rgb(215, 250, 245)) !important; background-clip: border-box !important; white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">● Al día</span>
+       </div>
+       <div class="admin-grid">
+        <article data-template-id="kpi-total-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(9, 19, 21), rgb(9, 19, 21)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-total-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Total del día · Effi + Dropi</p>
+         <div>
+          <span data-template-id="kpi-total-value" class="canva-text kpi-value" data-canva-font-size="3rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.98rem !important;">204</span>
+          <p data-template-id="kpi-total-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(199, 211, 212) !important; --canva-color: #c7d3d4ff; caret-color: rgb(199, 211, 212) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">prendas</p>
+         </div>
+        </article>
+        <article data-template-id="kpi-own-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(23, 195, 195), rgb(23, 195, 195)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-own-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Ventas propias · Effi</p>
+         <div>
+          <span data-template-id="kpi-own-value" class="canva-text kpi-value" data-canva-font-size="3rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.99rem !important;">164</span>
+          <p data-template-id="kpi-own-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(18, 59, 61) !important; --canva-color: #123b3dff; caret-color: rgb(18, 59, 61) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">prendas</p>
+         </div>
+        </article>
+        <article data-template-id="kpi-dropi-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-dropi-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Ventas Dropi</p>
+         <div>
+          <span data-template-id="kpi-dropi-value" class="canva-text kpi-value" data-canva-font-size="3rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.99rem !important;">40</span>
+          <p data-template-id="kpi-dropi-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">prendas</p>
+         </div>
+        </article>
+        <article data-template-id="kpi-month-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-month-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Acumulado del mes</p>
+         <div>
+          <span data-template-id="kpi-month-value" class="canva-text kpi-value" data-canva-font-size="2.75rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.74rem !important;">3.468</span>
+          <p data-template-id="kpi-month-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">prendas</p>
+         </div>
+        </article>
+        <article data-template-id="kpi-average-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-average-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Promedio por día</p>
+         <div>
+          <span data-template-id="kpi-average-value" class="canva-text kpi-value" data-canva-font-size="3rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 3rem !important;">193</span>
+          <p data-template-id="kpi-average-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">prendas</p>
+         </div>
+        </article>
+        <article data-template-id="kpi-percent-card" class="canva-card kpi soft-card" style="background-image: linear-gradient(rgb(231, 250, 248), rgb(231, 250, 248)) !important; background-clip: border-box !important;">
+         <p data-template-id="kpi-percent-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">% Propias</p>
+         <div>
+          <span data-template-id="kpi-percent-value" class="canva-text kpi-value" data-canva-font-size="2.75rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.74rem !important;">80,4%</span>
+          <p data-template-id="kpi-percent-unit" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">del total de hoy</p>
+         </div>
+        </article>
+       </div>
+      </section>
+      <article data-template-id="goal-card" class="canva-card soft-card mt-5 p-5 sm:p-6" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <div class="flex justify-between gap-4 items-end">
+        <div>
+         <p data-template-id="goal-label" class="canva-text font-black" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">Meta del día: 200 prendas</p>
+         <p data-template-id="goal-progress-text" class="canva-text mt-1" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">204 de 200 prendas · meta grupal superada</p>
+        </div><span data-template-id="goal-percent" class="canva-text font-black" data-canva-font-size="1.75rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.75rem !important;">102%</span>
+       </div>
+       <div class="h-5 bg-slate-200 rounded-full overflow-hidden mt-4" role="progressbar" aria-label="Progreso meta del día" aria-valuemin="0" aria-valuemax="200" aria-valuenow="204">
+        <div data-template-id="goal-progress-fill" class="canva-progress h-full rounded-full" style="width: 100%; background-image: linear-gradient(0deg, rgb(23, 195, 195), rgb(7, 143, 148)) !important; background-clip: border-box !important;"></div>
+       </div>
+      </article>
+      <section class="two-col mt-5" aria-label="Comparación diaria">
+       <article data-template-id="real-chart-card" class="canva-card soft-card p-5" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <p data-template-id="real-chart-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">SIN REPARTIR</p>
+        <h2 data-template-id="real-chart-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5625rem !important;" data-canva-font-size="1.5625rem">Ventas reales</h2>
+        <div id="real-chart" class="chart-box"><div class="chart-area"><div class="goal-line" style="bottom:88.88888888888889%"></div><span class="goal-label" style="bottom:calc(88.88888888888889% + 4px)">Meta 200</span><div class="bar-col"><span class="bar-value">188</span><div class="bar" style="height:83.55555555555556%;background:#17C3C3"></div><span class="bar-label">Lun</span></div><div class="bar-col"><span class="bar-value">204</span><div class="bar" style="height:90.66666666666666%;background:#17C3C3"></div><span class="bar-label">Mar</span></div><div class="bar-col"><span class="bar-value">176</span><div class="bar" style="height:78.22222222222223%;background:#17C3C3"></div><span class="bar-label">Mié</span></div><div class="bar-col"><span class="bar-value">218</span><div class="bar" style="height:96.88888888888889%;background:#17C3C3"></div><span class="bar-label">Jue</span></div><div class="bar-col"><span class="bar-value">196</span><div class="bar" style="height:87.1111111111111%;background:#17C3C3"></div><span class="bar-label">Vie</span></div><div class="bar-col"><span class="bar-value">172</span><div class="bar" style="height:76.44444444444444%;background:#17C3C3"></div><span class="bar-label">Sáb</span></div><div class="bar-col"><span class="bar-value">204</span><div class="bar" style="height:90.66666666666666%;background:#17C3C3"></div><span class="bar-label">Dom</span></div></div></div>
+       </article>
+       <article data-template-id="seller-chart-card" class="canva-card soft-card p-5 mt-5 md:mt-0" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <p data-template-id="seller-chart-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">REPARTO DE FIN DE SEMANA</p>
+        <h2 data-template-id="seller-chart-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5625rem !important;" data-canva-font-size="1.5625rem">Como lo ven los vendedores</h2>
+        <div id="seller-chart" class="chart-box"><div class="chart-area"><div class="goal-line" style="bottom:88.88888888888889%"></div><span class="goal-label" style="bottom:calc(88.88888888888889% + 4px)">Meta 200</span><div class="bar-col"><span class="bar-value">188</span><div class="bar" style="height:83.55555555555556%;background:#091315"></div><span class="bar-label">Lun</span></div><div class="bar-col"><span class="bar-value">204</span><div class="bar" style="height:90.66666666666666%;background:#091315"></div><span class="bar-label">Mar</span></div><div class="bar-col"><span class="bar-value">176</span><div class="bar" style="height:78.22222222222223%;background:#091315"></div><span class="bar-label">Mié</span></div><div class="bar-col"><span class="bar-value">218</span><div class="bar" style="height:96.88888888888889%;background:#091315"></div><span class="bar-label">Jue</span></div><div class="bar-col"><span class="bar-value">196</span><div class="bar" style="height:87.1111111111111%;background:#091315"></div><span class="bar-label">Vie</span></div><div class="bar-col"><span class="bar-value">190</span><div class="bar" style="height:84.44444444444444%;background:#091315"></div><span class="bar-label">Sáb</span></div><div class="bar-col"><span class="bar-value">204</span><div class="bar" style="height:90.66666666666666%;background:#091315"></div><span class="bar-label">Dom</span></div></div></div>
+       </article>
+      </section>
+      <section class="two-col mt-5" aria-label="Líderes del día">
+       <article data-template-id="top-seller-card" class="canva-card soft-card p-6 flex items-center gap-5" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;"><span class="w-14 h-14 rounded-2xl bg-black text-cyan-300 grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="trophy" class="lucide lucide-trophy"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg></span>
+        <div>
+         <p data-template-id="top-seller-label" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">TOP 1 VENDEDOR</p>
+         <h2 data-template-id="top-seller-name" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5rem !important;" data-canva-font-size="1.5rem">Laura Gómez</h2>
+         <p data-template-id="top-seller-value" class="canva-text mt-1" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">38 prendas hoy</p>
+        </div>
+       </article>
+       <article data-template-id="top-store-card" class="canva-card soft-card p-6 flex items-center gap-5 mt-5 md:mt-0" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;"><span class="w-14 h-14 rounded-2xl bg-cyan-400 text-black grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="store" class="lucide lucide-store"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"></path></svg></span>
+        <div>
+         <p data-template-id="top-store-label" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">TOP 1 TIENDA</p>
+         <h2 data-template-id="top-store-name" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5rem !important;" data-canva-font-size="1.5rem">Centro</h2>
+         <p data-template-id="top-store-value" class="canva-text mt-1" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">72 prendas hoy</p>
+        </div>
+       </article>
+      </section>
+      <section class="two-col mt-5">
+       <article data-template-id="seller-ranking-card" class="canva-card soft-card p-5 sm:p-6" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <h2 data-template-id="seller-ranking-title" class="canva-text font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5rem !important;" data-canva-font-size="1.5rem">Ranking por vendedor</h2>
+        <div id="admin-seller-ranking" class="mt-3"><div class="rank-row"><span class="rank-pos">1</span><strong>Laura</strong><span class="font-black">38 prendas</span></div><div class="rank-row"><span class="rank-pos">2</span><strong>Mateo</strong><span class="font-black">34 prendas</span></div><div class="rank-row"><span class="rank-pos">3</span><strong>Valentina</strong><span class="font-black">31 prendas</span></div><div class="rank-row"><span class="rank-pos">4</span><strong>Santiago</strong><span class="font-black">28 prendas</span></div><div class="rank-row"><span class="rank-pos">5</span><strong>Camila</strong><span class="font-black">25 prendas</span></div></div>
+       </article>
+       <article data-template-id="store-ranking-card" class="canva-card soft-card p-5 sm:p-6 mt-5 md:mt-0" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <h2 data-template-id="store-ranking-title" class="canva-text font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5rem !important;" data-canva-font-size="1.5rem">Ranking por tienda</h2>
+        <div id="store-ranking" class="mt-3"><div class="rank-row"><span class="rank-pos">1</span><strong>Centro</strong><span class="font-black">72 prendas</span></div><div class="rank-row"><span class="rank-pos">2</span><strong>Cabecera</strong><span class="font-black">58 prendas</span></div><div class="rank-row"><span class="rank-pos">3</span><strong>Cañaveral</strong><span class="font-black">45 prendas</span></div><div class="rank-row"><span class="rank-pos">4</span><strong>Floridablanca</strong><span class="font-black">29 prendas</span></div></div>
+       </article>
+      </section>
+      <section data-template-id="month-summary-card" class="canva-card soft-card mt-5 p-5 sm:p-7" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <p data-template-id="month-summary-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">JULIO 2026</p>
+       <h2 data-template-id="month-summary-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.875rem !important;" data-canva-font-size="1.875rem">Resumen del Mes</h2>
+       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+        <div class="rounded-2xl bg-slate-100 p-4">
+         <p data-template-id="reports-label" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Reportes registrados</p><strong data-template-id="reports-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">18 reportes</strong>
+        </div>
+        <div class="rounded-2xl bg-slate-100 p-4">
+         <p data-template-id="days-label" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Días cubiertos</p><strong data-template-id="days-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">18 días</strong>
+        </div>
+        <div class="rounded-2xl bg-slate-100 p-4">
+         <p data-template-id="month-total-label" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Total prendas</p><strong data-template-id="month-total-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">3.468 prendas</strong>
+        </div>
+        <div class="rounded-2xl bg-slate-100 p-4">
+         <p data-template-id="month-avg-label" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Promedio por día</p><strong data-template-id="month-avg-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">193 prendas</strong>
+        </div>
+       </div>
+       <div class="grid sm:grid-cols-2 gap-3 mt-3">
+        <div data-template-id="best-day-card" class="canva-card rounded-2xl p-4" style="background-image: linear-gradient(rgb(215, 250, 245), rgb(215, 250, 245)) !important; background-clip: border-box !important;">
+         <p data-template-id="best-day-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Mejor jornada</p><strong data-template-id="best-day-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">218 · vie 10-jul</strong>
+        </div>
+        <div data-template-id="worst-day-card" class="canva-card rounded-2xl p-4" style="background-image: linear-gradient(rgb(242, 244, 244), rgb(242, 244, 244)) !important; background-clip: border-box !important;">
+         <p data-template-id="worst-day-label" class="canva-text font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Peor jornada</p><strong data-template-id="worst-day-value" class="canva-text block mt-2" data-canva-font-size="1.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.375rem !important;">158 · lun 20-jul</strong>
+        </div>
+       </div>
+      </section>
+      <section data-template-id="analysis-card" class="canva-card soft-card mt-5 p-5 sm:p-7" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <div class="flex flex-wrap justify-between items-start gap-4">
+        <div>
+         <p data-template-id="analysis-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">ANÁLISIS TIPO EXCEL</p>
+         <h2 data-template-id="analysis-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.875rem !important;" data-canva-font-size="1.875rem">Explora la jornada por fechas</h2>
+         <p data-template-id="analysis-help" class="canva-text mt-2 max-w-2xl" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Toca días sueltos o arrastra un rango. Puedes fijar el inicio, cambiar de mes y elegir el final.</p>
+        </div><button id="clear-calendar" data-template-id="clear-selection-button" class="canva-button rounded-xl px-4 py-2 font-bold flex items-center gap-2" style="background-image: linear-gradient(rgb(232, 240, 239), rgb(232, 240, 239)) !important; background-clip: border-box !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eraser" class="lucide lucide-eraser"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path></svg><span data-template-id="clear-selection-text" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Limpiar</span></button>
+       </div>
+       <div class="analysis-layout mt-6">
+        <div>
+         <div class="flex justify-between items-center mb-3"><button id="prev-month" aria-label="Mes anterior" class="focusable w-11 h-11 rounded-xl border-2 border-slate-200 grid place-items-center bg-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-left" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div class="text-center">
+           <h3 id="calendar-month" class="font-black text-xl" aria-live="polite">Julio 2026</h3>
+           <p id="range-status" class="text-sm text-slate-500 mt-1">Toca o arrastra para seleccionar</p>
+          </div><button id="next-month" aria-label="Mes siguiente" class="focusable w-11 h-11 rounded-xl border-2 border-slate-200 grid place-items-center bg-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="chevron-right" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"></path></svg></button>
+         </div>
+         <div class="calendar-grid" aria-hidden="true"><span class="calendar-head">Lun</span><span class="calendar-head">Mar</span><span class="calendar-head">Mié</span><span class="calendar-head">Jue</span><span class="calendar-head">Vie</span><span class="calendar-head">Sáb</span><span class="calendar-head">Dom</span>
+         </div>
+         <div id="calendar" class="calendar-grid select-none"><span class="day blank"></span><span class="day blank"></span><button type="button" class="day focusable" data-date="2026-07-01" aria-label="1 de julio, 196 prendas"><span class="day-num">1</span><span class="day-total">196</span></button><button type="button" class="day focusable" data-date="2026-07-02" aria-label="2 de julio, 209 prendas"><span class="day-num">2</span><span class="day-total">209</span></button><button type="button" class="day focusable" data-date="2026-07-03" aria-label="3 de julio, 153 prendas"><span class="day-num">3</span><span class="day-total">153</span></button><button type="button" class="day focusable" data-date="2026-07-04" aria-label="4 de julio, 166 prendas"><span class="day-num">4</span><span class="day-total">166</span></button><button type="button" class="day focusable" data-date="2026-07-05" aria-label="5 de julio, 179 prendas"><span class="day-num">5</span><span class="day-total">179</span></button><button type="button" class="day focusable" data-date="2026-07-06" aria-label="6 de julio, 192 prendas"><span class="day-num">6</span><span class="day-total">192</span></button><button type="button" class="day focusable" data-date="2026-07-07" aria-label="7 de julio, 205 prendas"><span class="day-num">7</span><span class="day-total">205</span></button><button type="button" class="day focusable" data-date="2026-07-08" aria-label="8 de julio, 218 prendas"><span class="day-num">8</span><span class="day-total">218</span></button><button type="button" class="day focusable" data-date="2026-07-09" aria-label="9 de julio, 162 prendas"><span class="day-num">9</span><span class="day-total">162</span></button><button type="button" class="day focusable" data-date="2026-07-10" aria-label="10 de julio, 175 prendas"><span class="day-num">10</span><span class="day-total">175</span></button><button type="button" class="day focusable" data-date="2026-07-11" aria-label="11 de julio, 188 prendas"><span class="day-num">11</span><span class="day-total">188</span></button><button type="button" class="day focusable" data-date="2026-07-12" aria-label="12 de julio, 201 prendas"><span class="day-num">12</span><span class="day-total">201</span></button><button type="button" class="day focusable" data-date="2026-07-13" aria-label="13 de julio, 214 prendas"><span class="day-num">13</span><span class="day-total">214</span></button><button type="button" class="day focusable" data-date="2026-07-14" aria-label="14 de julio, 158 prendas"><span class="day-num">14</span><span class="day-total">158</span></button><button type="button" class="day focusable" data-date="2026-07-15" aria-label="15 de julio, 171 prendas"><span class="day-num">15</span><span class="day-total">171</span></button><button type="button" class="day focusable" data-date="2026-07-16" aria-label="16 de julio, 184 prendas"><span class="day-num">16</span><span class="day-total">184</span></button><button type="button" class="day focusable" data-date="2026-07-17" aria-label="17 de julio, 197 prendas"><span class="day-num">17</span><span class="day-total">197</span></button><button type="button" class="day focusable" data-date="2026-07-18" aria-label="18 de julio, 210 prendas"><span class="day-num">18</span><span class="day-total">210</span></button><button type="button" class="day focusable" data-date="2026-07-19" aria-label="19 de julio, 154 prendas"><span class="day-num">19</span><span class="day-total">154</span></button><button type="button" class="day focusable" data-date="2026-07-20" aria-label="20 de julio, 167 prendas"><span class="day-num">20</span><span class="day-total">167</span></button><button type="button" class="day focusable" data-date="2026-07-21" aria-label="21 de julio, 180 prendas"><span class="day-num">21</span><span class="day-total">180</span></button><button type="button" class="day focusable" data-date="2026-07-22" aria-label="22 de julio, 193 prendas"><span class="day-num">22</span><span class="day-total">193</span></button><button type="button" class="day focusable" data-date="2026-07-23" aria-label="23 de julio, 206 prendas"><span class="day-num">23</span><span class="day-total">206</span></button><button type="button" class="day focusable" data-date="2026-07-24" aria-label="24 de julio, 150 prendas"><span class="day-num">24</span><span class="day-total">150</span></button><button type="button" class="day focusable" data-date="2026-07-25" aria-label="25 de julio, 163 prendas"><span class="day-num">25</span><span class="day-total">163</span></button><button type="button" class="day focusable" data-date="2026-07-26" aria-label="26 de julio, 176 prendas"><span class="day-num">26</span><span class="day-total">176</span></button><button type="button" class="day focusable" data-date="2026-07-27" aria-label="27 de julio, 189 prendas"><span class="day-num">27</span><span class="day-total">189</span></button><button type="button" class="day focusable" data-date="2026-07-28" aria-label="28 de julio, 202 prendas"><span class="day-num">28</span><span class="day-total">202</span></button><button type="button" class="day focusable" data-date="2026-07-29" aria-label="29 de julio, 215 prendas"><span class="day-num">29</span><span class="day-total">215</span></button><button type="button" class="day focusable" data-date="2026-07-30" aria-label="30 de julio, 159 prendas"><span class="day-num">30</span><span class="day-total">159</span></button><button type="button" class="day focusable" data-date="2026-07-31" aria-label="31 de julio, 172 prendas"><span class="day-num">31</span><span class="day-total">172</span></button></div>
+        </div>
+        <aside data-template-id="selection-panel" class="canva-panel rounded-3xl p-5 mt-5 md:mt-0" style="background-image: linear-gradient(rgb(231, 250, 248), rgb(231, 250, 248)) !important; background-clip: border-box !important;">
+         <p data-template-id="selection-label" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">RESULTADO AUTOMÁTICO</p>
+         <h3 id="selection-title" class="font-black text-xl mt-1">Sin días seleccionados</h3>
+         <p id="selection-dates" class="text-sm mt-2 text-slate-600">Toca un día para comenzar.</p>
+         <div id="analysis-results" class="mt-5 space-y-3"><div class="bg-white rounded-2xl p-4 border border-slate-200"><div class="flex justify-between"><strong>Total</strong><strong>0 prendas</strong></div><div class="flex justify-between text-sm text-slate-500 mt-2"><span>Promedio</span><span>0 · 0 días</span></div></div><div class="bg-white rounded-2xl p-4 border border-slate-200"><div class="flex justify-between"><strong>Propias</strong><strong>0 prendas</strong></div><div class="flex justify-between text-sm text-slate-500 mt-2"><span>Promedio</span><span>0 · 0 días</span></div></div><div class="bg-white rounded-2xl p-4 border border-slate-200"><div class="flex justify-between"><strong>Dropi</strong><strong>0 prendas</strong></div><div class="flex justify-between text-sm text-slate-500 mt-2"><span>Promedio</span><span>0 · 0 días</span></div></div></div>
+        </aside>
+       </div>
+      </section>
+      <section data-template-id="comparison-card" class="canva-card soft-card mt-5 p-5 sm:p-7" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <p data-template-id="comparison-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">COMPARATIVO</p>
+       <h2 data-template-id="comparison-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.875rem !important;" data-canva-font-size="1.875rem">Evolución mes a mes</h2>
+       <div id="monthly-chart" class="chart-box mt-2"><div class="chart-area"><div class="goal-line" style="bottom:87.96622097114708%"></div><span class="goal-label" style="bottom:calc(87.96622097114708% + 4px)">Meta 5000</span><div class="bar-col"><span class="bar-value">4860</span><div class="bar" style="height:85.50316678395497%;background:#17C3C3"></div><span class="bar-label">Lun</span></div><div class="bar-col"><span class="bar-value">5124</span><div class="bar" style="height:90.14778325123153%;background:#17C3C3"></div><span class="bar-label">Mar</span></div><div class="bar-col"><span class="bar-value">5388</span><div class="bar" style="height:94.7923997185081%;background:#17C3C3"></div><span class="bar-label">Mié</span></div><div class="bar-col"><span class="bar-value">5272</span><div class="bar" style="height:92.75158339197748%;background:#17C3C3"></div><span class="bar-label">Jue</span></div><div class="bar-col"><span class="bar-value">5526</span><div class="bar" style="height:97.22026741731176%;background:#17C3C3"></div><span class="bar-label">Vie</span></div><div class="bar-col"><span class="bar-value">5684</span><div class="bar" style="height:100%;background:#17C3C3"></div><span class="bar-label">Sáb</span></div></div></div>
+      </section>
+      <section data-template-id="export-card" class="canva-card soft-card mt-5 p-5 sm:p-7" style="background-image: linear-gradient(rgb(9, 19, 21), rgb(9, 19, 21)) !important; background-clip: border-box !important;">
+       <p data-template-id="export-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">CONTENIDO PARA COMPARTIR</p>
+       <h2 data-template-id="export-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.875rem !important;" data-canva-font-size="1.875rem">Descargar imagen para WhatsApp</h2>
+       <p data-template-id="export-help" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(182, 196, 197) !important; --canva-color: #b6c4c5ff; caret-color: rgb(182, 196, 197) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Exportación disponible únicamente para el administrador.</p>
+       <div class="grid sm:grid-cols-2 gap-3 mt-5"><button id="download-total" data-template-id="download-total-button" class="canva-button rounded-2xl px-5 py-4 font-black flex items-center justify-center gap-2" style="background-image: linear-gradient(rgb(23, 195, 195), rgb(23, 195, 195)) !important; background-clip: border-box !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg><span data-template-id="download-total-text" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Total · Effi + Dropi</span></button> <button id="download-own" data-template-id="download-own-button" class="canva-button rounded-2xl px-5 py-4 font-black flex items-center justify-center gap-2" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="download" class="lucide lucide-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg><span data-template-id="download-own-text" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Propias · Effi</span></button>
+       </div>
+       <p id="download-status" class="mt-3 text-sm font-bold" aria-live="polite"></p>
+      </section>
+     </div>
+    </section>
+    <section id="vendor-screen" data-template-id="vendor-section" class="canva-section screen" style="background-image: linear-gradient(rgb(215, 250, 245), rgb(244, 248, 247)) !important; background-clip: border-box !important;">
+     <div class="content">
+      <header data-template-id="vendor-header" class="canva-header soft-card p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+       <div class="flex items-center gap-4"><img data-template-id="vendor-mascot" loading="lazy" class="canva-image w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-2xl" alt="Quino, robot blanco amigable con detalles turquesa" src="./4a36a52703954bd0f5cc9936530d6b7f.png">
+        <div>
+         <p data-template-id="vendor-eyebrow" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">VISTA VENDEDOR</p>
+         <h2 data-template-id="vendor-title" class="canva-text font-black tracking-[-.05em]" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.125rem !important;" data-canva-font-size="2.125rem">Hola, Valentina</h2>
+         <p data-template-id="vendor-date" class="canva-text mt-1" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Sábado, 18 de julio de 2026</p>
+        </div>
+       </div><button id="to-admin" data-template-id="view-admin-button" class="canva-button rounded-2xl px-4 py-3 font-bold flex items-center gap-2" style="background-image: linear-gradient(rgb(9, 19, 21), rgb(9, 19, 21)) !important; background-clip: border-box !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="layout-dashboard" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg><span data-template-id="view-admin-text" class="canva-text" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Ver administrador</span></button>
+      </header>
+      <div class="grid lg:grid-cols-2 gap-5 mt-7">
+       <article data-template-id="my-sales-card" class="canva-card soft-card p-6 sm:p-8 min-h-64 flex flex-col justify-between" style="background-image: linear-gradient(rgb(9, 19, 21), rgb(9, 19, 21)) !important; background-clip: border-box !important;">
+        <div>
+         <p data-template-id="my-sales-label" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">MI JORNADA</p>
+         <h2 data-template-id="my-sales-title" class="canva-text font-black mt-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.75rem !important;" data-canva-font-size="1.75rem">Tus ventas de hoy</h2>
+        </div>
+        <div>
+         <span data-template-id="my-sales-value" class="canva-text kpi-value" data-canva-font-size="4.25rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 4.23rem !important;">31</span>
+         <p data-template-id="my-sales-unit" class="canva-text mt-3" data-canva-font-size="1.125rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(212, 223, 224) !important; --canva-color: #d4dfe0ff; caret-color: rgb(212, 223, 224) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1.125rem !important;">prendas vendidas</p>
+        </div>
+       </article>
+       <article data-template-id="team-goal-card" class="canva-card soft-card p-6 sm:p-8 min-h-64 flex flex-col justify-between" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <div class="flex justify-between gap-3">
+         <div>
+          <p data-template-id="team-goal-label" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">ESTADO DEL EQUIPO</p>
+          <h2 data-template-id="team-goal-title" class="canva-text font-black mt-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.75rem !important;" data-canva-font-size="1.75rem">Meta grupal de propias</h2>
+         </div><span data-template-id="team-goal-status" class="canva-tag rounded-full px-4 py-2 h-fit font-black" data-canva-font-size="1rem" style="background-image: linear-gradient(rgb(215, 250, 245), rgb(215, 250, 245)) !important; background-clip: border-box !important; white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Cumplida</span>
+        </div>
+        <div>
+         <p data-template-id="team-goal-value" class="canva-text font-black" data-canva-font-size="1.875rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.875rem !important;">164 de 160 prendas</p>
+         <div class="h-5 bg-slate-200 rounded-full overflow-hidden mt-4">
+          <div data-template-id="team-goal-fill" class="canva-progress h-full rounded-full" style="width: 100%; background-image: linear-gradient(rgb(23, 195, 195), rgb(23, 195, 195)) !important; background-clip: border-box !important;"></div>
+         </div>
+         <p data-template-id="team-goal-note" class="canva-text mt-3" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Esta es una meta del equipo, no una meta individual.</p>
+        </div>
+       </article>
+      </div>
+      <div class="grid lg:grid-cols-[.8fr_1.2fr] gap-5 mt-5">
+       <article data-template-id="vendor-ranking-card" class="canva-card soft-card p-5 sm:p-6" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <h2 data-template-id="vendor-ranking-title" class="canva-text font-black" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.5625rem !important;" data-canva-font-size="1.5625rem">Posiciones del día</h2>
+        <div id="vendor-ranking" class="mt-3"><div class="rank-row"><span class="rank-pos">1</span><strong>Laura</strong><span class="font-black">38 prendas</span></div><div class="rank-row"><span class="rank-pos">2</span><strong>Mateo</strong><span class="font-black">34 prendas</span></div><div class="rank-row" style="background:#e8fafa;border-radius:14px;padding-left:8px;padding-right:8px"><span class="rank-pos">3</span><strong>Valentina</strong><span class="font-black">31 prendas</span></div><div class="rank-row"><span class="rank-pos">4</span><strong>Santiago</strong><span class="font-black">28 prendas</span></div><div class="rank-row"><span class="rank-pos">5</span><strong>Camila</strong><span class="font-black">25 prendas</span></div><div class="rank-row"><span class="rank-pos">6</span><strong>Daniel</strong><span class="font-black">22 prendas</span></div><div class="rank-row"><span class="rank-pos">7</span><strong>Sara</strong><span class="font-black">18 prendas</span></div><div class="rank-row"><span class="rank-pos">8</span><strong>Nicolás</strong><span class="font-black">16 prendas</span></div><div class="rank-row"><span class="rank-pos">9</span><strong>Andrea</strong><span class="font-black">14 prendas</span></div><div class="rank-row"><span class="rank-pos">10</span><strong>Juan</strong><span class="font-black">12 prendas</span></div></div>
+       </article>
+       <article data-template-id="vs-card" class="canva-card soft-card p-5 sm:p-6" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+        <p data-template-id="vs-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(7, 143, 148) !important; --canva-color: #078f94ff; caret-color: rgb(7, 143, 148) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">TOP 10</p>
+        <h2 data-template-id="vs-title" class="canva-text font-black mt-1" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1.75rem !important;" data-canva-font-size="1.75rem">VS Vendedores</h2>
+        <p data-template-id="vs-note" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(96, 113, 116) !important; --canva-color: #607174ff; caret-color: rgb(96, 113, 116) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Visualización en pantalla · sin descarga</p>
+        <div id="vendor-chart" class="chart-box mt-2"><div class="chart-area"><div class="goal-line" style="bottom:61.53846153846154%"></div><span class="goal-label" style="bottom:calc(61.53846153846154% + 4px)">Meta 40</span><div class="bar-col"><span class="bar-value">38</span><div class="bar" style="height:58.46153846153847%;background:#17C3C3"></div><span class="bar-label">Lun</span></div><div class="bar-col"><span class="bar-value">34</span><div class="bar" style="height:52.307692307692314%;background:#17C3C3"></div><span class="bar-label">Mar</span></div><div class="bar-col"><span class="bar-value">31</span><div class="bar" style="height:47.69230769230769%;background:#17C3C3"></div><span class="bar-label">Mié</span></div><div class="bar-col"><span class="bar-value">28</span><div class="bar" style="height:43.07692307692308%;background:#17C3C3"></div><span class="bar-label">Jue</span></div><div class="bar-col"><span class="bar-value">25</span><div class="bar" style="height:38.46153846153847%;background:#17C3C3"></div><span class="bar-label">Vie</span></div><div class="bar-col"><span class="bar-value">22</span><div class="bar" style="height:33.84615384615385%;background:#17C3C3"></div><span class="bar-label">Sáb</span></div><div class="bar-col"><span class="bar-value">18</span><div class="bar" style="height:27.692307692307693%;background:#17C3C3"></div><span class="bar-label">Dom</span></div><div class="bar-col"><span class="bar-value">16</span><div class="bar" style="height:24.615384615384617%;background:#17C3C3"></div><span class="bar-label">undefined</span></div><div class="bar-col"><span class="bar-value">14</span><div class="bar" style="height:21.53846153846154%;background:#17C3C3"></div><span class="bar-label">undefined</span></div><div class="bar-col"><span class="bar-value">12</span><div class="bar" style="height:18.461538461538463%;background:#17C3C3"></div><span class="bar-label">undefined</span></div></div></div>
+       </article>
+      </div>
+     </div>
+    </section>
+    <section id="stories-screen" data-template-id="stories-section" class="canva-section screen" style="background-image: linear-gradient(rgb(205, 237, 234), rgb(205, 237, 234)) !important; background-clip: border-box !important;">
+     <div class="content">
+      <header class="text-center max-w-2xl mx-auto mb-8">
+       <p data-template-id="stories-kicker" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(6, 119, 123) !important; --canva-color: #06777bff; caret-color: rgb(6, 119, 123) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">FORMATOS VERTICALES</p>
+       <h2 data-template-id="stories-title" class="canva-text font-black tracking-[-.05em] mt-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.625rem !important;" data-canva-font-size="2.625rem">Tarjetas para WhatsApp</h2>
+       <p data-template-id="stories-note" class="canva-text mt-3" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(83, 101, 104) !important; --canva-color: #536568ff; caret-color: rgb(83, 101, 104) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 400 !important; font-style: normal !important; font-size: 1rem !important;">Dos versiones coherentes con la jornada: total y ventas propias.</p>
+      </header>
+      <div class="grid lg:grid-cols-2 gap-10 items-start">
+       <article>
+        <div id="story-total" data-template-id="story-total-card" class="canva-card story" style="background-image: linear-gradient(160deg, rgb(23, 195, 195), rgb(189, 244, 241)) !important; background-clip: border-box !important;">
+         <div class="absolute w-48 h-48 rounded-full bg-white/20 -right-16 -top-16"></div>
+         <p data-template-id="story-total-brand" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">AGENCIA QUIN · TOTAL</p>
+         <h2 data-template-id="story-total-title" class="canva-text font-black leading-none tracking-[-.06em] mt-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.9375rem !important;" data-canva-font-size="2.9375rem">Meta 200</h2>
+         <p data-template-id="story-total-date" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(18, 59, 61) !important; --canva-color: #123b3dff; caret-color: rgb(18, 59, 61) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Jornada · 18 jul 2026</p><img data-template-id="story-total-mascot" loading="lazy" class="canva-image story-mascot" alt="Quino, robot blanco amigable con detalles turquesa" src="./4a36a52703954bd0f5cc9936530d6b7f.png">
+         <div class="mt-9 relative z-10"><span data-template-id="story-total-value" class="canva-text font-black leading-none tracking-[-.08em]" data-canva-font-size="4.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 4.36rem !important;">204</span>
+          <p data-template-id="story-total-unit" class="canva-text font-bold mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(18, 59, 61) !important; --canva-color: #123b3dff; caret-color: rgb(18, 59, 61) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">prendas del día</p>
+         </div>
+         <div data-template-id="story-total-chart" class="canva-panel story-chart" style="background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255)) !important; background-clip: border-box !important;">
+          <p data-template-id="story-total-chart-label" class="canva-text font-black" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Últimos 7 días · meta 200</p>
+          <div id="story-total-bars" class="story-bars"><div class="story-goal" style="bottom:88.88888888888889%;color:#091315"></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">188</span><div class="story-bar" style="height:83.55555555555556%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Lun</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">204</span><div class="story-bar" style="height:90.66666666666666%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Mar</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">176</span><div class="story-bar" style="height:78.22222222222223%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Mié</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">218</span><div class="story-bar" style="height:96.88888888888889%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Jue</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">196</span><div class="story-bar" style="height:87.1111111111111%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Vie</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">172</span><div class="story-bar" style="height:76.44444444444444%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Sáb</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#091315">204</span><div class="story-bar" style="height:90.66666666666666%;background:#091315"></div><span style="font-size:9px;font-weight:800;color:#091315">Dom</span></div></div>
+         </div>
+        </div>
+        <p data-template-id="story-total-caption" class="canva-text text-center mt-4 font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Versión Total · Effi + Dropi</p>
+       </article>
+       <article>
+        <div id="story-own" data-template-id="story-own-card" class="canva-card story" style="background-image: linear-gradient(160deg, rgb(9, 19, 21), rgb(23, 56, 58)) !important; background-clip: border-box !important;">
+         <div class="absolute w-48 h-48 rounded-full bg-cyan-300/30 -right-16 -top-16"></div>
+         <p data-template-id="story-own-brand" class="canva-text eyebrow" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">AGENCIA QUIN · PROPIAS</p>
+         <h2 data-template-id="story-own-title" class="canva-text font-black leading-none tracking-[-.06em] mt-2" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 2.9375rem !important;" data-canva-font-size="2.9375rem">Meta 160</h2>
+         <p data-template-id="story-own-date" class="canva-text mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(191, 208, 209) !important; --canva-color: #bfd0d1ff; caret-color: rgb(191, 208, 209) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Jornada · 18 jul 2026</p><img data-template-id="story-own-mascot" loading="lazy" class="canva-image story-mascot" alt="Quino, robot blanco amigable con detalles turquesa" src="./4a36a52703954bd0f5cc9936530d6b7f.png">
+         <div class="mt-9 relative z-10"><span data-template-id="story-own-value" class="canva-text font-black leading-none tracking-[-.08em]" data-canva-font-size="4.375rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(23, 195, 195) !important; --canva-color: #17c3c3ff; caret-color: rgb(23, 195, 195) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 4.375rem !important;">164</span>
+          <p data-template-id="story-own-unit" class="canva-text font-bold mt-2" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(212, 223, 224) !important; --canva-color: #d4dfe0ff; caret-color: rgb(212, 223, 224) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">prendas propias · Effi</p>
+         </div>
+         <div data-template-id="story-own-chart" class="canva-panel story-chart" style="background-image: linear-gradient(rgb(23, 56, 58), rgb(23, 56, 58)) !important; background-clip: border-box !important;">
+          <p data-template-id="story-own-chart-label" class="canva-text font-black" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(255, 255, 255) !important; --canva-color: #ffffffff; caret-color: rgb(255, 255, 255) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Últimos 7 días · meta 160</p>
+          <div id="story-own-bars" class="story-bars"><div class="story-goal" style="bottom:86.48648648648648%;color:#ffffff"></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">149</span><div class="story-bar" style="height:80.54054054054053%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Lun</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">163</span><div class="story-bar" style="height:88.10810810810811%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Mar</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">141</span><div class="story-bar" style="height:76.21621621621621%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Mié</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">176</span><div class="story-bar" style="height:95.13513513513514%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Jue</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">157</span><div class="story-bar" style="height:84.86486486486487%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Vie</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">139</span><div class="story-bar" style="height:75.13513513513513%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Sáb</span></div><div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:#ffffff">164</span><div class="story-bar" style="height:88.64864864864866%;background:#17C3C3"></div><span style="font-size:9px;font-weight:800;color:#ffffff">Dom</span></div></div>
+         </div>
+        </div>
+        <p data-template-id="story-own-caption" class="canva-text text-center mt-4 font-bold" data-canva-font-size="1rem" style="white-space: pre-wrap !important; overflow-wrap: normal !important; line-height: normal !important; color: rgb(9, 19, 21) !important; --canva-color: #091315ff; caret-color: rgb(9, 19, 21) !important; font-family: YAD1aU3sLnI_0, auto !important; font-weight: 700 !important; font-style: normal !important; font-size: 1rem !important;">Versión Propias · Effi</p>
+       </article>
+      </div>
+     </div>
+    </section>
+   </main>
+   <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white rounded-full px-5 py-3 font-bold shadow-xl" aria-live="polite"></div>
+  </div>
+  <script src="./editing_sdk.js.descarga"></script>
+  <script>
+  const mascotId = 'canva://MAHPx0hSkkk/1';
+  const dailyReal = [188, 204, 176, 218, 196, 172, 204];
+  const dailySeller = [188, 204, 176, 218, 196, 190, 204];
+  const ownDaily = [149, 163, 141, 176, 157, 139, 164];
+  const sellers = [
+    ['Laura', 38], ['Mateo', 34], ['Valentina', 31], ['Santiago', 28],
+    ['Camila', 25], ['Daniel', 22], ['Sara', 18], ['Nicolás', 16], ['Andrea', 14], ['Juan', 12]
+  ];
+  const stores = [['Centro', 72], ['Cabecera', 58], ['Cañaveral', 45], ['Floridablanca', 29]];
+  const labels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+  function makeChart(target, values, goal, color) {
+    const el = document.getElementById(target);
+    const max = Math.max(goal + 25, ...values);
+    el.innerHTML = '<div class="chart-area"><div class="goal-line" style="bottom:' + (goal/max*100) + '%"></div><span class="goal-label" style="bottom:calc(' + (goal/max*100) + '% + 4px)">Meta ' + goal + '</span>' +
+      values.map((v,i) => '<div class="bar-col"><span class="bar-value">' + v + '</span><div class="bar" style="height:' + (v/max*100) + '%;background:' + color + '"></div><span class="bar-label">' + labels[i] + '</span></div>').join('') +
+      '</div>';
+  }
+
+  function makeRanking(target, rows, highlight) {
+    document.getElementById(target).innerHTML = rows.map((row,i) =>
+      '<div class="rank-row"' + (highlight === row[0] ? ' style="background:#e8fafa;border-radius:14px;padding-left:8px;padding-right:8px"' : '') + '>' +
+      '<span class="rank-pos">' + (i+1) + '</span><strong>' + row[0] + '</strong><span class="font-black">' + row[1] + ' prendas</span></div>'
+    ).join('');
+  }
+
+  function makeStoryBars(target, values, goal, color, textColor) {
+    const el = document.getElementById(target);
+    const max = Math.max(goal + 25, ...values);
+    el.innerHTML = '<div class="story-goal" style="bottom:' + (goal/max*100) + '%;color:' + textColor + '"></div>' +
+      values.map((v,i) => '<div class="story-bar-col"><span style="font-size:10px;font-weight:900;color:' + textColor + '">' + v + '</span><div class="story-bar" style="height:' + (v/max*100) + '%;background:' + color + '"></div><span style="font-size:9px;font-weight:800;color:' + textColor + '">' + labels[i] + '</span></div>').join('');
+  }
+
+  const calendarData = {};
+  function iso(y,m,d) { return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0'); }
+  for (let m = 5; m <= 7; m++) {
+    const days = new Date(2026, m + 1, 0).getDate();
+    for (let d = 1; d <= days; d++) {
+      const total = 150 + ((d * 13 + m * 17) % 69);
+      const own = Math.round(total * (.72 + ((d % 4) * .025)));
+      calendarData[iso(2026,m,d)] = { total, own, dropi: total-own };
+    }
+  }
+
+  let currentMonth = 6;
+  let selected = new Set();
+  let dragStart = null;
+  let pointerDown = false;
+  let pendingRangeStart = null;
+  const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function datesBetween(a,b) {
+    const out = [];
+    let start = new Date(a + 'T12:00:00');
+    let end = new Date(b + 'T12:00:00');
+    if (start > end) [start,end] = [end,start];
+    while (start <= end) {
+      const key = start.toISOString().slice(0,10);
+      if (calendarData[key]) out.push(key);
+      start.setDate(start.getDate()+1);
+    }
+    return out;
+  }
+
+  function renderCalendar() {
+    document.getElementById('calendar-month').textContent = monthNames[currentMonth][0].toUpperCase() + monthNames[currentMonth].slice(1) + ' 2026';
+    document.getElementById('range-status').textContent = pendingRangeStart ? 'Inicio fijado: elige el final del rango' : 'Toca o arrastra para seleccionar';
+    const grid = document.getElementById('calendar');
+    grid.innerHTML = '';
+    const first = (new Date(2026,currentMonth,1).getDay()+6)%7;
+    for (let i=0;i<first;i++) {
+      const blank = document.createElement('span');
+      blank.className = 'day blank';
+      grid.appendChild(blank);
+    }
+    const count = new Date(2026,currentMonth+1,0).getDate();
+    for (let d=1; d<=count; d++) {
+      const key = iso(2026,currentMonth,d);
+      const data = calendarData[key];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'day focusable' + (selected.has(key) ? ' selected' : '') + (key === pendingRangeStart ? ' range-edge' : '');
+      btn.dataset.date = key;
+      btn.setAttribute('aria-label', d + ' de ' + monthNames[currentMonth] + ', ' + data.total + ' prendas');
+      btn.innerHTML = '<span class="day-num">' + d + '</span><span class="day-total">' + data.total + '</span>';
+      btn.addEventListener('pointerdown', e => {
+        pointerDown = true; dragStart = key;
+        e.currentTarget.setPointerCapture(e.pointerId);
+      });
+      btn.addEventListener('pointerenter', () => {
+        if (pointerDown && dragStart) previewRange(dragStart,key);
+      });
+      btn.addEventListener('pointerup', () => handleDay(key));
+      btn.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDay(key); }
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  function previewRange(a,b) {
+    document.querySelectorAll('.day[data-date]').forEach(el => {
+      el.classList.toggle('selected', datesBetween(a,b).includes(el.dataset.date) || selected.has(el.dataset.date));
+    });
+  }
+
+  function handleDay(key) {
+    if (dragStart && dragStart !== key) {
+      datesBetween(dragStart,key).forEach(d => selected.add(d));
+      pendingRangeStart = null;
+    } else if (pendingRangeStart && pendingRangeStart !== key) {
+      datesBetween(pendingRangeStart,key).forEach(d => selected.add(d));
+      pendingRangeStart = null;
+    } else if (selected.has(key)) {
+      selected.delete(key);
+      pendingRangeStart = null;
+    } else {
+      selected.add(key);
+      pendingRangeStart = key;
+    }
+    pointerDown = false; dragStart = null;
+    renderCalendar(); updateAnalysis();
+  }
+  document.addEventListener('pointerup', () => { pointerDown = false; dragStart = null; });
+
+  function updateAnalysis() {
+    const keys = [...selected].sort();
+    const title = document.getElementById('selection-title');
+    const dates = document.getElementById('selection-dates');
+    const results = document.getElementById('analysis-results');
+    if (!keys.length) {
+      title.textContent = 'Sin días seleccionados';
+      dates.textContent = 'Toca un día para comenzar.';
+      results.innerHTML = metricRows({total:0,own:0,dropi:0},0);
+      return;
+    }
+    const sums = keys.reduce((a,k) => {
+      a.total += calendarData[k].total; a.own += calendarData[k].own; a.dropi += calendarData[k].dropi; return a;
+    }, {total:0,own:0,dropi:0});
+    title.textContent = keys.length + (keys.length === 1 ? ' día seleccionado' : ' días seleccionados');
+    dates.textContent = formatShort(keys[0]) + (keys.length > 1 ? ' — ' + formatShort(keys[keys.length-1]) : '');
+    results.innerHTML = metricRows(sums, keys.length);
+  }
+
+  function metricRows(sums,count) {
+    return [
+      ['Total',sums.total], ['Propias',sums.own], ['Dropi',sums.dropi]
+    ].map(([name,val]) => '<div class="bg-white rounded-2xl p-4 border border-slate-200"><div class="flex justify-between"><strong>' + name + '</strong><strong>' + val + ' prendas</strong></div><div class="flex justify-between text-sm text-slate-500 mt-2"><span>Promedio</span><span>' + (count ? (val/count).toFixed(1) : '0') + ' · ' + count + ' días</span></div></div>').join('');
+  }
+
+  function formatShort(key) {
+    const d = new Date(key + 'T12:00:00');
+    return d.getDate() + ' ' + monthNames[d.getMonth()].slice(0,3);
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  async function downloadStory(id, filename, button) {
+    if (!window.html2canvas) {
+      showToast('No fue posible preparar la imagen.');
+      return;
+    }
+    const originalDisabled = button.disabled;
+    button.disabled = true;
+    button.classList.add('opacity-60');
+    document.getElementById('download-status').textContent = 'Preparando imagen…';
+    try {
+      const canvas = await html2canvas(document.getElementById(id), {scale: 2, backgroundColor: null, useCORS: true});
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      document.getElementById('download-status').textContent = 'Imagen lista para compartir.';
+      showToast('Descarga completada');
+    } catch (e) {
+      document.getElementById('download-status').textContent = 'No se pudo generar la imagen. Intenta de nuevo.';
+    } finally {
+      button.disabled = originalDisabled;
+      button.classList.remove('opacity-60');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    makeChart('real-chart', dailyReal, 200, '#17C3C3');
+    makeChart('seller-chart', dailySeller, 200, '#091315');
+    makeChart('monthly-chart', [4860,5124,5388,5272,5526,5684], 5000, '#17C3C3');
+    makeChart('vendor-chart', sellers.map(x=>x[1]), 40, '#17C3C3');
+    makeRanking('admin-seller-ranking', sellers.slice(0,5));
+    makeRanking('vendor-ranking', sellers, 'Valentina');
+    makeRanking('store-ranking', stores);
+    makeStoryBars('story-total-bars', dailyReal, 200, '#091315', '#091315');
+    makeStoryBars('story-own-bars', ownDaily, 160, '#17C3C3', '#ffffff');
+    renderCalendar();
+    updateAnalysis();
+
+    let role = 'admin';
+    document.querySelectorAll('.role-btn').forEach(btn => btn.addEventListener('click', () => {
+      role = btn.dataset.role;
+      document.querySelectorAll('.role-btn').forEach(b => {
+        const active = b.dataset.role === role;
+        b.classList.toggle('bg-black',active); b.classList.toggle('text-white',active);
+        b.classList.toggle('border-black',active); b.classList.toggle('bg-white',!active);
+        b.classList.toggle('border-slate-200',!active);
+      });
+    }));
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      document.getElementById(role === 'admin' ? 'admin-screen' : 'vendor-screen').scrollIntoView({behavior:'smooth'});
+    });
+    document.getElementById('to-vendor').addEventListener('click', () => document.getElementById('vendor-screen').scrollIntoView({behavior:'smooth'}));
+    document.getElementById('to-admin').addEventListener('click', () => document.getElementById('admin-screen').scrollIntoView({behavior:'smooth'}));
+    document.getElementById('prev-month').addEventListener('click', () => { if(currentMonth>5){ currentMonth--; renderCalendar(); } });
+    document.getElementById('next-month').addEventListener('click', () => { if(currentMonth<7){ currentMonth++; renderCalendar(); } });
+    document.getElementById('clear-calendar').addEventListener('click', () => { selected.clear(); pendingRangeStart=null; renderCalendar(); updateAnalysis(); });
+    document.getElementById('download-total').addEventListener('click', e => downloadStory('story-total','jornada-quin-total.png',e.currentTarget));
+    document.getElementById('download-own').addEventListener('click', e => downloadStory('story-own','jornada-quin-propias.png',e.currentTarget));
+  });
+</script>
+ 
+<canva-element-overlay style="position: fixed; z-index: 2147483647; pointer-events: none;"><template shadowrootmode="open"><div style="position: fixed; pointer-events: none; inset: 0px;"></div></template></canva-element-overlay></body></html>

@@ -6,7 +6,26 @@
       "PowerShell(python --version; python -c \"import openpyxl; print\\('openpyxl ok'\\)\" 2>&1; node --version 2>&1)",
       "PowerShell(\\(Get-Content \"Pasted-20260712-091019.svg\" -Tail 5\\))",
       "Bash(where node *)",
-      "Bash(py --version)"
+      "Bash(py --version)",
+      "Bash(node -e ' *)",
+      "Bash(powershell -NoProfile -Command ' *)",
+      "Bash(powershell -NoProfile -Command \"\nAdd-Type -AssemblyName System.Windows.Forms\n\\\\$content = [System.IO.File]::ReadAllText\\('D:\\\\PROYECTO IA\\\\REPORTE DE VENTAS\\\\google-apps-script-backend.gs.txt'\\)\n[System.Windows.Forms.Clipboard]::SetText\\(\\\\$content\\)\nWrite-Output 'clipboard set, length:' \\\\$content.Length\n\")",
+      "Bash(powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::GetText\\(\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(awk '/^<script>$/{f=1} f{print} /^<\\\\/script>$/{if\\(f\\)exit}' reporte-ventas.html)",
+      "Bash(wc -l /tmp_script_check.js)",
+      "Bash(grep -c \"{\" /tmp_script_check.js)",
+      "Bash(grep -c \"}\" /tmp_script_check.js)",
+      "Bash(powershell -NoProfile -Command \"Get-Content 'reporte-ventas.html' -Tail 15\")",
+      "Bash(php -v)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --version)",
+      "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$body = '{\\\\\"pin\\\\\":\\\\\"0000\\\\\",\\\\\"system\\\\\":\\\\\"A\\\\\",\\\\\"newRows\\\\\":[],\\\\\"headers\\\\\":[],\\\\\"dateCol\\\\\":\\\\\"\\\\\",\\\\\"horaCol\\\\\":\\\\\"\\\\\",\\\\\"valCol\\\\\":\\\\\"\\\\\",\\\\\"rankCol\\\\\":\\\\\"\\\\\",\\\\\"idCol\\\\\":\\\\\"\\\\\",\\\\\"removedDelta\\\\\":0}'\n  \\\\$resp = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -Method POST -ContentType 'text/plain;charset=utf-8' -Body \\\\$body -UseBasicParsing\n  Write-Output \\\\\"STATUS: \\\\$\\(\\\\$resp.StatusCode\\)\\\\\"\n  Write-Output \\\\$resp.Content.Substring\\(0, [Math]::Min\\(500, \\\\$resp.Content.Length\\)\\)\n} catch {\n  Write-Output 'ERROR:'\n  Write-Output \\\\$_.Exception.Message\n}\n\")",
+      "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$headers = @{ 'User-Agent' = 'Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120.0.0.0 Safari/537.36' }\n  \\\\$resp = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -Method GET -UseBasicParsing -Headers \\\\$headers\n  Write-Output \\\\\"STATUS: \\\\$\\(\\\\$resp.StatusCode\\)\\\\\"\n  Write-Output \\\\$resp.Content.Substring\\(0,[Math]::Min\\(300,\\\\$resp.Content.Length\\)\\)\n  Write-Output '---RESPONSEURI---'\n  Write-Output \\\\$resp.BaseResponse.ResponseUri\n} catch {\n  Write-Output \\\\$_.Exception.Message\n}\n\")",
+      "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\n  Write-Output \\('StatusCode: ' + \\\\$r.StatusCode\\)\n  Write-Output \\('FinalUri: ' + \\\\$r.BaseResponse.ResponseUri\\)\n  Write-Output \\('Content \\(first 500\\): ' + \\\\$r.Content.Substring\\(0, [Math]::Min\\(500, \\\\$r.Content.Length\\)\\)\\)\n} catch {\n  Write-Output \\('ERROR: ' + \\\\$_.Exception.Message\\)\n  if \\(\\\\$_.Exception.Response\\) {\n    Write-Output \\('Status: ' + [int]\\\\$_.Exception.Response.StatusCode\\)\n  }\n}\n\")",
+      "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\n  Write-Output \\('StatusCode: ' + \\\\$r.StatusCode\\)\n  Write-Output \\('FinalUri: ' + \\\\$r.BaseResponse.ResponseUri\\)\n  Write-Output \\('Content: ' + \\\\$r.Content\\)\n} catch {\n  Write-Output \\('ERROR: ' + \\\\$_.Exception.Message\\)\n}\n\")",
+      "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$body = '{\\\\\"pin\\\\\":\\\\\"0000\\\\\",\\\\\"system\\\\\":\\\\\"A\\\\\",\\\\\"newRows\\\\\":[],\\\\\"headers\\\\\":[],\\\\\"removedDelta\\\\\":0}'\n  \\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -Method Post -Body \\\\$body -ContentType 'text/plain;charset=utf-8' -MaximumRedirection 5 -UseBasicParsing\n  Write-Output \\('StatusCode: ' + \\\\$r.StatusCode\\)\n  Write-Output \\('Content: ' + \\\\$r.Content\\)\n} catch {\n  Write-Output \\('ERROR: ' + \\\\$_.Exception.Message\\)\n}\n\")",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/Tati/AppData/Local/Temp/claude/D--PROYECTO-IA-REPORTE-DE-VENTAS/ee4337af-4903-4140-8fbf-c7eda47c1849/scratchpad/serve.ps1\")",
+      "Bash(powershell -NoProfile -Command \"\n\\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\nWrite-Output \\\\$r.Content\n\")"
     ]
   }
 }
