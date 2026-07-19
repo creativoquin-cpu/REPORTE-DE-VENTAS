@@ -589,9 +589,48 @@ function filasRankingPublico(mes){
     var ven = jornadas[k].oficial.ven || {};
     Object.keys(ven).forEach(function(v){ acVen[v] = (acVen[v]||0) + ven[v]; });
   });
+  // Los días sin cerrar (bosquejo) también suman al ranking, salvo que ese
+  // mismo día ya se haya cerrado — ahí manda lo oficial, no el bosquejo.
+  Object.keys(ultimoCalculo).forEach(function(k){
+    if (k.slice(0,7) !== mes || jornadas[k]) return;
+    var ven = ultimoCalculo[k].ven || {};
+    Object.keys(ven).forEach(function(v){ acVen[v] = (acVen[v]||0) + ven[v]; });
+  });
   return Object.keys(acVen).map(function(n){ return { nom:n, n:acVen[n] }; })
     .sort(function(a,b){ return b.n-a.n || (a.nom<b.nom?-1:1); })
     .map(function(x,i){ return { mes:mes, puesto:i+1, nombre:x.nom }; });
+}
+// ---- bosquejo (Excel cargado, todavía sin cerrar) también sube a la nube.
+// Va a la misma tabla "jornadas", marcado cerrada:false, para que la página
+// pública también pueda mostrarlo mientras esperás a cerrar el día. Si ese
+// día ya está cerrado oficialmente, eso manda y el bosquejo no lo pisa.
+function filasDeBosquejo(dias){
+  var out = {}, ahora = new Date().toISOString();
+  Object.keys(dias).forEach(function(k){
+    if (jornadas[k]) return;
+    var v = dias[k];
+    out[k] = { fecha:k, propias:v.propias, dropi:v.dropi, ven:v.ven||{}, tie:v.tie||{},
+      cerrada:false, cerrada_el:null, actualizado:ahora };
+  });
+  return out;
+}
+function sincronizarBosquejo(dias){
+  if (!sb) return;
+  var filas = filasDeBosquejo(dias), claves = Object.keys(filas);
+  var snap = leerSnapshot(), previas = snap.bosquejo || [];
+  var borrar = previas.filter(function(k){ return claves.indexOf(k) === -1; });
+  var subir = claves.map(function(k){ return filas[k]; });
+  var p = subir.length ? sb.from("jornadas").upsert(subir) : Promise.resolve({ error:null });
+  p.then(function(r){
+    if (r.error) throw r.error;
+    // el .eq("cerrada", false) es a propósito: nunca borra un día que ya se cerró.
+    return borrar.length ? sb.from("jornadas").delete().in("fecha", borrar).eq("cerrada", false)
+                          : Promise.resolve({ error:null });
+  }).then(function(r){
+    if (r.error) throw r.error;
+    guardarSnapshotTabla("bosquejo", claves);
+    sincronizarRankingPublico();
+  }).catch(function(){});
 }
 function sincronizarRankingPublico(){
   if (!sb) return;
@@ -1568,6 +1607,7 @@ function calcular() {
 
   guardarAjustes();
   ultimoCalculo = dias;          // lo cargado del Excel, esté cerrado o no (lo usa el calendario)
+  sincronizarBosquejo(dias);     // ese mismo bosquejo también sube a la nube (paso 9.6)
   renderCongelado(dias, claves);
 
   // Tarjeta de resumen al lado de los dos cargadores (aprovecha el espacio libre)

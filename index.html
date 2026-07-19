@@ -193,12 +193,25 @@ function datosDelMesPublico(mSel){
 }
 function pintarVendedorPublico(){
   var mesActual = mesDeHoy(), p = mesActual.split("-");
-  vendMes.textContent = "Mes en curso: " + MESES_L[+p[1]-1] + " " + p[0] + ". Cifras del equipo, ya cerradas.";
+  vendMes.textContent = "Mes en curso: " + MESES_L[+p[1]-1] + " " + p[0] + ". Cifras del equipo.";
 
   var D = datosDelMesPublico(mesActual), claves = Object.keys(D).sort();
   if (!claves.length) {
-    vendContenido.innerHTML = "<div class='aviso'><b>Todavía no hay jornadas cerradas este mes.</b></div>";
+    vendContenido.innerHTML = "<div class='aviso'><b>Todavía no hay ventas cargadas este mes.</b></div>";
     return;
+  }
+
+  var abiertas = claves.filter(function(k){ return !D[k].cerrada; });
+  var avisoBosquejo = "";
+  if (abiertas.length) {
+    var masReciente = abiertas.reduce(function(a,k){
+      return (!a || (D[k].actualizado && D[k].actualizado > a)) ? D[k].actualizado : a;
+    }, null);
+    avisoBosquejo = "<div class='aviso' style='margin-bottom:14px'>" +
+      "Hay <b>" + abiertas.length + " día" + (abiertas.length===1?"":"s") + "</b> que todavía no cierra el administrador. " +
+      "Esas cifras pueden cambiar." +
+      (masReciente ? " Subidas por última vez: " + new Date(masReciente).toLocaleString("es-CO", { dateStyle:"short", timeStyle:"short" }) + "." : "") +
+      "</div>";
   }
 
   var eqDia = {}, eqRep = {}, eqEnMeta = 0;
@@ -219,7 +232,7 @@ function pintarVendedorPublico(){
   var mejor = null;
   claves.forEach(function(k){ if (!mejor || eqRep[k] > mejor.t) mejor = { k:k, t:eqRep[k] }; });
 
-  var h = "<h2>Cómo va el equipo</h2><div class='kpis'>" +
+  var h = avisoBosquejo + "<h2>Cómo va el equipo</h2><div class='kpis'>" +
     kpi("Prendas propias del equipo", eqTotal, "en " + n + " día" + (n===1?"":"s"), true) +
     kpi("Promedio por día", eqProm, "meta de " + mHoy) +
     kpi("Días en meta", eqEnMeta, "de " + n + " día" + (n===1?"":"s")) +
@@ -261,7 +274,7 @@ function cargarDatos(){
   if (!sb) return;
   var mesActual = mesDeHoy();
   Promise.all([
-    sb.from("jornadas").select("fecha,propias,cerrada").eq("cerrada", true),
+    sb.from("jornadas").select("fecha,propias,cerrada,actualizado"),
     sb.from("metas").select("*"),
     sb.from("dias_manuales").select("*"),
     sb.from("ranking_publico").select("puesto,nombre").eq("mes", mesActual).order("puesto")
@@ -269,7 +282,7 @@ function cargarDatos(){
     var rJor=r[0], rMet=r[1], rDia=r[2], rRank=r[3];
     if (rJor.error || rMet.error || rDia.error || rRank.error) throw (rJor.error||rMet.error||rDia.error||rRank.error);
     jornadas = {};
-    (rJor.data||[]).forEach(function(x){ jornadas[x.fecha] = { p:x.propias, cerrada:true }; });
+    (rJor.data||[]).forEach(function(x){ jornadas[x.fecha] = { p:x.propias, cerrada:x.cerrada, actualizado:x.actualizado }; });
     metas = (rMet.data||[]).map(function(x){ return { id:x.id, desde:x.desde, total:x.total, propias:x.propias }; });
     diasManuales = {};
     (rDia.data||[]).forEach(function(x){ diasManuales[x.fecha] = true; });

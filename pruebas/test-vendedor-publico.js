@@ -121,22 +121,78 @@ console.log('\n=== 2. index.html, alimentada con esos mismos datos, pinta lo mis
   ok('index.html también muestra los tres nombres', tPub.includes('Ana') && tPub.includes('Beto') && tPub.includes('Caro'));
   ok('index.html nunca muestra la cifra de Ana (320)', !tPub.includes('320'));
   ok('index.html nunca muestra la cifra de Beto (210)', !tPub.includes('210'));
-  ok('index.html le pide a jornadas solo fecha, propias y cerrada — nunca ven/tie con select("*")',
-     HTML_PUB.includes('from("jornadas").select("fecha,propias,cerrada")') &&
+  ok('index.html le pide a jornadas fecha, propias, cerrada y actualizado — nunca ven/tie con select("*")',
+     HTML_PUB.includes('from("jornadas").select("fecha,propias,cerrada,actualizado")') &&
      !HTML_PUB.includes('from("jornadas").select("*")'));
 }
 
-console.log('\n=== 3. index.html sin jornadas cerradas este mes ===');
+console.log('\n=== 3. index.html sin ninguna venta cargada este mes ===');
 {
   const w = arrancar(HTML_PUB, '2026-07-20');
   w.jornadas = {}; w.metas = []; w.diasManuales = {}; w.rankingMes = [];
   w.pintarVendedorPublico();
-  ok('avisa que todavía no hay jornadas cerradas',
-     texto(w).includes('Todavía no hay jornadas cerradas este mes'));
+  ok('avisa que todavía no hay ventas cargadas',
+     texto(w).includes('Todavía no hay ventas cargadas este mes'));
   ok('no revienta intentando dibujar el gráfico', !graficas.gEquipo);
 }
 
-console.log('\n=== 4. index.html no pide login ni trae nada del panel de administrador ===');
+console.log('\n=== 4. paso 9.6 — el bosquejo (Excel subido, sin cerrar) también sube a la nube ===');
+{
+  // 13 y 14 ya están cerrados oficialmente. El 15 se acaba de cargar en un
+  // Excel pero todavía nadie lo cerró — así se ve un mes a mitad de camino.
+  const CERRADAS = { '2026-07-13': JUL['2026-07-13'], '2026-07-14': JUL['2026-07-14'] };
+  const BOSQUEJO = { '2026-07-15': { propias: 150, dropi: 10, ven: { Ana: 80, Beto: 50, Caro: 20 }, tie: { TiendaX: 10 } } };
+
+  const w = arrancar(HTML_ADMIN, '2026-07-20', ww => {
+    ww.localStorage.setItem('quin.jornadas', JSON.stringify(CERRADAS));
+  });
+  // filasRankingPublico() lee "ultimoCalculo" (variable global del script, la
+  // llena cargarExcels() de verdad); acá se asigna a mano después de arrancar
+  // por la misma razón de siempre: el propio script la declara "var ultimoCalculo = {}".
+  w.ultimoCalculo = BOSQUEJO;
+  const filas = w.filasDeBosquejo(BOSQUEJO);
+  ok('el día sin cerrar arma su fila para subir', filas['2026-07-15'] && filas['2026-07-15'].cerrada === false,
+     JSON.stringify(filas));
+  ok('esa fila trae la fecha como propia (no la del objeto)', filas['2026-07-15'].fecha === '2026-07-15');
+
+  // Si ese mismo día YA está cerrado, el bosquejo no lo debe pisar.
+  const filasConCerrado = w.filasDeBosquejo(Object.assign({}, BOSQUEJO, {
+    '2026-07-13': { propias: 999, dropi: 999, ven: {}, tie: {} }
+  }));
+  ok('un día ya cerrado no se manda como bosquejo (no lo pisa)', !filasConCerrado['2026-07-13'],
+     JSON.stringify(Object.keys(filasConCerrado)));
+
+  const ranking = w.filasRankingPublico('2026-07');
+  ok('el ranking público suma también lo que trae el bosquejo (Ana pasa de 190 a 270)',
+     ranking[0].nombre === 'Ana', JSON.stringify(ranking));
+  // Ana cerrada: 100+90=190. Con el bosquejo del 15 (80 más): 270. Sigue siendo la 1.
+
+  // Del lado de index.html: un mes con 2 días cerrados y 1 sin cerrar.
+  const wPub = arrancar(HTML_PUB, '2026-07-20');
+  wPub.jornadas = {
+    '2026-07-13': { p: 200, cerrada: true, actualizado: '2026-07-13T09:00:00.000Z' },
+    '2026-07-14': { p: 190, cerrada: true, actualizado: '2026-07-14T09:00:00.000Z' },
+    '2026-07-15': { p: 150, cerrada: false, actualizado: '2026-07-20T08:30:00.000Z' }
+  };
+  wPub.metas = []; wPub.diasManuales = {}; wPub.rankingMes = [];
+  wPub.pintarVendedorPublico();
+  const tPub = texto(wPub);
+  ok('avisa que hay 1 día sin cerrar', tPub.includes('Hay 1 día que todavía no cierra el administrador'), tPub.slice(0,200));
+  ok('el aviso dice cuándo se subió por última vez', tPub.includes('Subidas por última vez'));
+  ok('el total del equipo SÍ incluye el bosquejo (200+190+150=540)', tPub.includes('Prendas propias del equipo540'),
+     (tPub.match(/Prendas propias del equipo.{0,10}/) || [''])[0]);
+
+  // Si los tres días ya están cerrados, no debería salir ningún aviso.
+  const wPub2 = arrancar(HTML_PUB, '2026-07-20');
+  wPub2.jornadas = {
+    '2026-07-13': { p: 200, cerrada: true, actualizado: '2026-07-13T09:00:00.000Z' }
+  };
+  wPub2.metas = []; wPub2.diasManuales = {}; wPub2.rankingMes = [];
+  wPub2.pintarVendedorPublico();
+  ok('sin días abiertos, no aparece el aviso de bosquejo', !texto(wPub2).includes('todavía no cierra el administrador'));
+}
+
+console.log('\n=== 5. index.html no pide login ni trae nada del panel de administrador ===');
 {
   ok('no hay formulario de login', !HTML_PUB.includes('loginNube') && !HTML_PUB.includes('signInWithPassword'));
   ok('no hay pestañas de administrador', !HTML_PUB.includes('Cargar y validar') && !HTML_PUB.includes('Excel de Dropi'));

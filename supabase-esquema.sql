@@ -141,7 +141,9 @@ grant select on public.admins to authenticated;
 
 -- El público solo lee lo que puede ver el vendedor.
 -- OJO: se conceden COLUMNAS, no la tabla entera. ven, tie y dropi quedan fuera.
-grant select (fecha, propias, cerrada) on public.jornadas       to anon;
+-- "actualizado" se agregó en el paso 9.6, para poder avisar qué tan reciente
+-- es un día sin cerrar (bosquejo) que también se muestra en la página pública.
+grant select (fecha, propias, cerrada, actualizado) on public.jornadas to anon;
 grant select                          on public.metas           to anon;
 grant select                          on public.ranking_publico to anon;
 grant select                          on public.dias_manuales   to anon;
