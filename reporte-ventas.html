@@ -296,7 +296,6 @@
 
   .rank-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
   @media(max-width:760px){.rank-grid{grid-template-columns:1fr;}}
-  .rank-grid.single{grid-template-columns:1fr;}
 
   /* ---------- SELECTOR DE MES (botones) ---------- */
   .month-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
@@ -360,6 +359,34 @@
     letter-spacing:.06em;
   }
   footer::before{content:"◆ ";color:var(--cyan);}
+
+  .snapshot-banner{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    background:linear-gradient(90deg, rgba(63,232,224,.08), rgba(76,141,255,.06));
+    border:1px solid var(--line-bright);
+    border-radius:8px;
+    padding:12px 16px;
+    margin-bottom:22px;
+    font-size:12px;
+    color:var(--paper-dim);
+  }
+  .snapshot-banner b{color:var(--paper);font-family:'Orbitron',sans-serif;font-weight:600;font-size:12px;letter-spacing:.02em;}
+  .snapshot-banner button{
+    background:transparent;
+    border:1px solid var(--line-bright);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    padding:7px 12px;
+    border-radius:5px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .snapshot-banner button:hover{border-color:var(--cyan);color:var(--cyan);}
 
   /* ---------- MASCOT ---------- */
   .mascot-wrap{
@@ -494,6 +521,11 @@
     <div id="liveDate"></div>
   </header>
 
+  <div class="snapshot-banner" id="snapshotBanner">
+    <div><b>Estas viendo datos de EJEMPLO</b><br>Numeros reales de referencia (los mismos excel de esta carpeta, incluido el sabado con reparto de fin de semana) — no son las ventas mas recientes. Sube tus archivos para ver el reporte actualizado.</div>
+    <button id="clearSnapshotBtn" type="button">Salir del ejemplo</button>
+  </div>
+
   <div class="admin-gate" id="adminGate">
     <div class="lock-note">🔒 Solo el administrador puede subir archivos nuevos (y ver la vista acumulada, más abajo). Si eres el administrador, ingresa la clave.</div>
     <div class="admin-pin-row">
@@ -541,23 +573,21 @@
     <b>Esperando los datos del administrador</b>
     El administrador de este reporte aun no ha subido los excel de hoy.<br>
     Vuelve a abrir esta pagina mas tarde, o si eres el administrador, ingresa la clave arriba.
+    <div style="margin-top:18px;">
+      <button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button>
+    </div>
   </div>
 
   <section class="kpis" id="kpis">
-    <div class="kpi accent-cyan" id="kpiCardEffiMes">
+    <div class="kpi accent-cyan">
       <div class="lab">Unidades EFFI (mes)</div>
       <div class="val" id="kpiPropiasTotal">—</div>
       <div class="sub" id="kpiPropiasVar">—</div>
     </div>
-    <div class="kpi accent-blue" id="kpiCardDropiMes">
+    <div class="kpi accent-blue">
       <div class="lab">Unidades Dropi (mes)</div>
       <div class="val" id="kpiTotalTotal">—</div>
       <div class="sub" id="kpiTotalVar">—</div>
-    </div>
-    <div class="kpi">
-      <div class="lab">Ventas totales (mes)</div>
-      <div class="val" id="kpiVentasTotalesMes">—</div>
-      <div class="sub" id="kpiVentasTotalesMesVar">EFFI + Dropi</div>
     </div>
     <div class="kpi accent-total">
       <div class="lab">Total combinado (último día)</div>
@@ -574,7 +604,7 @@
       <div class="val" id="kpiTopVendedor">—</div>
       <div class="sub" id="kpiTopVendedorVal">—</div>
     </div>
-    <div class="kpi" id="kpiCardTopTienda">
+    <div class="kpi">
       <div class="lab">Top tienda Dropi (mes)</div>
       <div class="val" id="kpiTopTienda">—</div>
       <div class="sub" id="kpiTopTiendaVal">—</div>
@@ -584,39 +614,24 @@
   <section class="panels" id="panels">
     <div class="panel">
       <div class="panel-head">
-        <div class="ph-title"><span id="detalleTituloUsuario">Detalle por dia</span><span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
+        <div class="ph-title">Detalle por dia<span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
         <select id="detalleMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
       </div>
       <div class="chart-wrap" style="height:220px;"><canvas id="chartDetalle"></canvas></div>
       <div class="table-wrap show" id="tableWrap">
         <table>
           <thead>
-            <tr id="tableHeadRow"><th id="tableTh1">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4">Meta 200</th></tr>
+            <tr><th id="tableTh1">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4">Meta 200</th></tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
     </div>
 
-    <div class="panel admin-content" id="detallePanelAdmin">
-      <div class="panel-head">
-        <div class="ph-title">Detalle por dia (administrador)<span>Meta combinada: 200 prendas por dia operativo (EFFI + Dropi)</span></div>
-      </div>
-      <div class="chart-wrap" style="height:220px;"><canvas id="chartDetalleAdmin"></canvas></div>
-      <div class="table-wrap show" id="tableWrapAdmin">
-        <table>
-          <thead>
-            <tr id="tableHeadRowAdmin"><th id="tableTh1Admin">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="tableTh4Admin">Meta 200</th></tr>
-          </thead>
-          <tbody id="tableBodyAdmin"></tbody>
-        </table>
-      </div>
-    </div>
-
     <div class="panel">
       <div class="panel-head">
-        <div class="ph-title"><span id="comboTitle" style="display:inline;font-size:inherit;color:inherit;font-weight:inherit;margin-top:0;">Unidades EFFI vs. unidades Dropi</span><span id="comboSubtitle">Comparativo diario</span></div>
-        <div class="legend-chip" id="comboLegend">
+        <div class="ph-title">Unidades EFFI vs. unidades Dropi<span id="comboSubtitle">Comparativo diario</span></div>
+        <div class="legend-chip">
           <span><i style="background:var(--cyan)"></i>Unidades EFFI</span>
           <span><i style="background:var(--blue)"></i>Unidades Dropi</span>
         </div>
@@ -625,7 +640,7 @@
       <div class="chart-wrap"><canvas id="chartCombo"></canvas></div>
     </div>
 
-    <div class="rank-grid" id="rankGrid">
+    <div class="rank-grid">
       <div class="panel">
         <div class="panel-head">
           <div class="ph-title" style="--tone:var(--cyan)">Ranking de vendedores<span>EFFI &bull; unidades vendidas</span></div>
@@ -637,7 +652,7 @@
           </table>
         </div>
       </div>
-      <div class="panel" id="rankTiendaPanel">
+      <div class="panel">
         <div class="panel-head">
           <div class="ph-title" style="--tone:var(--blue)">Ranking de tiendas<span>Dropi &bull; unidades despachadas</span></div>
         </div>
@@ -650,21 +665,21 @@
       </div>
     </div>
 
-    <div class="panel" style="display:none">
+    <div class="panel">
       <div class="panel-head">
-        <div class="ph-title" style="--tone:var(--cyan)">Cumplimiento de vendedores<span>EFFI &bull; meta de equipo: 180 prendas por dia operativo (suma de todos los vendedores)</span></div>
+        <div class="ph-title" style="--tone:var(--cyan)">Cumplimiento de vendedores<span>EFFI &bull; tope de 180 prendas por dia operativo (turno 8am-8am, sabado hasta las 7am)</span></div>
         <select id="metasMesSelect" style="background:var(--bg-mid);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;"></select>
       </div>
       <div class="table-wrap show">
         <table class="rank-table" style="--tone:var(--cyan)">
-          <thead><tr><th id="metasTh1" style="text-align:left">Mes</th><th style="text-align:left">Vendedor</th><th>Unidades</th><th id="metasTh4">Meta equipo (180)</th></tr></thead>
+          <thead><tr><th id="metasTh1" style="text-align:left">Mes</th><th style="text-align:left">Vendedor</th><th>Unidades</th><th id="metasTh4">Dias &ge; 180</th></tr></thead>
           <tbody id="metasVendedorBody"></tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <section style="margin-top:18px;" id="historialSection" class="admin-content">
+  <section style="margin-top:18px;">
     <div class="panel">
       <div class="panel-head">
         <div class="ph-title">Historial y comparativo mensual<span>Guardado automatico en este navegador, por dia operativo</span></div>
@@ -1258,9 +1273,8 @@ function festivosColombia(year){
   const fija = (m,d)=> set.add(isoOfDate(new Date(year,m-1,d)));
   fija(1,1); fija(5,1); fija(7,20); fija(8,7); fija(12,8); fija(12,25); // fijas, no se trasladan
   const emiliani = (m,d)=> set.add(isoOfDate(moveToNextMonday(new Date(year,m-1,d))));
-  emiliani(1,6); emiliani(3,19); emiliani(6,29); emiliani(7,9); emiliani(8,15);
+  emiliani(1,6); emiliani(3,19); emiliani(6,29); emiliani(8,15);
   emiliani(10,12); emiliani(11,1); emiliani(11,11); // Ley Emiliani: se trasladan al lunes siguiente
-  // 9 jul: Ntra. Sra. del Rosario de Chiquinquira (Ley 2578 de 2026)
   const easter = easterSundayDate(year);
   set.add(isoOfDate(addDays(easter,-3))); // Jueves Santo
   set.add(isoOfDate(addDays(easter,-2))); // Viernes Santo
@@ -1312,17 +1326,7 @@ function miembrosDeVentana(sabadoIso){
   }
   return miembros;
 }
-/* reparte `total` (numero) en `n` partes enteras que suman exacto: floor para todos,
-   y +1 para los ULTIMOS `resto` elementos (el array de miembros de la ventana ya viene
-   en orden cronologico ascendente, asi que "ultimos" = los dias mas recientes de la ventana). */
-function repartirEntero(total, n){
-  const piso = Math.floor(total / n);
-  const resto = Math.round(total - piso*n); // entero 0..n-1
-  return Array.from({length:n}, (_,i)=> piso + (i >= n - resto ? 1 : 0));
-}
-/* reparte en partes ENTERAS (piso + residuo en los ultimos dias) las unidades
-   {isoDate: unidades} de cada fin de semana / festivo largo, para que la suma mostrada
-   siempre cierre exacto con el total real de la ventana (sin decimales). */
+/* reparte en partes iguales las unidades {isoDate: unidades} de cada fin de semana / festivo largo */
 function repartirFinDeSemana(byDateMap){
   const result = {...byDateMap};
   const vistos = new Set();
@@ -1332,20 +1336,12 @@ function repartirFinDeSemana(byDateMap){
     vistos.add(ventana);
     const miembros = miembrosDeVentana(ventana);
     const total = miembros.reduce((s,d)=> s + (byDateMap[d]||0), 0);
-    const partes = repartirEntero(total, miembros.length);
-    miembros.forEach((d,i)=>{ result[d] = partes[i]; });
+    const promedio = total / miembros.length;
+    miembros.forEach(d=>{ result[d] = promedio; });
   });
   return result;
 }
-/* igual que repartirFinDeSemana pero para el mapa {isoDate: {vendedor: unidades}} del tope de 180.
-   Riesgo conocido (no es bug): el enterizado por vendedor aqui es independiente del enterizado
-   del total del dia en repartirFinDeSemana() -cada vendedor arrastra su propio residuo floor+resto-,
-   asi que en teoria el total de un dia sumando todos los vendedores de esta funcion podria diferir
-   en +-1 unidad del valor que da repartirFinDeSemana() para ese mismo dia, aunque ambos sigan
-   sumando exacto al total real de la ventana. Matematicamente esperable con floor+residuo no
-   lineal repartido de forma independiente. Hoy no es visible: el panel "Cumplimiento de
-   vendedores" que consume esto esta oculto (style="display:none"). Documentado por si se
-   reactiva el panel mas adelante. */
+/* igual que repartirFinDeSemana pero para el mapa {isoDate: {vendedor: unidades}} del tope de 180 */
 function repartirFinDeSemanaVendedores(byDayRankMap){
   const result = {...byDayRankMap};
   const vistos = new Set();
@@ -1356,12 +1352,12 @@ function repartirFinDeSemanaVendedores(byDayRankMap){
     const miembros = miembrosDeVentana(ventana);
     const vendedores = new Set();
     miembros.forEach(d=>{ if(byDayRankMap[d]) Object.keys(byDayRankMap[d]).forEach(v=>vendedores.add(v)); });
-    miembros.forEach(d=>{ result[d] = {}; });
+    const promedios = {};
     vendedores.forEach(v=>{
-      const totalV = miembros.reduce((s,d)=> s + ((byDayRankMap[d]||{})[v]||0), 0);
-      const partesV = repartirEntero(totalV, miembros.length);
-      miembros.forEach((d,i)=>{ result[d][v] = partesV[i]; });
+      const total = miembros.reduce((s,d)=> s + ((byDayRankMap[d]||{})[v]||0), 0);
+      promedios[v] = total / miembros.length;
     });
+    miembros.forEach(d=>{ result[d] = promedios; });
   });
   return result;
 }
@@ -1466,14 +1462,18 @@ function renderVistaAcumuladaTable(){
    (nunca se le muestra la zona de carga). */
 function emptyStateHTML(){
   if(adminUnlocked){
-    return '<b>Sube los dos excel para ver el reporte</b>EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>Los cancelados se descartan automaticamente.';
+    return '<b>Sube los dos excel para ver el reporte</b>EFFI aporta las unidades vendidas por dia y el ranking de vendedores.<br>Dropi aporta las prendas despachadas por dia y el ranking de tiendas.<br>Los cancelados se descartan automaticamente.'+
+      '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
   }
-  return '<b>Esperando los datos del administrador</b>El administrador de este reporte aun no ha subido los excel de hoy.<br>Vuelve a abrir esta pagina mas tarde, o si eres el administrador, ingresa la clave arriba.';
+  return '<b>Esperando los datos del administrador</b>El administrador de este reporte aun no ha subido los excel de hoy.<br>Vuelve a abrir esta pagina mas tarde, o si eres el administrador, ingresa la clave arriba.'+
+    '<div style="margin-top:18px;"><button class="example-btn" id="viewExampleBtn" type="button">Ver ejemplo</button></div>';
 }
 function refreshEmptyStateMessage(){
   const el = document.getElementById('emptyState');
   if(!el || el.style.display === 'none') return; // no molestar si ya hay un reporte visible
   el.innerHTML = emptyStateHTML();
+  const btn = document.getElementById('viewExampleBtn');
+  if(btn) btn.addEventListener('click', loadSnapshot);
 }
 
 /* un solo candado de administrador controla dos cosas a la vez: la zona de subida de excel
@@ -1490,8 +1490,6 @@ function tryUnlockAdmin(){
     document.getElementById('adminGate').style.display = 'none';
     document.getElementById('uploadZoneWrap').style.display = 'grid';
     document.getElementById('adminContent').style.display = 'block';
-    document.getElementById('historialSection').style.display = 'block';
-    document.getElementById('detallePanelAdmin').style.display = 'block';
     renderVistaAcumuladaTable();
     refreshEmptyStateMessage();
     /* al entrar en modo admin, todo el reporte cambia a la version "real" sin repartir —
@@ -1724,20 +1722,9 @@ function recompute(){
   }
 
   document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('snapshotBanner').style.display = 'none';
   document.getElementById('kpis').classList.add('show');
   document.getElementById('panels').classList.add('show');
-
-  /* KPIs y ranking exclusivos de administrador: un visitante sin la clave no ve "Unidades EFFI
-     (mes)", "Unidades Dropi (mes)" ni "Top tienda Dropi (mes)" por separado (ve en cambio la
-     tarjeta combinada "Ventas totales (mes)"), y no ve el ranking de tiendas Dropi. */
-  ['kpiCardEffiMes','kpiCardDropiMes','kpiCardTopTienda'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.style.display = adminUnlocked ? '' : 'none';
-  });
-  const rankTiendaPanelEl = document.getElementById('rankTiendaPanel');
-  if(rankTiendaPanelEl) rankTiendaPanelEl.style.display = adminUnlocked ? '' : 'none';
-  const rankGridEl = document.getElementById('rankGrid');
-  if(rankGridEl) rankGridEl.classList.toggle('single', !adminUnlocked);
 
   /* Las tarjetas KPI de arriba (Unidades EFFI/Dropi, Total combinado, Promedio diario, Top
      vendedor/tienda) se limitan al MES seleccionado — el mismo que usan las pastillas de
@@ -1752,8 +1739,6 @@ function recompute(){
 
   document.getElementById('kpiPropiasTotal').textContent = fmtUnits(sumPropias);
   document.getElementById('kpiTotalTotal').textContent = fmtUnits(sumTotal);
-  document.getElementById('kpiVentasTotalesMes').textContent = fmtUnits(sumPropias + sumTotal);
-  document.getElementById('kpiVentasTotalesMesVar').textContent = monthLabelOf(comboSelectedMonth);
 
   /* "Total combinado" muestra solo el ultimo dia operativo CON DATOS DENTRO DEL MES elegido
      (no el ultimo dia de todo el historico), para que coincida con lo que se esta filtrando. */
@@ -1809,11 +1794,8 @@ function recompute(){
   document.getElementById('kpiTopTiendaVal').textContent = rankBMes.length ? fmtUnits(rankBMes[0][1]) : `${monthLabelOf(comboSelectedMonth)}`;
 
   renderComboChartWithMonths(dates, A.byDate, B.byDate);
-  /* ranking completo (todo el historico) solo para el administrador autenticado; un visitante
-     sin la clave ve el ranking recortado al mes calendario de hoy (rankAMes/rankBMes, ya
-     calculados arriba para las tarjetas KPI "Top vendedor"/"Top tienda"). */
-  renderRankTable('rankVendedorBody', adminUnlocked ? rankA : rankAMes, fmtUnits);
-  renderRankTable('rankTiendaBody', adminUnlocked ? rankB : rankBMes, fmtUnits);
+  renderRankTable('rankVendedorBody', rankA, fmtUnits);
+  renderRankTable('rankTiendaBody', rankB, fmtUnits);
   renderTable(dates, A.byDate, B.byDate);
   renderMetasVendedores(A.byDayRank);
 
@@ -2056,18 +2038,7 @@ function renderMetasVendedores(byDayRank){
   lastByDayRank = byDayRank || {};
   const days = Object.keys(lastByDayRank);
   const select = document.getElementById('metasMesSelect');
-  if(!adminUnlocked){
-    /* visitante sin clave: el select queda fijo en el mes de hoy y oculto -nunca puede caer en
-       "Resumen mensual" (historico completo). El mes de hoy se incluye en la lista aunque no
-       tenga datos todavia, igual que ya hace resolveComboMonth/todayMonthKey en el combo. */
-    const todayKey = todayMonthKey();
-    const monthsConHoy = Array.from(new Set([...monthsFromDates(days), todayKey])).sort();
-    populateMonthSelect(select, monthsConHoy, 'Resumen mensual');
-    if(select){ select.value = todayKey; select.style.display = 'none'; }
-  } else {
-    populateMonthSelect(select, monthsFromDates(days), 'Resumen mensual');
-    if(select) select.style.display = '';
-  }
+  populateMonthSelect(select, monthsFromDates(days), 'Resumen mensual');
   renderMetasBody();
 }
 
@@ -2081,12 +2052,9 @@ function renderMetasBody(){
   const selectedMonth = select ? select.value : '';
 
   if(!selectedMonth){
-    /* resumen: unidades acumuladas del mes por vendedor (informativo) + en cuantos dias del
-       mes cumplio el EQUIPO completo la meta de 180 (suma de TODOS los vendedores ese dia
-       operativo, no evaluada vendedor por vendedor). Se muestra una sola vez por mes, en la
-       primera fila (mismo patron de colapso que la columna "Mes"). */
+    /* resumen: unidades acumuladas del mes por vendedor + en cuantos dias activos cumplio el tope diario */
     if(th1) th1.textContent = 'Mes';
-    if(th4) th4.textContent = 'Meta equipo (180)';
+    if(th4) th4.textContent = 'Cumplido';
     const months = monthsFromDates(days);
     if(!months.length){
       body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos</td></tr>';
@@ -2096,30 +2064,29 @@ function renderMetasBody(){
     months.forEach(mk=>{
       const daysInMonth = days.filter(d=>monthKeyOf(d)===mk);
       const totals = {};
-      let diasCumplidosEquipo = 0;
       daysInMonth.forEach(d=>{
-        const entriesDia = Object.entries(lastByDayRank[d]);
-        const teamTotal = entriesDia.reduce((s,[,val])=>s+val, 0);
-        if(teamTotal >= META_VENDEDOR) diasCumplidosEquipo += 1;
-        entriesDia.forEach(([vend, val])=>{
-          if(!totals[vend]) totals[vend] = { unidades:0 };
+        Object.entries(lastByDayRank[d]).forEach(([vend, val])=>{
+          if(!totals[vend]) totals[vend] = { unidades:0, diasActivos:0, diasCumplidos:0 };
           totals[vend].unidades += val;
+          totals[vend].diasActivos += 1;
+          if(val >= META_VENDEDOR) totals[vend].diasCumplidos += 1;
         });
       });
       const entries = Object.entries(totals).sort((a,b)=>b[1].unidades - a[1].unidades);
-      const equipoTexto = `${diasCumplidosEquipo}/${daysInMonth.length} dias`;
       entries.forEach(([vend, t], i)=>{
-        rowsHtml.push(`<tr><td>${i===0?monthLabelOf(mk):''}</td><td>${vend}</td><td>${fmtUnits(t.unidades)}</td><td>${i===0?equipoTexto:''}</td></tr>`);
+        /* "cumplido" a nivel mes = tuvo al menos 1 dia operativo con >=180 prendas; la cantidad
+           exacta (unidades del mes) ya va en su propia columna. */
+        const cumplioBadge = t.diasCumplidos > 0
+          ? `<span style="color:var(--cyan)">✔ Cumplido (${t.diasCumplidos} ${t.diasCumplidos===1?'dia':'dias'})</span>`
+          : `<span style="color:var(--red)">✖ No cumplio</span>`;
+        rowsHtml.push(`<tr><td>${i===0?monthLabelOf(mk):''}</td><td>${vend}</td><td>${fmtUnits(t.unidades)}</td><td>${cumplioBadge}</td></tr>`);
       });
     });
     body.innerHTML = rowsHtml.join('');
   } else {
-    /* mes elegido: detalle dia a dia — el badge de meta ahora es de EQUIPO (suma de TODOS los
-       vendedores ese dia operativo, no evaluada vendedor por vendedor), mostrado una sola vez
-       por dia en la primera fila (mismo patron de colapso que ya usa la columna "Dia"). Las
-       filas individuales conservan su columna "Unidades" (informativa). */
+    /* mes elegido: detalle dia a dia (igual que antes) */
     if(th1) th1.textContent = 'Dia';
-    if(th4) th4.textContent = 'Meta equipo (180)';
+    if(th4) th4.textContent = 'Tope 180';
     const daysInMonth = days.filter(d=>monthKeyOf(d)===selectedMonth).sort().reverse();
     if(!daysInMonth.length){
       body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--paper-dim)">sin datos ese mes</td></tr>';
@@ -2128,10 +2095,8 @@ function renderMetasBody(){
     const rowsHtml = [];
     daysInMonth.forEach(day=>{
       const entries = Object.entries(lastByDayRank[day]).sort((a,b)=>b[1]-a[1]);
-      const teamTotal = entries.reduce((s,[,val])=>s+val, 0);
       entries.forEach(([vend, val], i)=>{
-        const metaCell = i===0 ? metaBadge(teamTotal, META_VENDEDOR) : '';
-        rowsHtml.push(`<tr><td>${i===0?fmtDateLabel(day):''}</td><td>${vend}</td><td>${fmtUnits(val)}</td><td>${metaCell}</td></tr>`);
+        rowsHtml.push(`<tr><td>${i===0?fmtDateLabel(day):''}</td><td>${vend}</td><td>${fmtUnits(val)}</td><td>${metaBadge(val, META_VENDEDOR)}</td></tr>`);
       });
     });
     body.innerHTML = rowsHtml.join('');
@@ -2166,14 +2131,6 @@ function resolveComboMonth(dates){
   const months = monthsFromDates(dates);
   const todayKey = todayMonthKey();
   const monthsConHoy = months.includes(todayKey) ? months : [...months, todayKey].sort();
-  if(!adminUnlocked){
-    /* visitante sin clave: la vista queda bloqueada SIEMPRE al mes calendario de hoy, sin poder
-       navegar a otro mes (las pastillas ademas quedan ocultas, ver renderComboMonthPills). No es
-       solo el default de la primera vez -se fuerza en cada llamada, incluso si el usuario ya
-       habia elegido otro mes antes de que se activara este modo. */
-    comboSelectedMonth = todayKey;
-    return monthsConHoy;
-  }
   if(!comboSelectedMonth || !monthsConHoy.includes(comboSelectedMonth)){
     comboSelectedMonth = todayKey;
   }
@@ -2188,13 +2145,6 @@ function renderComboChartWithMonths(dates, effiByDate, dropiByDate){
 function renderComboMonthPills(months){
   const wrap = document.getElementById('comboMesPills');
   if(!wrap) return;
-  if(!adminUnlocked){
-    /* visitante sin clave: sin pastillas -la vista ya quedo fijada al mes de hoy en resolveComboMonth. */
-    wrap.innerHTML = '';
-    wrap.style.display = 'none';
-    return;
-  }
-  wrap.style.display = '';
   wrap.innerHTML = months.map(m=>{
     const active = m===comboSelectedMonth ? ' active' : '';
     return `<button type="button" class="month-pill${active}" data-month="${m}">${monthLabelOf(m)}</button>`;
@@ -2203,8 +2153,10 @@ function renderComboMonthPills(months){
     btn.addEventListener('click', ()=>{
       comboSelectedMonth = btn.dataset.month;
       /* las tarjetas KPI de arriba comparten este mismo mes — hay que recalcularlas junto con
-         el grafico, no solo redibujar el grafico. recompute() hace las dos cosas de una vez
-         (y vuelve a pintar las pastillas via renderComboChartWithMonths). */
+         el grafico, no solo redibujar el grafico. Con datos reales cargados, recompute() hace
+         las dos cosas de una vez (y vuelve a pintar las pastillas via renderComboChartWithMonths).
+         En modo "Ver ejemplo" (SNAPSHOT) no hay filas crudas que recalcular — ahi solo se
+         refresca el grafico, como antes. */
       if(store.A.rows && store.B.rows){
         recompute();
       } else {
@@ -2263,46 +2215,6 @@ function renderCharts(dates, propias, total){
 
   const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
   const gridColor = 'rgba(63,232,224,0.08)';
-  /* visitante sin clave: una sola serie de unidades totales (EFFI+Dropi), sin doble eje. Admin
-     ve las dos series de siempre, sin cambios. */
-  const combinedView = !adminUnlocked;
-
-  const titleEl = document.getElementById('comboTitle');
-  if(titleEl) titleEl.textContent = combinedView ? 'Unidades totales' : 'Unidades EFFI vs. unidades Dropi';
-  const legendEl = document.getElementById('comboLegend');
-  if(legendEl) legendEl.innerHTML = combinedView
-    ? '<span><i style="background:var(--cyan)"></i>Unidades totales</span>'
-    : '<span><i style="background:var(--cyan)"></i>Unidades EFFI</span><span><i style="background:var(--blue)"></i>Unidades Dropi</span>';
-
-  if(combinedView){
-    const combinado = dates.map((d,i)=>(propias[i]||0)+(total[i]||0));
-    comboChart = new Chart(ctxCombo, {
-      type:'line',
-      data:{
-        labels,
-        datasets:[
-          {
-            label:'Unidades totales',
-            data:combinado,
-            borderColor:'#3FE8E0',
-            backgroundColor:'rgba(63,232,224,0.14)',
-            tension:.3, fill:true, pointRadius:3, pointBackgroundColor:'#3FE8E0', borderWidth:2.5,
-            yAxisID:'y'
-          }
-        ]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{ legend:{display:false} },
-        scales:{
-          x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{color:gridColor} },
-          y:{ position:'left', ticks:{color:'#3FE8E0', font:{family:"IBM Plex Mono", size:10}, callback:v=>v+' u.'}, grid:{color:gridColor} }
-        }
-      }
-    });
-    return;
-  }
 
   comboChart = new Chart(ctxCombo, {
     type:'line',
@@ -2340,74 +2252,27 @@ function renderCharts(dates, propias, total){
   });
 }
 
-/* ---------------- Detalle por dia: dos vistas en paralelo ----------------
-   panelKey 'usuario'  -> siempre combinado (EFFI+Dropi en una columna/serie),
-                          es el panel que ve TODO visitante y que el admin ve
-                          etiquetado "Detalle por dia (usuario)".
-   panelKey 'admin'    -> siempre separado (EFFI/Dropi en columnas/series
-                          propias), solo se renderiza si adminUnlocked===true,
-                          panel oculto por completo (.admin-content) para
-                          cualquiera sin la clave. */
-const DETALLE_PANEL_CONFIG = {
-  usuario: {
-    combinedView: true,
-    headRowId: 'tableHeadRow', th1Id: 'tableTh1', th4Id: 'tableTh4',
-    bodyId: 'tableBody', canvasId: 'chartDetalle'
-  },
-  admin: {
-    combinedView: false,
-    headRowId: 'tableHeadRowAdmin', th1Id: 'tableTh1Admin', th4Id: 'tableTh4Admin',
-    bodyId: 'tableBodyAdmin', canvasId: 'chartDetalleAdmin'
-  }
-};
-
 let lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
 
-/* effiByDate/dropiByDate son mapas {diaOperativo: unidades}, igual que A.byDate/B.byDate.
-   El selector de mes (detalleMesSelect) es UNICO y compartido por los dos paneles. */
+/* effiByDate/dropiByDate son mapas {diaOperativo: unidades}, igual que A.byDate/B.byDate */
 function renderTable(dates, effiByDate, dropiByDate){
   lastDetalle = { dates, effiByDate, dropiByDate };
   const select = document.getElementById('detalleMesSelect');
-
-  const usuarioTitleEl = document.getElementById('detalleTituloUsuario');
-  if(usuarioTitleEl) usuarioTitleEl.textContent = adminUnlocked ? 'Detalle por dia (usuario)' : 'Detalle por dia';
-
-  if(!adminUnlocked){
-    /* visitante sin clave: mismo bloqueo de siempre -fijo en el mes de hoy, select oculto,
-       nunca "Resumen mensual". Solo existe el panel 'usuario' para visitante. */
-    const todayKey = todayMonthKey();
-    const monthsConHoy = Array.from(new Set([...monthsFromDates(dates), todayKey])).sort();
-    populateMonthSelect(select, monthsConHoy, 'Resumen mensual');
-    if(select){ select.value = todayKey; select.style.display = 'none'; }
-  } else {
-    populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
-    if(select) select.style.display = '';
-  }
-
-  renderTableBody('usuario');
-  if(adminUnlocked) renderTableBody('admin');
+  populateMonthSelect(select, monthsFromDates(dates), 'Resumen mensual');
+  renderTableBody();
 }
 
-function renderTableBody(panelKey){
-  const cfg = DETALLE_PANEL_CONFIG[panelKey];
+function renderTableBody(){
   const { dates, effiByDate, dropiByDate } = lastDetalle;
   const select = document.getElementById('detalleMesSelect');
-  const body = document.getElementById(cfg.bodyId);
+  const body = document.getElementById('tableBody');
+  const th1 = document.getElementById('tableTh1');
+  const th4 = document.getElementById('tableTh4');
   if(!body) return;
   const selectedMonth = select ? select.value : '';
-  const combinedView = cfg.combinedView;
-
-  const headRow = document.getElementById(cfg.headRowId);
-  if(headRow){
-    headRow.innerHTML = combinedView
-      ? `<th id="${cfg.th1Id}">Mes</th><th>Unidades totales</th><th id="${cfg.th4Id}">Meta 200</th>`
-      : `<th id="${cfg.th1Id}">Mes</th><th>Unidades EFFI</th><th>Unidades Dropi</th><th id="${cfg.th4Id}">Meta 200</th>`;
-  }
-  /* headRow.innerHTML fue reemplazado, asi que hay que volver a tomar los nodos th1/th4 */
-  const th1 = document.getElementById(cfg.th1Id);
-  const th4 = document.getElementById(cfg.th4Id);
 
   if(!selectedMonth){
+    /* resumen: un renglon acumulado por mes */
     if(th1) th1.textContent = 'Mes';
     if(th4) th4.textContent = 'Meta 200';
     const months = monthsFromDates(dates);
@@ -2419,54 +2284,54 @@ function renderTableBody(panelKey){
         effi += e; dropi += dr;
         if(e+dr >= META_COMBINADA) cumplidos++;
       });
-      return combinedView
-        ? `<tr><td>${monthLabelOf(mk)}</td><td>${fmtUnits(effi+dropi)}</td><td>${cumplidos}/${daysInMonth.length} dias</td></tr>`
-        : `<tr><td>${monthLabelOf(mk)}</td><td>${fmtUnits(effi)}</td><td>${fmtUnits(dropi)}</td><td>${cumplidos}/${daysInMonth.length} dias</td></tr>`;
+      return `<tr><td>${monthLabelOf(mk)}</td><td>${fmtUnits(effi)}</td><td>${fmtUnits(dropi)}</td><td>${cumplidos}/${daysInMonth.length} dias</td></tr>`;
     }).join('');
   } else {
+    /* mes elegido: detalle dia a dia (igual que antes) */
     if(th1) th1.textContent = 'Fecha';
     if(th4) th4.textContent = 'Meta 200';
     const daysInMonth = dates.filter(d=>monthKeyOf(d)===selectedMonth);
     body.innerHTML = daysInMonth.map(d=>{
       const combinado = (effiByDate[d]||0) + (dropiByDate[d]||0);
-      return combinedView
-        ? `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(combinado)}</td><td>${metaBadge(combinado, META_COMBINADA)}</td></tr>`
-        : `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(effiByDate[d])}</td><td>${fmtUnits(dropiByDate[d])}</td><td>${metaBadge(combinado, META_COMBINADA)}</td></tr>`;
+      return `<tr><td>${fmtDateLabel(d)}</td><td>${fmtUnits(effiByDate[d])}</td><td>${fmtUnits(dropiByDate[d])}</td><td>${metaBadge(combinado, META_COMBINADA)}</td></tr>`;
     }).join('');
   }
 
-  renderDetalleChart(panelKey);
+  renderDetalleChart();
 }
 
-const detalleCharts = { usuario:null, admin:null };
-function renderDetalleChart(panelKey){
-  const cfg = DETALLE_PANEL_CONFIG[panelKey];
+/* grafico de "Detalle por dia": barras EFFI+Dropi apiladas (para ver el total combinado de
+   un vistazo) mas una linea punteada en la meta de 200 — solo tiene sentido dia a dia, ya que
+   la meta es por dia operativo. En modo "Resumen mensual" (sin mes elegido) se muestra un
+   totalizado por mes sin la linea de meta. Comparte el mismo selector de mes que la tabla
+   (detalleMesSelect), asi que cambia junto con ella con un solo clic. */
+let detalleChart = null;
+function renderDetalleChart(){
   const { dates, effiByDate, dropiByDate } = lastDetalle;
   const select = document.getElementById('detalleMesSelect');
   const selectedMonth = select ? select.value : '';
-  const canvas = document.getElementById(cfg.canvasId);
+  const canvas = document.getElementById('chartDetalle');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  if(detalleCharts[panelKey]){ detalleCharts[panelKey].destroy(); detalleCharts[panelKey] = null; }
+  if(detalleChart){ detalleChart.destroy(); detalleChart = null; }
 
   const paperDim = getComputedStyle(document.documentElement).getPropertyValue('--paper-dim').trim();
   const gridColor = 'rgba(63,232,224,0.08)';
-  const combinedView = cfg.combinedView;
 
   if(!selectedMonth){
     const months = monthsFromDates(dates);
     if(!months.length) return;
     const effiVals = months.map(mk=> dates.filter(d=>monthKeyOf(d)===mk).reduce((s,d)=>s+(effiByDate[d]||0),0));
     const dropiVals = months.map(mk=> dates.filter(d=>monthKeyOf(d)===mk).reduce((s,d)=>s+(dropiByDate[d]||0),0));
-    const datasets = combinedView
-      ? [ { label:'Unidades totales', data: months.map((mk,i)=>effiVals[i]+dropiVals[i]), backgroundColor:'#3FE8E0', borderRadius:4 } ]
-      : [
+    detalleChart = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: months.map(monthLabelOf),
+        datasets:[
           { label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:4 },
           { label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:4 }
-        ];
-    detalleCharts[panelKey] = new Chart(ctx, {
-      type:'bar',
-      data:{ labels: months.map(monthLabelOf), datasets },
+        ]
+      },
       options:{
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } } },
@@ -2481,25 +2346,22 @@ function renderDetalleChart(panelKey){
     if(!daysInMonth.length) return;
     const effiVals = daysInMonth.map(d=>effiByDate[d]||0);
     const dropiVals = daysInMonth.map(d=>dropiByDate[d]||0);
-    const datasets = combinedView
-      ? [
-          { type:'bar', label:'Unidades totales', data: daysInMonth.map((d,i)=>effiVals[i]+dropiVals[i]), backgroundColor:'#3FE8E0', borderRadius:3, stack:'total' },
-          { type:'line', label:`Meta ${META_COMBINADA}`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
-        ]
-      : [
+    detalleChart = new Chart(ctx, {
+      data:{
+        labels: daysInMonth.map(fmtDateLabel),
+        datasets:[
           { type:'bar', label:'Unidades EFFI', data: effiVals, backgroundColor:'#3FE8E0', borderRadius:3, stack:'total' },
           { type:'bar', label:'Unidades Dropi', data: dropiVals, backgroundColor:'#4C8DFF', borderRadius:3, stack:'total' },
           { type:'line', label:`Meta ${META_COMBINADA}`, data: daysInMonth.map(()=>META_COMBINADA), borderColor:'#FF6B6B', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false }
-        ];
-    detalleCharts[panelKey] = new Chart(ctx, {
-      data:{ labels: daysInMonth.map(fmtDateLabel), datasets },
+        ]
+      },
       plugins:[stackedTotalLabelPlugin],
       options:{
         responsive:true, maintainAspectRatio:false,
         layout:{ padding:{ top:16 } },
         plugins:{
           legend:{ labels:{ color:paperDim, font:{family:"IBM Plex Mono", size:10} } },
-          stackedTotalLabel:{ barIndices: combinedView ? [0] : [0,1] }
+          stackedTotalLabel:{ barIndices:[0,1] }
         },
         scales:{
           x:{ ticks:{color:paperDim, font:{family:"IBM Plex Mono", size:10}}, grid:{display:false}, stacked:true },
@@ -2510,10 +2372,129 @@ function renderDetalleChart(panelKey){
   }
 }
 
-document.getElementById('detalleMesSelect').addEventListener('change', ()=>{
-  renderTableBody('usuario');
-  if(adminUnlocked) renderTableBody('admin');
-});
+/* ---------------- datos de EJEMPLO (solo detras del boton "Ver ejemplo", nunca se cargan solos) ---------------- */
+/* datos REALES de los excel actuales de esta carpeta (no inventados) — 4 dias operativos
+   consecutivos para que el ejemplo muestre el reparto de fin de semana en accion: EFFI 99 u.
+   todas el viernes 2026-07-10; Dropi 1 (jue 07-09) + 11 (vie 07-10) + 8 crudas el sabado
+   07-11, que como el lunes 07-13 no es festivo se reparten entre 2 -> 07-11=4 y 07-12
+   (domingo, dia nuevo por el reparto)=4. Mismos numeros de referencia documentados en
+   CLAUDE.md — coincide con lo que ve cualquiera que suba estos mismos excel. */
+const SNAPSHOT = {
+  dates: ['2026-07-09','2026-07-10','2026-07-11','2026-07-12'],
+  effiUnits: [0, 99, 0, 0],
+  dropiValue: [1, 11, 4, 4],
+  effiRemoved: 0,
+  dropiRemoved: 4,
+  dropiDupes: 0,
+  rankEffi: [
+    ["Lucenith Quintero Leon",24],["FUNNELISTH LANDING",23],["Isaac Salazar",13],
+    ["César Alfredo Aponte Artigas",10],["Juan manuel sanchez leon",9],["Nini Johana quintero leon",7],
+    ["Zaida Vanesa Meneses Chinchilla",5],["Santander Delgado",3],["JOSUE QUINTERO LEON",3],
+    ["DROPI - ROCKETFY",1],["miguel angel angarita ariza",1]
+  ],
+  rankDropi: [
+    ["Tiko",9],["Tienda Colombia",3],["DoviCenter",2],["Tienda Labarca",2],["(sin dato)",2],
+    ["Azaroma",1],["9428708",1]
+  ]
+};
+/* todo el EFFI real cayo el viernes 07-10 (no en dates[0], que ahora es 07-09) — se referencia
+   la fecha explicita para no depender del orden del array. */
+SNAPSHOT.byDayRank = { '2026-07-10': Object.fromEntries(SNAPSHOT.rankEffi) };
+SNAPSHOT.effiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.effiByDate[d] = SNAPSHOT.effiUnits[i]; });
+SNAPSHOT.dropiByDate = {}; SNAPSHOT.dates.forEach((d,i)=>{ SNAPSHOT.dropiByDate[d] = SNAPSHOT.dropiValue[i]; });
+
+function loadSnapshot(){
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('kpis').classList.add('show');
+  document.getElementById('panels').classList.add('show');
+  document.getElementById('snapshotBanner').style.display = 'flex';
+
+  const sumPropias = SNAPSHOT.effiUnits.reduce((a,b)=>a+b,0);
+  const sumTotal = SNAPSHOT.dropiValue.reduce((a,b)=>a+b,0);
+  document.getElementById('kpiPropiasTotal').textContent = fmtUnits(sumPropias);
+  document.getElementById('kpiTotalTotal').textContent = fmtUnits(sumTotal);
+
+  const snapLastDate = SNAPSHOT.dates[SNAPSHOT.dates.length - 1];
+  const snapCombinadoUltimoDia = (SNAPSHOT.effiByDate[snapLastDate] ?? 0) + (SNAPSHOT.dropiByDate[snapLastDate] ?? 0);
+  document.getElementById('kpiCombinadoTotal').textContent = fmtUnits(snapCombinadoUltimoDia);
+  const snapKpiCombinadoVar = document.getElementById('kpiCombinadoVar');
+  snapKpiCombinadoVar.textContent = `${fmtDateLabel(snapLastDate)} — ${snapCombinadoUltimoDia >= META_COMBINADA ? 'meta 200 cumplida' : `faltan ${fmtUnits(META_COMBINADA - snapCombinadoUltimoDia)}`}`;
+  snapKpiCombinadoVar.className = 'sub ' + (snapCombinadoUltimoDia >= META_COMBINADA ? 'up' : 'down');
+
+  const snapMonthKey = monthKeyOf(snapLastDate);
+  const snapDiasDelMes = SNAPSHOT.dates.filter(d => monthKeyOf(d) === snapMonthKey);
+  const snapSumaMes = snapDiasDelMes.reduce((s,d)=> s + (SNAPSHOT.effiByDate[d] ?? 0) + (SNAPSHOT.dropiByDate[d] ?? 0), 0);
+  const snapPromedioDiario = snapDiasDelMes.length ? snapSumaMes / snapDiasDelMes.length : 0;
+  document.getElementById('kpiPromedioDiario').textContent = fmtUnitsAvg(snapPromedioDiario);
+  document.getElementById('kpiPromedioDiarioVar').textContent = `${monthLabelOf(snapMonthKey)} — ${snapDiasDelMes.length} ${snapDiasDelMes.length===1?'dia':'dias'} con datos`;
+
+  document.getElementById('kpiPropiasVar').textContent = SNAPSHOT.effiRemoved>0 ? `${SNAPSHOT.effiRemoved} "cambios" descartados` : 'sin filas de cambios';
+  const snapDropiParts = [];
+  if(SNAPSHOT.dropiDupes>0) snapDropiParts.push(`${SNAPSHOT.dropiDupes} duplicados`);
+  if(SNAPSHOT.dropiRemoved>0) snapDropiParts.push(`${SNAPSHOT.dropiRemoved} cancelados`);
+  document.getElementById('kpiTotalVar').textContent = snapDropiParts.length ? snapDropiParts.join(' + ') + ' descartados' : 'sin cancelados';
+
+  if(SNAPSHOT.rankEffi.length){
+    document.getElementById('kpiTopVendedor').textContent = SNAPSHOT.rankEffi[0][0];
+    document.getElementById('kpiTopVendedorVal').textContent = fmtUnits(SNAPSHOT.rankEffi[0][1]);
+  }
+  if(SNAPSHOT.rankDropi.length){
+    document.getElementById('kpiTopTienda').textContent = SNAPSHOT.rankDropi[0][0];
+    document.getElementById('kpiTopTiendaVal').textContent = fmtUnits(SNAPSHOT.rankDropi[0][1]);
+  }
+
+  renderComboChartWithMonths(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+  renderRankTable('rankVendedorBody', SNAPSHOT.rankEffi, fmtUnits);
+  renderRankTable('rankTiendaBody', SNAPSHOT.rankDropi, fmtUnits);
+  renderTable(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+  renderMetasVendedores(SNAPSHOT.byDayRank);
+  updateVistaAcumulada(SNAPSHOT.dates, SNAPSHOT.effiByDate, SNAPSHOT.dropiByDate);
+}
+
+function resetToEmptyState(){
+  document.getElementById('snapshotBanner').style.display = 'none';
+  document.getElementById('kpis').classList.remove('show');
+  document.getElementById('panels').classList.remove('show');
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('emptyState').innerHTML = emptyStateHTML();
+  document.getElementById('viewExampleBtn').addEventListener('click', loadSnapshot);
+  store.A = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
+  store.B = {rows:null, headers:null, dateCol:null, horaCol:null, valCol:null, rankCol:null, idCol:null, byDate:null, byRank:null, byDayRank:null, removed:0, removedDup:0};
+  const metasBody = document.getElementById('metasVendedorBody');
+  if(metasBody) metasBody.innerHTML = '';
+  vistaAcumuladaCache = [];
+  renderVistaAcumuladaTable();
+  comboSelectedMonth = null;
+  comboCache = { dates:[], effiByDate:{}, dropiByDate:{} };
+  const comboPills = document.getElementById('comboMesPills');
+  if(comboPills) comboPills.innerHTML = '';
+  lastDetalle = { dates:[], effiByDate:{}, dropiByDate:{} };
+  if(detalleChart){ detalleChart.destroy(); detalleChart = null; }
+  document.getElementById('slotUpload').classList.remove('filled');
+  document.getElementById('statusUpload').textContent = '';
+  ['A','B'].forEach(k=>{
+    document.getElementById('map'+k).classList.remove('show');
+    document.getElementById('status'+k).textContent = '';
+  });
+  const dropEl = document.getElementById('dropUpload');
+  dropEl.classList.remove('has-file');
+  dropEl.innerHTML = '<input type="file" id="fileUpload" accept=".xlsx,.xls,.csv" multiple><span class="dtext">Arrastra o toca para subir los excel (EFFI y Dropi)</span>';
+  document.getElementById('fileUpload').addEventListener('change', async ()=>{
+    const files = Array.from(document.getElementById('fileUpload').files);
+    for(const f of files){ await handleUpload(f); }
+  });
+  dropEl.addEventListener('click', (e)=>{ if(e.target.tagName!=='INPUT') document.getElementById('fileUpload').click(); });
+
+  /* "Salir del ejemplo" (y "Borrar datos guardados") pasan por aqui: si todavia queda algo
+     guardado en localStorage, se vuelve a cargar de una vez en vez de dejar la pagina vacia. */
+  if(loadRawStore()) recompute();
+}
+
+document.getElementById('clearSnapshotBtn').addEventListener('click', resetToEmptyState);
+document.getElementById('viewExampleBtn').addEventListener('click', loadSnapshot);
+
+document.getElementById('historialMesSelect').addEventListener('change', renderHistorialTable);
+document.getElementById('detalleMesSelect').addEventListener('change', renderTableBody);
 document.getElementById('metasMesSelect').addEventListener('change', renderMetasBody);
 
 document.getElementById('adminUnlockBtn').addEventListener('click', tryUnlockAdmin);
@@ -2523,8 +2504,6 @@ document.getElementById('adminLockBtn').addEventListener('click', ()=>{
   document.getElementById('adminGate').style.display = 'flex';
   document.getElementById('uploadZoneWrap').style.display = 'none';
   document.getElementById('adminContent').style.display = 'none';
-  document.getElementById('historialSection').style.display = 'none';
-  document.getElementById('detallePanelAdmin').style.display = 'none';
   document.getElementById('vistaAcumuladaBody').innerHTML = '';
   refreshEmptyStateMessage();
   /* al salir del modo admin, todo el reporte vuelve a la version repartida de siempre. */

@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quin — Administrador</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root { --cian:#17C3C3; --linea:#e4e7e9; --gris:#6b7280; --rojo:#c62828; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; padding:14px;
+         background:#fafbfc; color:#111; line-height:1.4; font-size:14px; }
+  .wrap { max-width:1200px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  h2 { font-size:15px; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--cian); }
+  .sub { color:var(--gris); font-size:13px; margin:0 0 12px; }
+  .caja { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+
+  .nav { display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--linea); flex-wrap:wrap; }
+  .nav button { background:none; color:var(--gris); border:0; border-bottom:3px solid transparent;
+                padding:8px 14px; font-size:14px; font-weight:600; cursor:pointer; border-radius:0; }
+  .nav button.on { color:#111; border-bottom-color:var(--cian); }
+
+  .carga { display:flex; flex-wrap:wrap; gap:12px; }
+  .carga > div { flex:1; min-width:240px; }
+  @media (min-width:1000px){
+    .zonaConfig { display:grid; grid-template-columns:2fr 1fr; gap:0 20px; align-items:start; }
+    .zonaConfig > div > h2 { margin-top:26px; }
+    .zonaConfig .lista { max-height:340px; }
+  }
+  label.tit { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
+  input[type=file] { width:100%; font-size:13px; }
+  .estado { font-size:13px; color:var(--gris); margin-top:6px; min-height:18px; }
+  .ok { color:#0a7d38; font-weight:600; }
+  .err { color:var(--rojo); font-weight:600; }
+
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { border:1px solid var(--linea); padding:5px 8px; text-align:right; }
+  th { background:#f2fbfb; font-weight:600; }
+  th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align:left; }
+  tfoot td { font-weight:700; background:#f7f8f9; }
+  .total { color:var(--cian); font-weight:700; }
+
+  .dosCols { display:flex; flex-wrap:wrap; gap:16px; }
+  .dosCols > div { flex:1; min-width:270px; }
+  .lista { border:1px solid var(--linea); border-radius:8px; max-height:260px; overflow:auto; }
+  .item { display:flex; align-items:center; gap:8px; padding:5px 9px; border-bottom:1px solid #f0f2f3;
+          font-size:13px; cursor:pointer; }
+  .item:last-child { border-bottom:0; }
+  .item:hover { background:#f7fdfd; }
+  .item input { width:17px; height:17px; accent-color:var(--cian); flex:none; cursor:pointer; }
+  .item .nom { flex:1; word-break:break-word; }
+  .item .num { color:var(--gris); font-size:12px; white-space:nowrap; }
+  .item.off .nom { color:var(--rojo); text-decoration:line-through; }
+  .item.off .num { color:var(--rojo); }
+  .acc { font-size:12px; color:var(--cian); cursor:pointer; text-decoration:underline;
+         background:none; border:0; padding:0 8px 0 0; }
+  .vacio { padding:14px; color:var(--gris); font-size:13px; text-align:center; }
+
+  button { background:var(--cian); color:#fff; border:0; border-radius:8px;
+           padding:7px 13px; font-size:13px; font-weight:600; cursor:pointer; }
+  button:disabled { background:#c9ced3; cursor:default; }
+  select, input[type=date] { padding:6px 10px; border:1px solid var(--linea);
+           border-radius:8px; font-size:14px; background:#fff; }
+
+  details { margin-top:10px; }
+  summary { cursor:pointer; font-weight:600; font-size:13px; padding:4px 0; }
+  .mini { font-size:12px; }
+  .mini td, .mini th { padding:5px 7px; }
+  .nota, .aviso { background:#fffbe6; border:1px solid #f0e0a0; border-radius:8px;
+          padding:10px 12px; font-size:13px; margin-top:10px; }
+  .descartada { color:var(--rojo); }
+  .pill { display:inline-block; background:#f2fbfb; border:1px solid #cfeeee; border-radius:20px;
+          padding:2px 10px; font-size:12px; margin-right:6px; }
+
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+  .kpi { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:10px 12px; }
+  .kpi .et { font-size:12px; color:var(--gris); margin:0 0 4px; }
+  .kpi .n  { font-size:23px; font-weight:700; margin:0; line-height:1.1; }
+  .kpi .pie{ font-size:12px; color:var(--gris); margin:2px 0 0; }
+  .kpi.destacado { border-color:#cfeeee; background:#f7fdfd; }
+  .kpi .n.cian { color:var(--cian); }
+  .graf { position:relative; width:100%; height:270px; }
+  .leyenda { display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--gris); margin-bottom:8px; }
+  .leyenda span { display:flex; align-items:center; gap:5px; }
+  .cuad { width:11px; height:11px; border-radius:2px; display:inline-block; }
+
+  /* ---- Calendario tipo Excel ---- */
+  .calNav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .calNav .rango { font-weight:600; font-size:15px; flex:1; min-width:180px; }
+  .calNav button.gris { background:#eef1f3; color:#111; }
+  .meses { display:flex; flex-wrap:wrap; gap:16px; user-select:none; -webkit-user-select:none; }
+  .mesCal { flex:1; min-width:290px; }
+  .mesCal h3 { font-size:14px; margin:0 0 8px; text-transform:capitalize; }
+  .rejilla { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .rejilla .dow { font-size:11px; color:var(--gris); text-align:center; font-weight:600; padding-bottom:2px; }
+  .celda { border:1px solid var(--linea); border-radius:6px; background:#fff; min-height:40px;
+           padding:2px 4px; cursor:pointer; touch-action:none; }
+  .celda .dnum { font-size:11px; color:var(--gris); line-height:1.1; }
+  .celda .dval { font-size:15px; font-weight:700; text-align:right; line-height:1.2; }
+  .celda.vacia { background:#fafbfc; color:#c9ced3; cursor:default; }
+  .celda.vacia .dval { color:#c9ced3; font-weight:400; }
+  .celda.nolab { background:#f6f7f8; }
+  .celda.nolab .dnum { color:#9aa1a8; }
+  .celda.pend .dval { color:#9aa1a8; font-weight:600; }
+  .celda.pend .dnum { color:#b4bac0; }
+  .celda.sel { background:#e6f9f9; border-color:var(--cian); box-shadow:inset 0 0 0 1px var(--cian); }
+  .celda.hueco { visibility:hidden; }
+  .rejilla.mini { gap:3px; margin-top:8px; }
+  .rejilla.mini .celda { min-height:34px; padding:1px 3px; }
+  .rejilla.mini .celda .dval { font-size:13px; }
+  .celda.cong { border-color:#cfeeee; background:#f7fdfd; }
+  .celda.revisada { box-shadow:inset 0 -3px 0 #c07800; }
+  .celda.abierta { border-color:var(--cian); box-shadow:inset 0 0 0 2px var(--cian); }
+  details.mesJor { border:1px solid var(--linea); border-radius:8px;
+          padding:3px 10px; margin:0 0 4px; background:#fff; }
+  details.mesJor > summary { font-size:13px; padding:3px 0; }
+  details.mesJor[open] { padding-bottom:12px; }
+  @media (min-width:900px){
+    details.mesJor[open] .rejilla.mini { max-width:640px; }
+    details.mesJor[open] { display:grid; grid-template-columns:1fr 1fr; gap:0 20px;
+            align-items:start; }
+    details.mesJor[open] > summary { grid-column:1 / -1; }
+    details.mesJor[open] > p { grid-column:1 / -1; }
+    details.mesJor[open] .detJor { align-self:start; }
+    details.mesJor[open] .detJor .caja { margin-top:34px; }
+  }
+  .panelSel { position:sticky; top:0; z-index:5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Quin — Administrador</h1>
+  <p class="sub">Consolida las ventas de Dropi y Effi en prendas. Solo el administrador entra aquí.</p>
+
+  <div class="nav">
+    <button id="tab1" class="on">1 · Cargar y validar</button>
+    <button id="tab2">2 · Tablero del mes</button>
+    <button id="tab3">3 · Calendario</button>
+    <button id="tab4">4 · Comparativo</button>
+  </div>
+
+  <div id="vista1">
+    <div class="caja carga">
+      <div>
+        <label class="tit">Excel de Dropi <span style="font-weight:400;color:#6b7280">(ordenes_productos…)</span></label>
+        <input type="file" id="fDropi" accept=".xlsx,.xls">
+        <div class="estado" id="eDropi"></div>
+      </div>
+      <div>
+        <label class="tit">Excel de Effi <span style="font-weight:400;color:#6b7280">(Reporte de conceptos…)</span></label>
+        <input type="file" id="fEffi" accept=".xlsx,.xls">
+        <div class="estado" id="eEffi"></div>
+      </div>
+      <div id="resumenCarga" style="flex:1.2;min-width:260px"></div>
+    </div>
+    <div class="zonaConfig">
+      <div id="filtros"></div>
+      <div id="calendario"></div>
+    </div>
+    <div id="congelado"></div>
+    <div id="salida"></div>
+  </div>
+
+  <div id="vista2" style="display:none">
+    <div class="caja" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <label style="font-weight:600;font-size:14px">Mes:</label>
+      <select id="mes"></select>
+      <label style="display:flex;align-items:center;gap:7px;font-size:14px;cursor:pointer">
+        <input type="checkbox" id="incBos" checked style="width:17px;height:17px;accent-color:var(--cian)">
+        Incluir días sin cerrar (bosquejo)
+      </label>
+    </div>
+    <div id="contenido"></div>
+  </div>
+
+  <div id="vista3" style="display:none">
+    <div class="caja calNav">
+      <button class="gris" id="calAtras">‹ Anterior</button>
+      <span class="rango" id="calRango"></span>
+      <button class="gris" id="calAdel">Siguiente ›</button>
+      <button class="gris" id="calHoy">Hoy</button>
+      <button class="gris" id="calLimpiar">Limpiar selección</button>
+    </div>
+    <div id="calDiag"></div>
+    <div id="calResumen"></div>
+    <div class="caja"><div class="meses" id="calMeses"></div></div>
+    <p style="font-size:13px;color:#6b7280;margin:0">
+      Arrastra sobre los días para seleccionar un rango (puede cruzar de un mes a otro).
+      Un toque suelto agrega o quita ese día. En <b style="color:#9aa1a8">gris</b> van los días que ya
+      subiste pero que todavía no has cerrado: se ven, pero no suman.
+    </p>
+  </div>
+
+  <div id="vista4" style="display:none">
+    <div class="caja" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:14px;cursor:pointer">
+        <input type="checkbox" id="cmpBos" checked style="width:17px;height:17px;accent-color:var(--cian)">
+        Incluir días sin cerrar (bosquejo)
+      </label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:14px;cursor:pointer">
+        <input type="checkbox" id="cmpPar" style="width:17px;height:17px;accent-color:var(--cian)">
+        Comparar el mismo número de días
+      </label>
+    </div>
+    <div id="cmpContenido"></div>
+  </div>
+
+</div>
+
+<script>
+// ####################################################################
+//  BLOQUE 1 — UTILIDADES Y REGLAS (las usan las dos pestañas)
+// ####################################################################
+function normalizar(t) {
+  return String(t == null ? "" : t)
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/\s+/g, " ").trim();
+}
+function aNumero(v) {
+  if (v == null || v === "") return 0;
+  var n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? 0 : n;
+}
+function claveFecha(y, m, d) {
+  return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+var DIAS  = ["dom","lun","mar","mié","jue","vie","sáb"];
+var MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+var MESES_L = ["enero","febrero","marzo","abril","mayo","junio",
+               "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var META_TOTAL = 200, META_PROPIAS = 160;
+
+function fdate(k){ var p=k.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function bonita(k){ if(!k) return "—"; var p=k.split("-");
+  return DIAS[fdate(k).getDay()]+" "+p[2]+"-"+MESES[+p[1]-1]; }
+function esc(t) {
+  return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+// --- fecha y hora de los Excel ---
+function fechaDropi(celda) {
+  if (celda instanceof Date)
+    return { y: celda.getFullYear(), m: celda.getMonth() + 1, d: celda.getDate() };
+  var t = String(celda == null ? "" : celda).trim();
+  var m = t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (m) return { y: +m[3], m: +m[2], d: +m[1] };
+  m = t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+  return null;
+}
+function horaDropi(celda) {
+  if (celda instanceof Date) return celda.getHours() + celda.getMinutes() / 60;
+  if (typeof celda === "number") return (celda - Math.floor(celda)) * 24;
+  var m = String(celda == null ? "" : celda).trim().match(/^(\d{1,2}):(\d{2})/);
+  return m ? +m[1] + (+m[2]) / 60 : null;
+}
+// La jornada corta a las 8am, salvo la madrugada del sábado que corta a las 7am.
+function jornadaDe(y, m, d, hora) {
+  var f = new Date(y, m - 1, d);
+  var corte = (f.getDay() === 6) ? 7 : 8;
+  if (hora < corte) f.setDate(f.getDate() - 1);
+  return claveFecha(f.getFullYear(), f.getMonth() + 1, f.getDate());
+}
+function fechaEffi(celda) {
+  if (celda instanceof Date)
+    return claveFecha(celda.getFullYear(), celda.getMonth() + 1, celda.getDate());
+  var t = String(celda == null ? "" : celda).trim();
+  var m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return claveFecha(+m[1], +m[2], +m[3]);
+  m = t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+  if (m) return claveFecha(+m[3], +m[2], +m[1]);
+  return null;
+}
+
+// --- festivos de Colombia (se calculan, no se teclean) ---
+function pascua(y) {
+  var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,
+      f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+      i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+      mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return new Date(y,mes-1,dia);
+}
+function sumarDias(f,n){ var x=new Date(f); x.setDate(x.getDate()+n); return x; }
+function alLunes(f){ var x=new Date(f),w=x.getDay(); if(w!==1) x.setDate(x.getDate()+((8-w)%7)); return x; }
+var cacheFestivos = {};
+function festivosColombia(y) {
+  if (cacheFestivos[y]) return cacheFestivos[y];
+  var P = pascua(y), R = {};
+  function fijo(m,d,n){ R[claveFecha(y,m,d)] = n; }
+  function mov(m,d,n){ var f=alLunes(new Date(y,m-1,d));
+    R[claveFecha(f.getFullYear(),f.getMonth()+1,f.getDate())] = n; }
+  function pas(n,nom,mv){ var f=sumarDias(P,n); if(mv) f=alLunes(f);
+    R[claveFecha(f.getFullYear(),f.getMonth()+1,f.getDate())] = nom; }
+  fijo(1,1,"Año Nuevo");   fijo(5,1,"Día del Trabajo");  fijo(7,20,"Independencia");
+  fijo(8,7,"Batalla de Boyacá"); fijo(12,8,"Inmaculada"); fijo(12,25,"Navidad");
+  mov(1,6,"Reyes Magos");  mov(3,19,"San José");         mov(6,29,"San Pedro y San Pablo");
+  mov(8,15,"Asunción");    mov(10,12,"Día de la Raza");  mov(11,1,"Todos los Santos");
+  mov(11,11,"Independencia de Cartagena");
+  pas(-3,"Jueves Santo",false); pas(-2,"Viernes Santo",false);
+  pas(43,"Ascensión",true); pas(64,"Corpus Christi",true); pas(71,"Sagrado Corazón",true);
+  // Festivo nuevo desde 2026: Virgen de Chiquinquirá (9 jul), corrido al lunes.
+  if (y >= 2026) mov(7,9,"Virgen de Chiquinquirá");
+  cacheFestivos[y] = R;
+  return R;
+}
+function porQueNoLaborable(clave) {
+  if (diasManuales[clave]) return "marcado a mano";
+  var p = clave.split("-"), f = fdate(clave);
+  var fest = festivosColombia(+p[0])[clave];
+  if (fest) return fest;
+  if (f.getDay() === 6) return "sábado";
+  if (f.getDay() === 0) return "domingo";
+  return null;
+}
+// Reparto: parejo en enteros, TODO el sobrante al último día.
+function repartir(total, n) {
+  var base = Math.floor(total / n), sobrante = total - base * n, r = [];
+  for (var i = 0; i < n; i++) r.push(base);
+  r[n - 1] += sobrante;
+  return r;
+}
+// Agrupa días no laborables consecutivos en bloques.
+function armarBloques(claves) {
+  var bloques = [], act = null;
+  claves.forEach(function (k, i) {
+    var seguido = i === 0 ? true : (fdate(k) - fdate(claves[i-1])) === 86400000;
+    if (porQueNoLaborable(k)) {
+      if (!act || !seguido) { act = { dias: [] }; bloques.push(act); }
+      act.dias.push(k);
+    } else act = null;
+  });
+  return bloques;
+}
+
+// ####################################################################
+//  BLOQUE 2 — ESTADO Y GUARDADO
+// ####################################################################
+var filasDropi = null, filasEffi = null;
+var listaEstatus = [], listaVend = [];
+var descartarNovedad = true;
+var diasManuales = {};
+var jornadas = {}, ultimoResumen = "", ajustesGuardados = null;
+var ultimoCalculo = {};   // días calculados del último Excel cargado (cerrados o no)
+
+var SIN_TIENDA = "Tienda no identificada";
+function nombreTienda(celda) {
+  var t = String(celda == null ? "" : celda).trim();
+  return (t === "" || t.toLowerCase() === "none") ? SIN_TIENDA : t;
+}
+// En Dropi la TIENDA es el vendedor. Effi y Dropi nunca se mezclan en rankings.
+var APAGADO_DROPI = ["cancelado", "devolucion", "novedad", "anulad"];
+var APAGADO_EFFI  = ["cambio", "miguel angel angarita ariza"];
+
+var LLAVE_JOR = "quin.jornadas", LLAVE_AJU = "quin.ajustes";
+function guardar(ll, d){ try{ localStorage.setItem(ll, JSON.stringify(d)); return true; }catch(e){ return false; } }
+function leer(ll){ try{ var t=localStorage.getItem(ll); return t?JSON.parse(t):null; }catch(e){ return null; } }
+function cargarTodo(){
+  jornadas = leer(LLAVE_JOR) || {};
+  var a = leer(LLAVE_AJU);
+  if (a) {
+    diasManuales = a.diasManuales || {};
+    if (typeof a.descartarNovedad === "boolean") descartarNovedad = a.descartarNovedad;
+    ajustesGuardados = a;
+  }
+}
+function guardarAjustes(){
+  var est={}, ven={};
+  listaEstatus.forEach(function(x){ est[x.valor]=x.cuenta; });
+  listaVend.forEach(function(x){ ven[x.valor]=x.cuenta; });
+  guardar(LLAVE_AJU, { diasManuales:diasManuales, descartarNovedad:descartarNovedad, est:est, ven:ven });
+}
+function hoyTexto(){
+  var f=new Date();
+  return f.getDate()+"-"+MESES[f.getMonth()]+"-"+f.getFullYear()+" "+
+         String(f.getHours()).padStart(2,"0")+":"+String(f.getMinutes()).padStart(2,"0");
+}
+
+// ####################################################################
+//  BLOQUE 3 — PESTAÑAS
+// ####################################################################
+tab1.addEventListener("click", function(){ mostrar(1); });
+tab2.addEventListener("click", function(){ mostrar(2); });
+tab3.addEventListener("click", function(){ mostrar(3); });
+tab4.addEventListener("click", function(){ mostrar(4); });
+function mostrar(n){
+  tab1.className = n===1 ? "on" : "";
+  tab2.className = n===2 ? "on" : "";
+  tab3.className = n===3 ? "on" : "";
+  tab4.className = n===4 ? "on" : "";
+  vista1.style.display = n===1 ? "" : "none";
+  vista2.style.display = n===2 ? "" : "none";
+  vista3.style.display = n===3 ? "" : "none";
+  vista4.style.display = n===4 ? "" : "none";
+  if (n===2) { pintarMeses(); pintarTablero(); }
+  if (n===3) pintarCalendarioSel();
+  if (n===4) pintarComparativo();
+}
+
+// ####################################################################
+//  BLOQUE 4 — PESTAÑA 1: cargar, filtrar, congelar
+// ####################################################################
+function leerArchivo(input, estado, guardarEn) {
+  input.addEventListener("change", function () {
+    var f = input.files[0];
+    if (!f) return;
+    estado.textContent = "Leyendo…"; estado.className = "estado";
+    var lector = new FileReader();
+    lector.onload = function (ev) {
+      try {
+        var libro = XLSX.read(new Uint8Array(ev.target.result), { type:"array", cellDates:true });
+        var filas = XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { defval:null });
+        guardarEn(filas);
+        estado.innerHTML = '<span class="ok">' + filas.length + " filas leídas</span>";
+      } catch (e) {
+        estado.innerHTML = '<span class="err">No se pudo leer: ' + esc(e.message) + "</span>";
+        guardarEn(null);
+      }
+      construirFiltros();
+      calcular();
+    };
+    lector.readAsArrayBuffer(f);
+  });
+}
+leerArchivo(fDropi, eDropi, function(f){ filasDropi = f; });
+leerArchivo(fEffi,  eEffi,  function(f){ filasEffi  = f; });
+
+function apagadoPorDefecto(valor, patrones) {
+  var v = normalizar(valor);
+  for (var i=0;i<patrones.length;i++) if (v.indexOf(patrones[i]) !== -1) return true;
+  return false;
+}
+function identificar(filas, colValor, colCant, patrones, vacioComo) {
+  var mapa = {};
+  (filas||[]).forEach(function(r){
+    var v = String(r[colValor]==null?"":r[colValor]).trim();
+    if (v==="" || v.toLowerCase()==="none") v = vacioComo;
+    if (!mapa[v]) mapa[v] = { valor:v, prendas:0, cuenta: !apagadoPorDefecto(v, patrones) };
+    mapa[v].prendas += aNumero(r[colCant]);
+  });
+  return Object.keys(mapa).map(function(k){ return mapa[k]; })
+    .sort(function(a,b){ return b.prendas - a.prendas; });
+}
+function fusionar(nueva, vieja, guardadas) {
+  var previo = {};
+  if (guardadas) Object.keys(guardadas).forEach(function(k){ previo[k]=guardadas[k]; });
+  vieja.forEach(function(x){ previo[x.valor]=x.cuenta; });
+  nueva.forEach(function(x){ if (previo.hasOwnProperty(x.valor)) x.cuenta = previo[x.valor]; });
+  return nueva;
+}
+
+function construirFiltros() {
+  listaEstatus = fusionar(identificar(filasDropi,"ESTATUS","CANTIDAD",APAGADO_DROPI,"(sin estatus)"),
+                          listaEstatus, ajustesGuardados && ajustesGuardados.est);
+  listaVend    = fusionar(identificar(filasEffi,"Vendedor","Cantidad",APAGADO_EFFI,"(sin vendedor)"),
+                          listaVend, ajustesGuardados && ajustesGuardados.ven);
+  if (!filasDropi && !filasEffi) { filtros.innerHTML=""; construirCalendario(); return; }
+
+  filtros.innerHTML =
+    "<h2>Qué cuenta y qué no</h2><div class='caja'>" +
+      "<p style='margin:0 0 14px;font-size:13px;color:#6b7280'>" +
+      "Esta lista sale de <b>tus propios archivos</b>. Lo <b>marcado</b> cuenta como venta; " +
+      "lo <b>desmarcado</b> se descarta. Los números se recalculan solos.</p>" +
+      "<div class='dosCols'><div>" + bloqueLista("Estatus encontrados en Dropi", listaEstatus, "est", !filasDropi) +
+        "<label class='item' style='border:1px solid var(--linea);border-radius:8px;margin-top:10px'>" +
+        "<input type='checkbox' id='chkNovedad'" + (descartarNovedad?" checked":"") + ">" +
+        "<span class='nom'>Descartar también las filas con algo escrito en la columna NOVEDAD</span></label>" +
+      "</div><div>" + bloqueLista("Vendedores encontrados en Effi", listaVend, "ven", !filasEffi) +
+      "</div></div></div>";
+
+  document.querySelectorAll("[data-tipo]").forEach(function(el){
+    el.addEventListener("change", function(){
+      (el.dataset.tipo==="est"?listaEstatus:listaVend)[+el.dataset.i].cuenta = el.checked;
+      el.closest(".item").classList.toggle("off", !el.checked);
+      calcular();
+    });
+  });
+  document.querySelectorAll("[data-todos]").forEach(function(b){
+    b.addEventListener("click", function(){
+      (b.dataset.todos==="est"?listaEstatus:listaVend).forEach(function(x){ x.cuenta = b.dataset.valor==="1"; });
+      construirFiltros(); calcular();
+    });
+  });
+  var ch = document.getElementById("chkNovedad");
+  if (ch) ch.addEventListener("change", function(){ descartarNovedad = ch.checked; calcular(); });
+  construirCalendario();
+}
+function bloqueLista(titulo, lista, tipo, vacio) {
+  var h = "<label class='tit'>" + titulo +
+          (vacio?"":" <span style='font-weight:400;color:#6b7280'>("+lista.length+")</span>") + "</label>";
+  if (vacio || !lista.length)
+    return h + "<div class='lista'><div class='vacio'>Carga el archivo para ver la lista</div></div>";
+  h += "<div style='margin-bottom:6px'>" +
+       "<button class='acc' data-todos='"+tipo+"' data-valor='1'>marcar todos</button>" +
+       "<button class='acc' data-todos='"+tipo+"' data-valor='0'>desmarcar todos</button></div><div class='lista'>";
+  lista.forEach(function(x,i){
+    h += "<label class='item"+(x.cuenta?"":" off")+"'>" +
+         "<input type='checkbox' data-tipo='"+tipo+"' data-i='"+i+"'"+(x.cuenta?" checked":"")+">" +
+         "<span class='nom'>"+esc(x.valor)+"</span>" +
+         "<span class='num'>"+x.prendas+" prendas</span></label>";
+  });
+  return h + "</div>";
+}
+
+function construirCalendario() {
+  if (!filasDropi && !filasEffi) { calendario.innerHTML=""; return; }
+  var man = Object.keys(diasManuales).sort();
+  var h = "<h2>Días no laborables</h2><div class='caja'>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    "Sábados, domingos y festivos de Colombia se detectan solos. " +
+    "Aquí solo agregas los días extra que decidas cerrar.</p>" +
+    "<div style='display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px'>" +
+    "<input type='date' id='fechaManual'><button id='btnManual'>Marcar como no laborable</button></div>";
+  if (man.length) {
+    h += "<div style='display:flex;flex-wrap:wrap;gap:6px'>";
+    man.forEach(function(k){
+      h += "<span class='pill' style='background:#fff5e6;border-color:#f0d0a0'>"+bonita(k)+
+           " <button class='acc quitar' data-k='"+k+"' style='color:#c62828;padding:0 0 0 4px'>quitar</button></span>";
+    });
+    h += "</div>";
+  } else h += "<p style='margin:0;font-size:13px;color:#6b7280'>Ningún día extra marcado.</p>";
+  calendario.innerHTML = h + "</div>";
+
+  var b = document.getElementById("btnManual");
+  if (b) b.addEventListener("click", function(){
+    var f = document.getElementById("fechaManual");
+    if (!f.value) return;
+    diasManuales[f.value] = true;
+    construirCalendario(); calcular();
+  });
+  document.querySelectorAll(".quitar").forEach(function(x){
+    x.addEventListener("click", function(){
+      delete diasManuales[x.dataset.k];
+      construirCalendario(); calcular();
+    });
+  });
+}
+
+function cerrarJornadas(dias, seleccionadas) {
+  var nuevas=0, act=0;
+  seleccionadas.forEach(function(k){
+    var v = dias[k];
+    var cifra = { p:v.propias, d:v.dropi, ven:v.ven||{}, tie:v.tie||{} };
+    if (!jornadas[k]) { jornadas[k] = { oficial:cifra, cerrada:hoyTexto(), fotos:[] }; nuevas++; }
+    else { jornadas[k].fotos = jornadas[k].fotos||[];
+           jornadas[k].fotos.push({ cuando:hoyTexto(), p:cifra.p, d:cifra.d }); act++; }
+  });
+  guardar(LLAVE_JOR, jornadas);
+  var p=[];
+  if (nuevas) p.push("cerré "+nuevas+" jornada"+(nuevas>1?"s":"")+" nueva"+(nuevas>1?"s":""));
+  if (act)    p.push("actualicé el comparativo de "+act+" ya cerrada"+(act>1?"s":""));
+  ultimoResumen = p.length ? p.join(" y ")+"." : "No había nada que cerrar.";
+}
+
+function detalleJornada(k){
+  var j = jornadas[k]; if (!j) return "";
+  var of = j.oficial.p + j.oficial.d;
+  var fo = j.fotos||[], u = fo.length ? fo[fo.length-1] : null;
+  var ac = u ? u.p+u.d : null, dif = ac==null ? null : ac-of;
+  return "<div class='caja' style='margin:10px 0 0;background:#f7fdfd'>" +
+    "<p style='margin:0 0 8px;font-weight:600'>"+bonita(k)+"</p>" +
+    "<table class='mini'><tbody>" +
+    "<tr><td style='text-align:left'>Oficial</td><td><b>"+of+"</b> ("+j.oficial.p+" propias · "+j.oficial.d+" Dropi)</td></tr>" +
+    "<tr><td style='text-align:left'>Última revisión</td><td>"+(ac==null?"—":ac+" · "+esc(u.cuando))+"</td></tr>" +
+    "<tr><td style='text-align:left'>Diferencia</td><td style='color:" +
+      (dif==null?"#6b7280":(dif<0?"#c62828":(dif>0?"#0a7d38":"#6b7280"))) + "'>" +
+      (dif==null?"—":(dif>0?"+"+dif:dif))+"</td></tr>" +
+    "<tr><td style='text-align:left'>Cerrada el</td><td>"+esc(j.cerrada)+"</td></tr>" +
+    "</tbody></table>" +
+    "<p style='margin:10px 0 0'><button class='borrarJor' data-k='"+esc(k)+"' " +
+    "style='background:#c62828'>Reabrir esta jornada</button></p></div>";
+}
+
+function renderCongelado(dias, claves) {
+  dias = dias || {}; claves = claves || [];
+  var seleccion = {};   // días marcados para cerrar (se reconstruye en cada pintado)
+
+  // ---- meses que hay que mostrar: los del archivo cargado y los del historial ----
+  var meses = {};
+  claves.forEach(function(k){ meses[k.slice(0,7)] = 1; });
+  Object.keys(jornadas).forEach(function(k){ meses[k.slice(0,7)] = 1; });
+  var listaM = Object.keys(meses).sort().reverse();       // reciente primero
+
+  var f0 = new Date();
+  var abierto = claves.length ? claves[claves.length-1].slice(0,7)
+              : f0.getFullYear()+"-"+String(f0.getMonth()+1).padStart(2,"0");
+  if (listaM.indexOf(abierto) === -1) abierto = listaM[0];
+
+  var pendTot = claves.filter(function(k){ return !jornadas[k]; }).length;
+  var histTot = Object.keys(jornadas).length;
+
+  var h = "<h2>Jornadas</h2><div class='caja'>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>" +
+    "Al <b>cerrar</b> una jornada su cifra queda <b>oficial</b> y ya no cambia. " +
+    "Si vuelves a subir ese mismo día, el oficial se respeta y la cifra nueva se guarda como comparación.</p>";
+
+  if (!listaM.length) {
+    congelado.innerHTML = h + "<p style='margin:0;color:#6b7280;font-size:13px'>" +
+      "Sube los dos Excel para ver aquí las jornadas.</p></div>";
+    return;
+  }
+
+  h += "<div class='leyenda' style='margin-bottom:10px'>" +
+    "<span><i class='cuad' style='background:#f7fdfd;border:1px solid #cfeeee'></i>Cerrada (oficial)</span>" +
+    "<span><i class='cuad' style='background:#fff;border:1px solid var(--linea)'></i>Cargada sin cerrar</span>" +
+    "<span><i class='cuad' style='background:#c07800'></i>Con revisión posterior</span>" +
+    "<span><i class='cuad' style='background:#fafbfc;border:1px solid var(--linea)'></i>Sin datos</span>" +
+    "</div>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    (claves.length ? "<b>"+claves.length+"</b> día"+(claves.length===1?"":"s")+" en el archivo cargado · " +
+                     "<b>"+pendTot+"</b> sin cerrar · " : "") +
+    "<b>"+histTot+"</b> en el historial · <b>"+listaM.length+"</b> mes"+(listaM.length===1?"":"es")+"</p>";
+
+  listaM.forEach(function(m){
+    var pp = m.split("-");
+    var ksMes = [], suma = 0, pend = 0, rev = 0;
+    var ultimo = new Date(+pp[0], +pp[1], 0).getDate();
+    for (var d=1; d<=ultimo; d++){
+      var k = claveFecha(+pp[0], +pp[1], d);
+      var j = jornadas[k], c = dias[k];
+      if (!j && !c) continue;
+      ksMes.push(k);
+      suma += j ? j.oficial.p + j.oficial.d : c.propias + c.dropi;
+      if (!j) pend++;
+      if (j && (j.fotos||[]).length) rev++;
+    }
+    h += "<details class='mesJor'"+(m===abierto?" open":"")+" data-m='"+m+"'>" +
+      "<summary style='text-transform:capitalize'>" + MESES_L[+pp[1]-1] + " " + pp[0] +
+      " <span style='font-weight:400;color:#6b7280;text-transform:none'>· " + ksMes.length + " día" +
+      (ksMes.length===1?"":"s") + " · " + suma + " prendas · " +
+      (pend ? "<b style='color:#c07800'>"+pend+" sin cerrar</b>" : "todas cerradas") +
+      (rev ? " · " + rev + " con revisión" : "") + "</span></summary>" +
+      (pend ? "<p style='margin:6px 0 0'><button class='acc marcarMesPend' data-m='"+m+"'>" +
+              "marcar las " + pend + " sin cerrar de este mes</button>" +
+              "<button class='acc limpiarMes' data-m='"+m+"'>quitar marcas</button></p>" : "") +
+      calendarioJornadas(m) +
+      "<div class='detJor'></div></details>";
+  });
+
+  h += "<p style='margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center'>" +
+       "<button id='btnCerrar' disabled>Cerrar seleccionadas</button>" +
+       "<span id='avisoSel' style='font-size:13px;color:#6b7280'></span></p>";
+
+  if (ultimoResumen) h += "<p class='nota'><b>Listo:</b> "+esc(ultimoResumen)+"</p>";
+
+  if (histTot) h += "<p style='margin:14px 0 0;font-size:12px;color:#6b7280'>" +
+    "Toca un día <b>cerrado</b> para ver su detalle y reabrirlo. Toca un día <b>sin cerrar</b> para marcarlo.</p>" +
+    "<p style='margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap'>" +
+    "<button id='btnRespaldo'>Descargar respaldo</button>" +
+    "<button id='btnBorrarTodo' style='background:#c62828'>Borrar todo el historial</button></p>";
+
+  congelado.innerHTML = h + "</div>";
+
+  // ------------------------------------------------------------------
+  function calendarioJornadas(m){
+    var pp = m.split("-"), ano = +pp[0], mes1 = +pp[1];
+    var s = "<div class='rejilla mini'>";
+    ["lu","ma","mi","ju","vi","sá","do"].forEach(function(d){ s += "<div class='dow'>"+d+"</div>"; });
+    var hueco = (new Date(ano, mes1-1, 1).getDay()+6)%7;
+    for (var i=0;i<hueco;i++) s += "<div class='celda hueco'></div>";
+    var ultimo = new Date(ano, mes1, 0).getDate();
+    for (var d=1; d<=ultimo; d++){
+      var k = claveFecha(ano, mes1, d), j = jornadas[k], c = dias[k];
+      var cls = "celda", val = "·", tip = "";
+      if (j) {
+        cls += " cong"; val = j.oficial.p + j.oficial.d; tip = "cerrada";
+        if ((j.fotos||[]).length) { cls += " revisada"; tip += ", con revisión"; }
+      } else if (c) {
+        cls += " pend"; val = c.propias + c.dropi; tip = "cargada, sin cerrar";
+      } else { cls += " vacia"; }
+      s += "<div class='"+cls+"' data-dia='"+k+"'"+(tip?" title='"+tip+"'":"")+">" +
+           "<div class='dnum'>"+d+"</div><div class='dval'>"+val+"</div></div>";
+    }
+    return s + "</div>";
+  }
+
+  function refrescar(){
+    var n = Object.keys(seleccion).length;
+    var b = document.getElementById("btnCerrar");
+    if (b) { b.textContent = "Cerrar seleccionadas" + (n?" ("+n+")":""); b.disabled = !n; }
+    var a = document.getElementById("avisoSel");
+    if (a) a.textContent = n ? "" : "Toca los días sin cerrar que quieras cerrar.";
+    document.querySelectorAll("[data-dia]").forEach(function(c){
+      c.classList.toggle("sel", !!seleccion[c.getAttribute("data-dia")]);
+    });
+  }
+
+  function mostrarDetalle(det, k){
+    var cont = det.querySelector(".detJor");
+    cont.innerHTML = detalleJornada(k);
+    var b = cont.querySelector(".borrarJor");
+    if (b) b.addEventListener("click", function(){
+      delete jornadas[b.dataset.k]; guardar(LLAVE_JOR, jornadas);
+      ultimoResumen = "Reabrí la jornada "+bonita(b.dataset.k)+"."; calcular();
+    });
+  }
+
+  document.querySelectorAll(".mesJor").forEach(function(det){
+    det.querySelectorAll("[data-dia]").forEach(function(c){
+      var k = c.getAttribute("data-dia");
+      if (jornadas[k]) {
+        c.addEventListener("click", function(){
+          var cont = det.querySelector(".detJor");
+          if (c.classList.contains("abierta")) {
+            c.classList.remove("abierta"); cont.innerHTML = ""; return;
+          }
+          det.querySelectorAll(".abierta").forEach(function(x){ x.classList.remove("abierta"); });
+          c.classList.add("abierta");
+          mostrarDetalle(det, k);
+        });
+      } else if (dias[k]) {
+        c.addEventListener("click", function(){
+          if (seleccion[k]) delete seleccion[k]; else seleccion[k] = 1;
+          refrescar();
+        });
+      }
+    });
+  });
+  document.querySelectorAll(".marcarMesPend").forEach(function(b){
+    b.addEventListener("click", function(){
+      claves.forEach(function(k){ if (k.slice(0,7)===b.dataset.m && !jornadas[k]) seleccion[k]=1; });
+      refrescar();
+    });
+  });
+  document.querySelectorAll(".limpiarMes").forEach(function(b){
+    b.addEventListener("click", function(){
+      Object.keys(seleccion).forEach(function(k){ if (k.slice(0,7)===b.dataset.m) delete seleccion[k]; });
+      refrescar();
+    });
+  });
+
+  var b1 = document.getElementById("btnCerrar");
+  if (b1) b1.addEventListener("click", function(){
+    var sel = Object.keys(seleccion);
+    if (!sel.length) return;
+    cerrarJornadas(dias, sel); calcular();
+  });
+  var bR = document.getElementById("btnRespaldo");
+  if (bR) bR.addEventListener("click", function(){
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(jornadas,null,2)],{type:"application/json"}));
+    a.download="respaldo-jornadas-quin.json"; a.click();
+  });
+  var b2 = document.getElementById("btnBorrarTodo");
+  if (b2) b2.addEventListener("click", function(){
+    if (!confirm("¿Borrar todas las jornadas guardadas? No se puede deshacer.")) return;
+    jornadas={}; guardar(LLAVE_JOR, jornadas);
+    ultimoResumen="Borré todo el historial."; calcular();
+  });
+
+  refrescar();
+}
+
+function permitido(lista, valor, vacioComo) {
+  var v = String(valor==null?"":valor).trim();
+  if (v==="" || v.toLowerCase()==="none") v = vacioComo;
+  for (var i=0;i<lista.length;i++) if (lista[i].valor===v) return lista[i].cuenta;
+  return true;
+}
+
+function calcular() {
+  if (!filasDropi && !filasEffi) {
+    salida.innerHTML=""; resumenCarga.innerHTML=""; renderCongelado({},null); return;
+  }
+
+  var dias = {};
+  function dia(k){ return dias[k] || (dias[k] = { propias:0, dropi:0, ven:{}, tie:{} }); }
+  var porTienda={}, porVendedorEffi={};
+
+  // ---- DROPI ----
+  var detD=[], contadasD=0, descD=0, sinFechaD=0;
+  (filasDropi||[]).forEach(function(r,i){
+    var cant = aNumero(r["CANTIDAD"]);
+    var est  = String(r["ESTATUS"]==null?"":r["ESTATUS"]).trim();
+    var nov  = String(r["NOVEDAD"]==null?"":r["NOVEDAD"]).trim();
+    var motivo = null;
+    if (!permitido(listaEstatus, est, "(sin estatus)"))
+      motivo = "estatus desmarcado: " + (est||"(sin estatus)");
+    if (!motivo && descartarNovedad && nov!=="" && nov.toLowerCase()!=="none")
+      motivo = "tiene novedad: " + nov;
+    var f=fechaDropi(r["FECHA"]), h=horaDropi(r["HORA"]), jor=null;
+    if (f && h!=null) jor = jornadaDe(f.y,f.m,f.d,h);
+    else if (!motivo) { motivo="sin fecha u hora legible"; sinFechaD++; }
+    if (motivo) descD += cant;
+    else {
+      var dj = dia(jor);
+      dj.dropi += cant; contadasD += cant;
+      var tnd = nombreTienda(r["TIENDA"]);
+      porTienda[tnd] = (porTienda[tnd]||0) + cant;
+      dj.tie[tnd] = (dj.tie[tnd]||0) + cant;
+    }
+    detD.push({ fila:i+2, fecha:r["FECHA"], hora:r["HORA"], b:est, cant:cant, jor:jor, motivo:motivo });
+  });
+
+  // ---- EFFI ----
+  var detE=[], contadasE=0, descE=0;
+  (filasEffi||[]).forEach(function(r,i){
+    var cant = aNumero(r["Cantidad"]);
+    var vend = String(r["Vendedor"]==null?"":r["Vendedor"]).trim();
+    var motivo = null;
+    if (!permitido(listaVend, vend, "(sin vendedor)"))
+      motivo = "vendedor desmarcado: " + (vend||"(sin vendedor)");
+    var k = fechaEffi(r["Fecha creación"]!=null ? r["Fecha creación"] : r["Fecha creacion"]);
+    if (!motivo && !k) motivo = "sin fecha legible";
+    if (motivo) descE += cant;
+    else {
+      var de = dia(k);
+      de.propias += cant; contadasE += cant;
+      porVendedorEffi[vend] = (porVendedorEffi[vend]||0) + cant;
+      de.ven[vend] = (de.ven[vend]||0) + cant;
+    }
+    detE.push({ fila:i+2, fecha:r["Fecha creación"], b:vend, cant:cant, jor:k, motivo:motivo });
+  });
+
+  // ---- completar el rango de días ----
+  var conDatos = Object.keys(dias).sort(), claves = [];
+  if (conDatos.length) {
+    var f = fdate(conDatos[0]), fin = fdate(conDatos[conDatos.length-1]);
+    while (f <= fin) {
+      var k = claveFecha(f.getFullYear(), f.getMonth()+1, f.getDate());
+      claves.push(k); dia(k);
+      f.setDate(f.getDate()+1);
+    }
+  }
+
+  // ---- bloques y reparto ----
+  claves.forEach(function(k){ dias[k].motivo = porQueNoLaborable(k);
+                              dias[k].repP = dias[k].propias; dias[k].repD = dias[k].dropi; });
+  var bloques = armarBloques(claves);
+  bloques.forEach(function(b){
+    var sp=0, sd=0;
+    b.dias.forEach(function(k){ sp+=dias[k].propias; sd+=dias[k].dropi; });
+    var rp=repartir(sp,b.dias.length), rd=repartir(sd,b.dias.length);
+    b.dias.forEach(function(k,i){ dias[k].repP=rp[i]; dias[k].repD=rd[i]; });
+    b.sumaP=sp; b.sumaD=sd;
+  });
+
+  // ---- tabla ----
+  var tP=0,tD=0,trP=0,trD=0;
+  var html = "<h2>Prendas por día</h2><div class='caja'>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    "<b>Real</b> = lo que cayó ese día. <b>Repartida</b> = el fin de semana o festivo repartido entre sus días.</p>" +
+    (claves.length > 40 ? "<details><summary>Ver la tabla día por día (" + claves.length + " días)</summary>" : "") +
+    "<table><thead><tr><th rowspan='2'>Fecha</th><th rowspan='2'>Día</th>" +
+    "<th rowspan='2' style='text-align:left'>Estado</th>" +
+    "<th colspan='3' style='text-align:center'>REAL</th>" +
+    "<th colspan='3' style='text-align:center;background:#eefafa'>REPARTIDA</th></tr>" +
+    "<tr><th>Prop.</th><th>Dropi</th><th>Total</th>" +
+    "<th style='background:#eefafa'>Prop.</th><th style='background:#eefafa'>Dropi</th>" +
+    "<th style='background:#eefafa'>Total</th></tr></thead><tbody>";
+  claves.forEach(function(k){
+    var v=dias[k], p=k.split("-"), esB = v.motivo!=null;
+    tP+=v.propias; tD+=v.dropi; trP+=v.repP; trD+=v.repD;
+    html += "<tr"+(esB?" style='background:#fcfdfd'":"")+">" +
+      "<td>"+p[2]+"-"+MESES[+p[1]-1]+"</td><td>"+bonita(k).split(" ")[0]+"</td>" +
+      "<td style='text-align:left;font-size:12px;color:"+(esB?"#c07800":"#6b7280")+"'>"+
+        (esB?esc(v.motivo):"laborable")+"</td>" +
+      "<td>"+v.propias+"</td><td>"+v.dropi+"</td><td class='total'>"+(v.propias+v.dropi)+"</td>" +
+      "<td style='background:#f7fdfd'>"+v.repP+"</td><td style='background:#f7fdfd'>"+v.repD+"</td>" +
+      "<td class='total' style='background:#f7fdfd'>"+(v.repP+v.repD)+"</td></tr>";
+  });
+  html += "</tbody><tfoot><tr><td colspan='3'>TOTAL</td><td>"+tP+"</td><td>"+tD+"</td><td>"+(tP+tD)+
+          "</td><td>"+trP+"</td><td>"+trD+"</td><td>"+(trP+trD)+"</td></tr></tfoot></table>" +
+          (claves.length > 40 ? "</details>" : "");
+  if (bloques.length) {
+    html += bloques.length > 8
+      ? "<details style='margin-top:12px'><summary>Bloques encontrados ("+bloques.length+")</summary>"
+      : "<p style='margin:14px 0 4px;font-weight:600;font-size:14px'>Bloques encontrados</p>";
+    bloques.forEach(function(b){
+      html += "<p style='margin:0 0 6px;font-size:13px'><span class='pill'>"+b.dias.length+" día"+
+        (b.dias.length>1?"s":"")+"</span>"+b.dias.map(bonita).join(" + ")+
+        " &nbsp;→&nbsp; propias "+b.sumaP+" en ["+repartir(b.sumaP,b.dias.length).join(", ")+"]"+
+        " &nbsp;·&nbsp; Dropi "+b.sumaD+" en ["+repartir(b.sumaD,b.dias.length).join(", ")+"]</p>";
+    });
+    if (bloques.length > 8) html += "</details>";
+  }
+  html += "</div>";
+
+  guardarAjustes();
+  ultimoCalculo = dias;          // lo cargado del Excel, esté cerrado o no (lo usa el calendario)
+  renderCongelado(dias, claves);
+
+  // Tarjeta de resumen al lado de los dos cargadores (aprovecha el espacio libre)
+  var pendCarga = claves.filter(function(k){ return !jornadas[k]; }).length;
+  var mesesCarga = {}; claves.forEach(function(k){ mesesCarga[k.slice(0,7)]=1; });
+  resumenCarga.innerHTML = "<div style='border:1px solid #cfeeee;background:#f7fdfd;border-radius:10px;" +
+    "padding:12px 14px;font-size:13px'>" +
+    "<p style='margin:0 0 6px;font-weight:600;font-size:14px'>Lo que trae el archivo</p>" +
+    "<p style='margin:0 0 3px'><b>" + (tP+tD) + "</b> prendas · <b>" + claves.length + "</b> día" +
+      (claves.length===1?"":"s") + " · <b>" + Object.keys(mesesCarga).length + "</b> mes" +
+      (Object.keys(mesesCarga).length===1?"":"es") + "</p>" +
+    "<p style='margin:0 0 3px;color:#6b7280'>" +
+      (claves.length ? bonita(claves[0]) + " → " + bonita(claves[claves.length-1]) : "sin fechas") + "</p>" +
+    "<p style='margin:0;color:#6b7280'>" + tP + " propias · " + tD + " Dropi · " +
+      "<b style='color:" + (pendCarga?"#c07800":"#0a7d38") + "'>" +
+      (pendCarga ? pendCarga + " sin cerrar" : "todas cerradas") + "</b></p></div>";
+
+  html += "<div class='dosCols'><div>" +
+    rankingHTML("Ranking de vendedores — Effi (propias)", porVendedorEffi, "Vendedor",
+      "Sale de la columna <b>Vendedor</b> del Excel de Effi.") +
+    "</div><div>" +
+    rankingHTML("Ranking de tiendas — Dropi", porTienda, "Tienda",
+      "En Dropi <b>la tienda es el vendedor</b>. Va aparte del de Effi y nunca se suman.") +
+    "</div></div>";
+
+  html += "<h2>Qué se descartó</h2><div class='caja'>" +
+    "<p style='margin:0 0 6px'><b>Dropi:</b> <span class='pill'>cuentan "+contadasD+
+    "</span><span class='pill'>descartadas "+descD+"</span>" +
+    (sinFechaD?"<span class='err'>"+sinFechaD+" filas sin fecha/hora legible</span>":"")+"</p>" +
+    "<p style='margin:0'><b>Effi:</b> <span class='pill'>cuentan "+contadasE+
+    "</span><span class='pill'>descartadas "+descE+"</span></p>" +
+    detalle("Ver las "+detD.length+" filas de Dropi una por una", detD, true) +
+    detalle("Ver las "+detE.length+" filas de Effi una por una", detE, false) + "</div>";
+
+  salida.innerHTML = html;
+}
+
+function rankingHTML(titulo, mapa, etiqueta, aclaracion) {
+  var r = Object.keys(mapa).map(function(n){ return {nom:n, n:mapa[n]}; })
+            .sort(function(a,b){ return b.n-a.n; });
+  var h = "<h2>"+titulo+"</h2><div class='caja'>";
+  if (aclaracion) h += "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>"+aclaracion+"</p>";
+  if (!r.length) return h + "<p style='margin:0;color:#6b7280'>Sin datos.</p></div>";
+  h += "<table><thead><tr><th>#</th><th>"+etiqueta+"</th><th>Prendas</th></tr></thead><tbody>";
+  var pos = 0;
+  r.forEach(function(x){
+    var suelto = x.nom === SIN_TIENDA;
+    if (!suelto) pos++;
+    h += "<tr"+(pos===1&&!suelto?" style='background:#f2fbfb'":"")+"><td>"+
+      (suelto?"—":(pos===1?"🏆 1":pos))+"</td>" +
+      "<td"+(suelto?" style='color:#c62828'":"")+">"+esc(x.nom)+"</td>" +
+      "<td class='total'>"+x.n+"</td></tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+function detalle(titulo, filas, esDropi) {
+  var h = "<details><summary>"+titulo+"</summary><table class='mini'><thead><tr><th>Fila</th>" +
+    (esDropi?"<th>Fecha</th><th>Hora</th><th>Estatus</th>":"<th>Fecha creación</th><th>Vendedor</th>") +
+    "<th>Cant.</th><th>Cuenta en el día</th></tr></thead><tbody>";
+  filas.forEach(function(r){
+    var fecha = r.fecha instanceof Date ? r.fecha.toLocaleString("es-CO") : (r.fecha==null?"":r.fecha);
+    h += "<tr"+(r.motivo?" class='descartada'":"")+"><td>"+r.fila+"</td><td>"+esc(fecha)+"</td>" +
+      (esDropi ? "<td>"+esc(r.hora==null?"":r.hora)+"</td><td>"+esc(r.b)+"</td>" : "<td>"+esc(r.b)+"</td>") +
+      "<td>"+r.cant+"</td><td>"+(r.motivo?"descartada — "+esc(r.motivo):bonita(r.jor))+"</td></tr>";
+  });
+  return h + "</tbody></table></details>";
+}
+
+// ####################################################################
+//  BLOQUE 5 — PESTAÑA 2: tablero del mes
+// ####################################################################
+function mesesDisponibles(){
+  var s={}; Object.keys(jornadas).forEach(function(k){ s[k.slice(0,7)]=1; });
+  return Object.keys(s).sort().reverse();
+}
+// Días del mes: los cerrados (oficiales) y, si el bosquejo está activo,
+// también los que se cargaron del Excel y todavía no se cierran.
+function datosDelMes(mSel, inc){
+  if (inc === undefined) inc = incBos.checked;
+  var s = {};
+  Object.keys(jornadas).forEach(function(k){
+    if (k.slice(0,7)!==mSel) return;
+    var o = jornadas[k].oficial;
+    s[k] = { p:o.p, d:o.d, ven:o.ven||null, tie:o.tie||null, cerrada:true };
+  });
+  if (inc) Object.keys(ultimoCalculo).forEach(function(k){
+    if (k.slice(0,7)!==mSel || s[k]) return;
+    var c = ultimoCalculo[k];
+    s[k] = { p:c.propias, d:c.dropi, ven:c.ven||null, tie:c.tie||null, cerrada:false };
+  });
+  return s;
+}
+function mesesTablero(){ return incBos.checked ? calMesesConAlgo() : mesesDisponibles(); }
+
+function pintarMeses(){
+  var ms = mesesTablero(), actual = mes.value;
+  mes.innerHTML = ms.map(function(m){
+    var p=m.split("-");
+    return "<option value='"+m+"'>"+MESES_L[+p[1]-1]+" "+p[0]+"</option>";
+  }).join("");
+  if (actual && ms.indexOf(actual)!==-1) mes.value = actual;
+}
+mes.addEventListener("change", pintarTablero);
+incBos.addEventListener("change", function(){ pintarMeses(); pintarTablero(); });
+
+function pintarTablero(){
+  var ms = mesesTablero();
+  if (!ms.length) {
+    contenido.innerHTML = "<div class='aviso'><b>Todavía no hay nada que mostrar.</b><br><br>" +
+      "Ve a la pestaña <b>1 · Cargar y validar</b> y sube los dos Excel. " +
+      "Apenas los cargues verás el bosquejo aquí, aunque no hayas cerrado nada.</div>";
+    return;
+  }
+  var mSel = mes.value || ms[0];
+  var D = datosDelMes(mSel);
+  var claves = Object.keys(D).sort();
+  var abiertas = claves.filter(function(k){ return !D[k].cerrada; }).length;
+  var cerradas = claves.length - abiertas;
+
+  var real = claves.map(function(k){ var o=D[k]; return {k:k,p:o.p,d:o.d,t:o.p+o.d,cerrada:o.cerrada}; });
+
+  var repP={}, repD={};
+  claves.forEach(function(k){ repP[k]=D[k].p; repD[k]=D[k].d; });
+  armarBloques(claves).forEach(function(b){
+    var sp=0, sd=0;
+    b.dias.forEach(function(k){ sp+=D[k].p; sd+=D[k].d; });
+    var rp=repartir(sp,b.dias.length), rd=repartir(sd,b.dias.length);
+    b.dias.forEach(function(k,i){ repP[k]=rp[i]; repD[k]=rd[i]; });
+  });
+
+  var tP=0,tD=0; real.forEach(function(x){ tP+=x.p; tD+=x.d; });
+  var total=tP+tD, n=real.length;
+  var prom = n ? Math.round(total/n) : 0;
+  var pct  = total ? Math.round(tP*100/total) : 0;
+  var mejor=null, peor=null;
+  real.forEach(function(x){
+    if (!mejor || x.t>mejor.t) mejor=x;
+    if (!peor  || x.t<peor.t)  peor=x;
+  });
+  var f=new Date(), hoyK=claveFecha(f.getFullYear(),f.getMonth()+1,f.getDate());
+  var hoy = D[hoyK] ? D[hoyK].p+D[hoyK].d : null;
+  var hoyPie = D[hoyK] ? (D[hoyK].cerrada ? bonita(hoyK) : bonita(hoyK)+" · bosquejo") : "jornada sin cargar";
+  var conRev = claves.filter(function(k){ return jornadas[k] && (jornadas[k].fotos||[]).length; }).length;
+
+  var h = "";
+  if (abiertas) h += "<div class='aviso' style='margin-bottom:14px'><b>Bosquejo.</b> " +
+    "Estás viendo " + abiertas + " día" + (abiertas===1?"":"s") + " que subiste pero todavía no cierras" +
+    (cerradas ? ", junto con " + cerradas + " ya cerrado" + (cerradas===1?"":"s") : "") +
+    ". Las cifras pueden cambiar hasta que cierres esas jornadas. " +
+    "Para ver solo lo oficial, desmarca <i>Incluir días sin cerrar</i>.</div>";
+
+  h += "<h2>Resumen del mes" + (abiertas ? " <span style='font-weight:400;font-size:13px;color:#6b7280'>(bosquejo)</span>" : "") + "</h2><div class='kpis'>" +
+    kpi("Total del mes", total, "prendas" + (abiertas?" · incluye bosquejo":""), true) +
+    kpi("Promedio por día", prom, n+" días") +
+    kpi("Propias (Effi)", tP, pct+"% del total") +
+    kpi("Dropi", tD, (100-pct)+"% del total") +
+    kpi("Ventas de hoy", hoy==null?"—":hoy, hoyPie) +
+    kpi("Jornadas cerradas", cerradas, abiertas ? abiertas+" sin cerrar" : (conRev?conRev+" con revisión":"sin revisiones")) +
+    "</div><div class='kpis' style='margin-top:12px'>" +
+    kpi("Mejor jornada", mejor?mejor.t:"—", mejor?bonita(mejor.k)+(mejor.cerrada?"":" · sin cerrar"):"", true) +
+    kpi("Jornada más baja", peor?peor.t:"—", peor?bonita(peor.k)+(peor.cerrada?"":" · sin cerrar"):"") + "</div>";
+
+  h += "<h2>Ventas reales — día por día</h2><div class='caja'>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>Lo que de verdad cayó cada día, sin repartir.</p>" +
+    leyenda(abiertas) + "<div class='graf'><canvas id='gReal'></canvas></div></div>" +
+    "<h2>Ventas repartidas — como las ve el vendedor</h2><div class='caja'>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>Los bloques repartidos entre sus días, " +
+    "con el sobrante al último.</p>" +
+    leyenda(abiertas) + "<div class='graf'><canvas id='gRep'></canvas></div></div>";
+
+  var acVen={}, acTie={}, faltan=0;
+  claves.forEach(function(k){
+    var o=D[k];
+    if (!o.ven && !o.tie) { faltan++; return; }
+    Object.keys(o.ven||{}).forEach(function(v){ acVen[v]=(acVen[v]||0)+o.ven[v]; });
+    Object.keys(o.tie||{}).forEach(function(t){ acTie[t]=(acTie[t]||0)+o.tie[t]; });
+  });
+  h += "<h2>Ranking de vendedores — Effi (propias)</h2>" + rankMes(acVen,"Vendedor",faltan,n);
+  h += "<h2>Ranking de tiendas — Dropi</h2>" + rankMes(acTie,"Tienda",faltan,n);
+
+  contenido.innerHTML = h;
+
+  var et = claves.map(function(k){ return k.split("-")[2]; });
+  var cerr = claves.map(function(k){ return D[k].cerrada; });
+  grafica("gReal", et, real.map(function(x){return x.p;}), real.map(function(x){return x.d;}), claves, cerr);
+  grafica("gRep",  et, claves.map(function(k){return repP[k];}), claves.map(function(k){return repD[k];}), claves, cerr);
+}
+
+function kpi(et,n,pie,dest){
+  return "<div class='kpi"+(dest?" destacado":"")+"'><p class='et'>"+et+"</p>" +
+         "<p class='n"+(dest?" cian":"")+"'>"+n+"</p>" +
+         (pie?"<p class='pie'>"+pie+"</p>":"")+"</div>";
+}
+function leyenda(abiertas){
+  return "<div class='leyenda'>" +
+    (abiertas ? "<span><i class='cuad' style='background:#b6d0ec'></i>" +
+                "<i class='cuad' style='background:#b3e2d0'></i>Días sin cerrar (bosquejo)</span>" : "") +
+    "<span><i class='cuad' style='background:#2a78d6'></i>Propias</span>" +
+    "<span><i class='cuad' style='background:#1baf7a'></i>Dropi</span>" +
+    "<span><i class='cuad' style='background:#d03b3b;height:2px;width:18px;border-radius:0'></i>Meta "+META_TOTAL+"</span></div>";
+}
+function rankMes(mapa, etiqueta, faltan, total){
+  var r = Object.keys(mapa).map(function(n){ return {nom:n,n:mapa[n]}; })
+            .sort(function(a,b){ return b.n-a.n; });
+  var h = "<div class='caja'>";
+  if (faltan) h += "<p class='aviso' style='margin:0 0 12px'><b>Faltan "+faltan+" de "+total+" jornadas.</b> " +
+    "Se congelaron antes de que se guardara el detalle por vendedor. Reábrelas y ciérralas de nuevo para incluirlas.</p>";
+  if (!r.length) return h + "<p style='margin:0;color:#6b7280'>Sin detalle guardado todavía.</p></div>";
+  var suma = r.reduce(function(a,x){ return a+x.n; },0);
+  h += "<table><thead><tr><th>#</th><th>"+etiqueta+"</th><th>Prendas</th><th>%</th></tr></thead><tbody>";
+  var pos=0;
+  r.forEach(function(x){
+    var suelto = x.nom===SIN_TIENDA;
+    if (!suelto) pos++;
+    h += "<tr"+(pos===1&&!suelto?" style='background:#f7fdfd'":"")+">" +
+      "<td>"+(suelto?"—":(pos===1?"🏆 1":pos))+"</td>" +
+      "<td"+(suelto?" style='color:#c62828'":"")+">"+esc(x.nom)+"</td>" +
+      "<td class='total'>"+x.n+"</td>" +
+      "<td style='color:#6b7280'>"+Math.round(x.n*100/suma)+"%</td></tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+function grafica(id, etiquetas, propias, dropi, claves, cerradas){
+  var el = document.getElementById(id);
+  if (!el) return;
+  function color(base, claro){
+    return function(c){
+      var i = c.dataIndex;
+      return (cerradas && cerradas[i]===false) ? claro : base;
+    };
+  }
+  el.setAttribute("role","img");
+  el.setAttribute("aria-label","Prendas por día: propias y Dropi, con línea de meta en "+META_TOTAL);
+  new Chart(el, {
+    type:"bar",
+    data:{ labels:etiquetas, datasets:[
+      { label:"Propias", data:propias, backgroundColor:color("#2a78d6","#b6d0ec"), stack:"a" },
+      { label:"Dropi",   data:dropi,   backgroundColor:color("#1baf7a","#b3e2d0"), stack:"a", borderRadius:4 } ]},
+    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{
+          title:function(i){ var x=i[0].dataIndex;
+            return bonita(claves[x]) + (cerradas && cerradas[x]===false ? "  (sin cerrar)" : ""); },
+          footer:function(i){ var x=i[0].dataIndex; return "Total "+(propias[x]+dropi[x]); } } } },
+      scales:{ x:{ stacked:true, grid:{display:false},
+                   ticks:{autoSkip:false,font:{size:11},color:"#898781"} },
+               y:{ stacked:true, beginAtZero:true, grid:{color:"#e1e0d9"},
+                   ticks:{font:{size:11},color:"#898781"} } } },
+    plugins:[{ id:"extras", afterDatasetsDraw:function(c){
+      var ctx=c.ctx;
+      ctx.save();
+      ctx.font="600 11px -apple-system,Segoe UI,Roboto,sans-serif";
+      ctx.fillStyle="#111"; ctx.textAlign="center";
+      c.getDatasetMeta(1).data.forEach(function(b,i){
+        var t=propias[i]+dropi[i];
+        if (t) ctx.fillText(t, b.x, b.y-6);
+      });
+      ctx.restore();
+      var y=c.scales.y.getPixelForValue(META_TOTAL);
+      if (y>c.chartArea.top && y<c.chartArea.bottom){
+        ctx.save(); ctx.strokeStyle="#d03b3b"; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(c.chartArea.left,y); ctx.lineTo(c.chartArea.right,y);
+        ctx.stroke(); ctx.restore();
+      }
+    }}]
+  });
+}
+
+// ####################################################################
+//  BLOQUE 7 — PESTAÑA 4: comparativo entre meses
+// ####################################################################
+// limite = cuántos de los primeros días con datos tomar (0 = el mes entero)
+function cmpResumenMes(m, inc, limite){
+  var D = datosDelMes(m, inc);
+  var claves = Object.keys(D).sort();
+  if (limite) claves = claves.slice(0, limite);
+  var p=0, d=0, abiertas=0, mejor=null, peor=null, ven={}, tie={};
+  claves.forEach(function(k){
+    var o=D[k], t=o.p+o.d;
+    p+=o.p; d+=o.d;
+    if (!o.cerrada) abiertas++;
+    if (!mejor || t>mejor.t) mejor={k:k,t:t};
+    if (!peor  || t<peor.t)  peor ={k:k,t:t};
+    Object.keys(o.ven||{}).forEach(function(x){ ven[x]=(ven[x]||0)+o.ven[x]; });
+    Object.keys(o.tie||{}).forEach(function(x){ tie[x]=(tie[x]||0)+o.tie[x]; });
+  });
+  var n = claves.length, total = p+d;
+  return { m:m, n:n, p:p, d:d, total:total, abiertas:abiertas,
+           prom: n ? Math.round(total/n) : 0,
+           pct : total ? Math.round(p*100/total) : 0,
+           mejor:mejor, peor:peor, ven:ven, tie:tie };
+}
+function cmpNombreMes(m){ var p=m.split("-"); return MESES_L[+p[1]-1]+" "+p[0]; }
+function cmpDelta(act, ant){
+  if (ant == null) return "<span style='color:#9aa1a8'>—</span>";
+  var dif = act - ant;
+  if (!dif) return "<span style='color:#6b7280'>=</span>";
+  var pc = ant ? Math.round(Math.abs(dif)*100/ant) : 0;
+  var col = dif>0 ? "#0a7d38" : "var(--rojo)";
+  return "<span style='color:"+col+";font-weight:600'>" + (dif>0?"▲ +":"▼ ") + dif +
+         (ant ? " ("+(dif>0?"+":"−")+pc+"%)" : "") + "</span>";
+}
+function cmpTop(mapa){
+  var r = Object.keys(mapa).filter(function(x){ return x!==SIN_TIENDA; })
+           .sort(function(a,b){ return mapa[b]-mapa[a]; });
+  return r.length ? esc(r[0])+" ("+mapa[r[0]]+")" : "—";
+}
+function cmpTablaPersonas(meses, resumenes, campo, etiqueta){
+  var nombres = {};
+  resumenes.forEach(function(r){ Object.keys(r[campo]).forEach(function(x){
+    nombres[x] = (nombres[x]||0) + r[campo][x]; }); });
+  var orden = Object.keys(nombres).sort(function(a,b){ return nombres[b]-nombres[a]; });
+  if (!orden.length) return "<div class='caja'><p style='margin:0;color:#6b7280'>Sin detalle guardado todavía.</p></div>";
+  var h = "<div class='caja' style='overflow-x:auto'><table><thead><tr><th>"+etiqueta+"</th>" +
+    meses.map(function(m){ return "<th>"+cmpNombreMes(m)+"</th>"; }).join("") +
+    "<th>Total</th><th>Último vs anterior</th></tr></thead><tbody>";
+  orden.forEach(function(nom){
+    var serie = resumenes.map(function(r){ return r[campo][nom] || 0; });
+    var ult = serie[serie.length-1], ant = serie.length>1 ? serie[serie.length-2] : null;
+    h += "<tr><td>"+esc(nom)+"</td>" +
+         serie.map(function(v){ return "<td>"+(v||"—")+"</td>"; }).join("") +
+         "<td class='total'>"+nombres[nom]+"</td><td>"+cmpDelta(ult, ant)+"</td></tr>";
+  });
+  return h + "</tbody></table></div>";
+}
+
+function pintarComparativo(){
+  var inc = cmpBos.checked;
+  var meses = (inc ? calMesesConAlgo() : mesesDisponibles()).slice().reverse();  // antiguo → reciente
+  if (meses.length < 1) {
+    cmpContenido.innerHTML = "<div class='aviso'><b>Todavía no hay meses para comparar.</b><br><br>" +
+      "Sube los dos Excel en <b>1 · Cargar y validar</b> o cierra jornadas de más de un mes.</div>";
+    return;
+  }
+  var corte = 0;
+  if (cmpPar.checked && meses.length > 1) {
+    corte = 99;
+    meses.forEach(function(m){
+      var n = Object.keys(datosDelMes(m, inc)).length;
+      if (n) corte = Math.min(corte, n);
+    });
+    if (corte === 99) corte = 0;
+  }
+  var R = meses.map(function(m){ return cmpResumenMes(m, inc, corte); });
+  var conAbiertas = R.filter(function(r){ return r.abiertas; }).length;
+
+  var h = "";
+  if (meses.length === 1) h += "<div class='aviso' style='margin-bottom:14px'>" +
+    "Solo hay <b>un mes</b> con datos, así que no hay contra qué comparar todavía. " +
+    "Cuando entren jornadas de otro mes, aquí verás la evolución.</div>";
+  if (corte) h += "<div class='caja' style='margin-bottom:14px;font-size:13px;color:#6b7280'>" +
+    "Comparando <b>los primeros " + corte + " día" + (corte===1?"":"s") + " con datos</b> de cada mes, " +
+    "para que el mes en curso no salga castigado frente a los meses completos.</div>";
+  if (conAbiertas) h += "<div class='aviso' style='margin-bottom:14px'><b>Hay bosquejo.</b> " +
+    conAbiertas + " mes" + (conAbiertas===1?"":"es") + " incluye" + (conAbiertas===1?"":"n") +
+    " días cargados sin cerrar. Desmarca la casilla de arriba para ver solo lo oficial.</div>";
+
+  h += "<h2>Mes a mes</h2><div class='caja' style='overflow-x:auto'><table><thead><tr>" +
+    "<th>Mes</th><th>Días</th><th>Total</th><th>vs mes anterior</th><th>Propias</th><th>Dropi</th>" +
+    "<th>% Propias</th><th>Promedio/día</th><th>Mejor día</th><th>Día más bajo</th>" +
+    "</tr></thead><tbody>";
+  R.forEach(function(r, i){
+    var ant = i ? R[i-1] : null;
+    h += "<tr><td><b>"+cmpNombreMes(r.m)+"</b>" +
+         (r.abiertas ? " <span class='pill'>"+r.abiertas+" sin cerrar</span>" : "") + "</td>" +
+         "<td>"+r.n+"</td><td class='total'>"+r.total+"</td>" +
+         "<td>"+cmpDelta(r.total, ant?ant.total:null)+"</td>" +
+         "<td>"+r.p+"</td><td>"+r.d+"</td><td>"+r.pct+"%</td><td>"+r.prom+"</td>" +
+         "<td style='text-align:left'>"+(r.mejor?r.mejor.t+" · "+bonita(r.mejor.k):"—")+"</td>" +
+         "<td style='text-align:left'>"+(r.peor ?r.peor.t +" · "+bonita(r.peor.k) :"—")+"</td></tr>";
+  });
+  h += "</tbody></table></div>";
+
+  h += "<h2>Evolución</h2><div class='caja'>" +
+    "<div class='leyenda'>" +
+    "<span><i class='cuad' style='background:#2a78d6'></i>Propias</span>" +
+    "<span><i class='cuad' style='background:#1baf7a'></i>Dropi</span>" +
+    "<span><i class='cuad' style='background:#c07800;height:2px;width:18px;border-radius:0'></i>Promedio por día</span>" +
+    "</div><div class='graf'><canvas id='gCmp'></canvas></div></div>";
+
+  h += "<h2>Top del mes</h2><div class='caja' style='overflow-x:auto'><table><thead><tr>" +
+    "<th>Mes</th><th style='text-align:left'>Top vendedor (Effi)</th>" +
+    "<th style='text-align:left'>Top tienda (Dropi)</th></tr></thead><tbody>" +
+    R.map(function(r){ return "<tr><td>"+cmpNombreMes(r.m)+"</td>" +
+      "<td style='text-align:left'>"+cmpTop(r.ven)+"</td>" +
+      "<td style='text-align:left'>"+cmpTop(r.tie)+"</td></tr>"; }).join("") +
+    "</tbody></table></div>";
+
+  h += "<h2>Vendedores mes a mes — Effi</h2>" + cmpTablaPersonas(meses, R, "ven", "Vendedor");
+  h += "<h2>Tiendas mes a mes — Dropi</h2>" + cmpTablaPersonas(meses, R, "tie", "Tienda");
+
+  cmpContenido.innerHTML = h;
+  graficaMeses("gCmp", R);
+}
+
+function graficaMeses(id, R){
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute("role","img");
+  el.setAttribute("aria-label","Prendas por mes: propias y Dropi, con el promedio por día");
+  new Chart(el, {
+    data:{ labels:R.map(function(r){ return cmpNombreMes(r.m); }), datasets:[
+      { type:"bar",  label:"Propias", data:R.map(function(r){return r.p;}),
+        backgroundColor:"#2a78d6", stack:"a", yAxisID:"y" },
+      { type:"bar",  label:"Dropi",   data:R.map(function(r){return r.d;}),
+        backgroundColor:"#1baf7a", stack:"a", borderRadius:4, yAxisID:"y" },
+      { type:"line", label:"Promedio por día", data:R.map(function(r){return r.prom;}),
+        borderColor:"#c07800", backgroundColor:"#c07800", borderWidth:2,
+        pointRadius:3, tension:0.25, yAxisID:"y2" } ]},
+    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ footer:function(i){
+          var x=i[0].dataIndex; return "Total "+(R[x].total)+" · "+R[x].n+" días"; } } } },
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{font:{size:11},color:"#898781"} },
+               y:{ stacked:true, beginAtZero:true, grid:{color:"#e1e0d9"},
+                   ticks:{font:{size:11},color:"#898781"} },
+               y2:{ position:"right", beginAtZero:true, grid:{display:false},
+                    ticks:{font:{size:11},color:"#c07800"} } } },
+    plugins:[{ id:"totalMes", afterDatasetsDraw:function(c){
+      var ctx=c.ctx;
+      ctx.save();
+      ctx.font="600 11px -apple-system,Segoe UI,Roboto,sans-serif";
+      ctx.fillStyle="#111"; ctx.textAlign="center";
+      c.getDatasetMeta(1).data.forEach(function(b,i){
+        if (R[i].total) ctx.fillText(R[i].total, b.x, b.y-6);
+      });
+      ctx.restore();
+    }}]
+  });
+}
+
+cmpBos.addEventListener("change", pintarComparativo);
+cmpPar.addEventListener("change", pintarComparativo);
+
+// ####################################################################
+//  BLOQUE 6 — PESTAÑA 3: calendario tipo Excel (selección por rango)
+// ####################################################################
+var calAncla = null;          // primer mes visible "YYYY-MM"
+var calMesesVis = 2;          // cuántos meses se pintan a la vez
+var calSel = {};              // claves seleccionadas
+var calArrastre = null;       // {desde:clave, previo:{...}, movio:bool}
+
+function calMesesConAlgo(){                  // meses con jornada cerrada o cargada, reciente primero
+  var s={};
+  Object.keys(jornadas).forEach(function(k){ s[k.slice(0,7)]=1; });
+  Object.keys(ultimoCalculo).forEach(function(k){ s[k.slice(0,7)]=1; });
+  return Object.keys(s).sort().reverse();
+}
+function calMesInicial(){
+  var ms = calMesesConAlgo();                // más reciente primero
+  var base = ms.length ? ms[0] : null;
+  if (!base) { var f=new Date(); base = f.getFullYear()+"-"+String(f.getMonth()+1).padStart(2,"0"); }
+  return calCorrer(base, -(calMesesVis-1));  // el mes con datos queda al final
+}
+function calCorrer(m, n){
+  var p=m.split("-"), f=new Date(+p[0], +p[1]-1+n, 1);
+  return f.getFullYear()+"-"+String(f.getMonth()+1).padStart(2,"0");
+}
+function calDatos(k){
+  var j = jornadas[k];
+  if (j) return { p:j.oficial.p, d:j.oficial.d, t:j.oficial.p+j.oficial.d, cerrada:true };
+  var c = ultimoCalculo[k];
+  if (c) return { p:c.propias, d:c.dropi, t:c.propias+c.dropi, cerrada:false };
+  return null;
+}
+
+function calDiagnostico(){
+  var ms = calMesesConAlgo();
+  var n = Object.keys(jornadas).length;
+  var pend = Object.keys(ultimoCalculo).filter(function(k){ return !jornadas[k]; }).length;
+  if (!n && !pend) {
+    calDiag.innerHTML = "<div class='aviso'><b>Todavía no hay nada que mostrar en este navegador.</b><br><br>" +
+      "Ve a <b>1 · Cargar y validar</b>, sube los dos Excel y cierra las jornadas. Luego vuelve aquí.</div>";
+    return;
+  }
+  var etiquetas = ms.slice().reverse().map(function(m){
+    var p=m.split("-"); return "<button class='acc' data-ir='"+m+"'>"+MESES_L[+p[1]-1]+" "+p[0]+"</button>";
+  }).join(" ");
+  calDiag.innerHTML = "<div class='caja' style='margin-bottom:14px;font-size:13px;color:#6b7280'>" +
+    "<b>" + n + "</b> jornada" + (n===1?"":"s") + " cerrada" + (n===1?"":"s") +
+    (pend ? " · <b>" + pend + "</b> día" + (pend===1?"":"s") + " cargado" + (pend===1?"":"s") +
+            " sin cerrar (en gris)" : "") +
+    ". Meses con datos: " + etiquetas + "</div>";
+  var bs = calDiag.querySelectorAll("[data-ir]");
+  for (var i=0;i<bs.length;i++) bs[i].addEventListener("click", function(){
+    calAncla = calCorrer(this.getAttribute("data-ir"), -(calMesesVis-1));
+    pintarCalendarioSel();
+  });
+}
+
+function pintarCalendarioSel(){
+  try { calDibujar(); }
+  catch (e) {
+    calMeses.innerHTML = "<div class='aviso'><b>El calendario falló al dibujar.</b><br>" +
+      esc(e && e.message ? e.message : String(e)) + "</div>";
+  }
+}
+
+function calDibujar(){
+  calDiagnostico();
+  if (!calAncla) calAncla = calMesInicial();
+  var html = "", rangoTxt = [];
+  for (var i=0;i<calMesesVis;i++){
+    var m = calCorrer(calAncla, i), p = m.split("-");
+    var ano=+p[0], mes1=+p[1];
+    rangoTxt.push(MESES_L[mes1-1]+" "+ano);
+    html += "<div class='mesCal'><h3>"+MESES_L[mes1-1]+" "+ano+"</h3><div class='rejilla'>";
+    ["lu","ma","mi","ju","vi","sá","do"].forEach(function(d){ html += "<div class='dow'>"+d+"</div>"; });
+    var primero = new Date(ano, mes1-1, 1);
+    var hueco = (primero.getDay()+6)%7;        // lunes = 0
+    for (var h=0; h<hueco; h++) html += "<div class='celda hueco'></div>";
+    var ultimo = new Date(ano, mes1, 0).getDate();
+    for (var d=1; d<=ultimo; d++){
+      var k = claveFecha(ano, mes1, d), dat = calDatos(k);
+      var cls = "celda" + (dat?"":" vacia") + (dat && !dat.cerrada ? " pend" : "") +
+                (porQueNoLaborable(k)?" nolab":"") + (calSel[k]?" sel":"");
+      html += "<div class='"+cls+"' data-k='"+k+"'" +
+              (dat && !dat.cerrada ? " title='Cargado del Excel, sin cerrar. No suma.'" : "") + ">" +
+              "<div class='dnum'>"+d+"</div>" +
+              "<div class='dval'>"+(dat?dat.t:"·")+"</div></div>";
+    }
+    html += "</div></div>";
+  }
+  calMeses.innerHTML = html;
+  calRango.textContent = rangoTxt.join("  ·  ");
+  calResumenPintar();
+}
+
+function calResumenPintar(){
+  var claves = Object.keys(calSel).sort();
+  var conDatos = claves.filter(function(k){ var v=calDatos(k); return v && v.cerrada; });
+  var pend = claves.filter(function(k){ var v=calDatos(k); return v && !v.cerrada; }).length;
+  var sP=0, sD=0;
+  conDatos.forEach(function(k){ var v=calDatos(k); sP+=v.p; sD+=v.d; });
+  var sT=sP+sD, n=conDatos.length;
+  function prom(x){ return n ? Math.round(x*10/n)/10 : 0; }
+
+  if (!claves.length) {
+    calResumen.innerHTML = "<div class='caja' style='margin-bottom:14px'>" +
+      "<p style='margin:0;font-size:13px;color:#6b7280'>Selecciona días en el calendario " +
+      "para ver suma, promedio y número de días.</p></div>";
+    return;
+  }
+  var sinDatos = claves.length - n - pend;
+  var h = "<div class='caja panelSel' style='margin-bottom:14px'>" +
+    "<p style='margin:0 0 10px;font-weight:600;font-size:14px'>Selección: " +
+    bonita(claves[0]) + (claves.length>1 ? " → " + bonita(claves[claves.length-1]) : "") +
+    " &nbsp;<span style='font-weight:400;color:#6b7280'>" + n + " día" + (n===1?"":"s") +
+    " con jornada cerrada" +
+    (pend ? " · " + pend + " cargado" + (pend===1?"":"s") + " sin cerrar (no cuenta" + (pend===1?"":"n") + ")" : "") +
+    (sinDatos ? " · " + sinDatos + " sin datos" : "") +
+    "</span></p>" +
+    "<table><thead><tr><th>&nbsp;</th><th>Suma</th><th>Promedio</th><th># días</th></tr></thead><tbody>" +
+    "<tr><td><b>Total</b></td><td class='total'>"+sT+"</td><td>"+prom(sT)+"</td><td>"+n+"</td></tr>" +
+    "<tr><td>Propias (Effi)</td><td>"+sP+"</td><td>"+prom(sP)+"</td><td>"+n+"</td></tr>" +
+    "<tr><td>Dropi</td><td>"+sD+"</td><td>"+prom(sD)+"</td><td>"+n+"</td></tr>" +
+    "</tbody></table></div>";
+  calResumen.innerHTML = h;
+}
+
+function calMarcarRango(a, b){
+  var ini = a<b ? a : b, fin = a<b ? b : a;
+  var f = fdate(ini), ff = fdate(fin);
+  while (f <= ff) {
+    calSel[claveFecha(f.getFullYear(), f.getMonth()+1, f.getDate())] = 1;
+    f = sumarDias(f, 1);
+  }
+}
+function calPintarMarcas(){
+  var celdas = calMeses.querySelectorAll(".celda[data-k]");
+  for (var i=0;i<celdas.length;i++){
+    var k = celdas[i].getAttribute("data-k");
+    celdas[i].classList.toggle("sel", !!calSel[k]);
+  }
+  calResumenPintar();
+}
+function calCeldaEn(x, y){
+  var el = document.elementFromPoint(x, y);
+  while (el && el !== document.body) {
+    if (el.classList && el.classList.contains("celda") && el.getAttribute("data-k")) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+function calInicio(k){
+  calArrastre = { desde:k, previo:Object.assign({}, calSel), movio:false };
+}
+function calMover(k){
+  if (!calArrastre) return;
+  if (k !== calArrastre.desde) calArrastre.movio = true;
+  calSel = {};
+  calMarcarRango(calArrastre.desde, k);
+  calPintarMarcas();
+}
+function calFin(){
+  if (!calArrastre) return;
+  if (!calArrastre.movio) {                     // toque suelto: agrega o quita ese día
+    calSel = calArrastre.previo;
+    var k = calArrastre.desde;
+    if (calSel[k]) delete calSel[k]; else calSel[k] = 1;
+    calPintarMarcas();
+  }
+  calArrastre = null;
+}
+
+calMeses.addEventListener("mousedown", function(e){
+  var c = calCeldaEn(e.clientX, e.clientY);
+  if (!c) return;
+  e.preventDefault();
+  calInicio(c.getAttribute("data-k"));
+});
+calMeses.addEventListener("mousemove", function(e){
+  if (!calArrastre) return;
+  var c = calCeldaEn(e.clientX, e.clientY);
+  if (c) calMover(c.getAttribute("data-k"));
+});
+document.addEventListener("mouseup", calFin);
+
+calMeses.addEventListener("touchstart", function(e){
+  var t=e.touches[0], c = calCeldaEn(t.clientX, t.clientY);
+  if (!c) return;
+  calInicio(c.getAttribute("data-k"));
+}, {passive:true});
+calMeses.addEventListener("touchmove", function(e){
+  if (!calArrastre) return;
+  var t=e.touches[0], c = calCeldaEn(t.clientX, t.clientY);
+  if (c) { e.preventDefault(); calMover(c.getAttribute("data-k")); }
+}, {passive:false});
+calMeses.addEventListener("touchend", calFin);
+
+calAtras.addEventListener("click", function(){ calAncla = calCorrer(calAncla, -1); pintarCalendarioSel(); });
+calAdel .addEventListener("click", function(){ calAncla = calCorrer(calAncla,  1); pintarCalendarioSel(); });
+calHoy  .addEventListener("click", function(){
+  var f=new Date();
+  calAncla = calCorrer(f.getFullYear()+"-"+String(f.getMonth()+1).padStart(2,"0"), -(calMesesVis-1));
+  pintarCalendarioSel();
+});
+calLimpiar.addEventListener("click", function(){ calSel = {}; calPintarMarcas(); });
+
+// ####################################################################
+//  ARRANQUE
+// ####################################################################
+cargarTodo();
+renderCongelado({}, null);
+</script>
+</body>
+</html>
