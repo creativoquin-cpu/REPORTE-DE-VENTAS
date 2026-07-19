@@ -572,9 +572,32 @@ function sincronizarTabla(tabla, llavePk, filasPorClave){
     marcarEstadoNube("nube-mal", "sin conexión, guardado en este equipo");
   });
 }
+// ---- ranking público del mes en curso: SOLO puesto y nombre, ninguna cifra.
+// Se recalcula del detalle privado (ven) cada vez que se guardan jornadas, y
+// se sube aparte porque su llave es compuesta (mes+puesto): no encaja en el
+// "subir y borrar lo que sobra" genérico de sincronizarTabla.
+function filasRankingPublico(mes){
+  var acVen = {};
+  Object.keys(jornadas).forEach(function(k){
+    if (k.slice(0,7) !== mes) return;
+    var ven = jornadas[k].oficial.ven || {};
+    Object.keys(ven).forEach(function(v){ acVen[v] = (acVen[v]||0) + ven[v]; });
+  });
+  return Object.keys(acVen).map(function(n){ return { nom:n, n:acVen[n] }; })
+    .sort(function(a,b){ return b.n-a.n || (a.nom<b.nom?-1:1); })
+    .map(function(x,i){ return { mes:mes, puesto:i+1, nombre:x.nom }; });
+}
+function sincronizarRankingPublico(){
+  if (!sb) return;
+  var mes = mesDeHoy(), filas = filasRankingPublico(mes);
+  sb.from("ranking_publico").delete().eq("mes", mes).then(function(r){
+    if (r.error) throw r.error;
+    return filas.length ? sb.from("ranking_publico").insert(filas) : Promise.resolve({ error:null });
+  }).catch(function(){}); // sin conexión: se reintenta solo la próxima vez que se guarde una jornada
+}
 function sincronizarNube(ll, d){
   if (!sb) return;
-  if (ll === LLAVE_JOR) sincronizarTabla("jornadas", "fecha", filasDeJornadas(d));
+  if (ll === LLAVE_JOR) { sincronizarTabla("jornadas", "fecha", filasDeJornadas(d)); sincronizarRankingPublico(); }
   else if (ll === LLAVE_MET) sincronizarTabla("metas", "id", filasDeMetas(d));
   else if (ll === LLAVE_MES) sincronizarTabla("meses", "mes", filasDeMeses(d));
   else if (ll === LLAVE_AJU) {

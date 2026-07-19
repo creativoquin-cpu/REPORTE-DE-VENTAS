@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quin — Equipo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root { --cian:#17C3C3; --linea:#e4e7e9; --gris:#6b7280; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; padding:14px;
+         background:#fafbfc; color:#111; line-height:1.4; font-size:14px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  h2 { font-size:15px; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--cian); }
+  .sub { color:var(--gris); font-size:13px; margin:0 0 14px; }
+  .caja { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .nota, .aviso { background:#fffbe6; border:1px solid #f0e0a0; border-radius:8px;
+          padding:10px 12px; font-size:13px; margin-top:10px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+  .kpi { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:10px 12px; }
+  .kpi .et { font-size:12px; color:var(--gris); margin:0 0 4px; }
+  .kpi .n  { font-size:23px; font-weight:700; margin:0; line-height:1.1; }
+  .kpi .pie{ font-size:12px; color:var(--gris); margin:2px 0 0; }
+  .kpi.destacado { border-color:#cfeeee; background:#f7fdfd; }
+  .kpi .n.cian { color:var(--cian); }
+  .graf { position:relative; width:100%; height:270px; }
+  .leyenda { display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--gris); margin-bottom:8px; }
+  .leyenda span { display:flex; align-items:center; gap:5px; }
+  .cuad { width:11px; height:11px; border-radius:2px; display:inline-block; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { border:1px solid var(--linea); padding:6px 9px; text-align:left; }
+  th { background:#f2fbfb; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Quin — Equipo</h1>
+  <span id="vendMes" class="sub"></span>
+
+  <div id="vendContenido">
+    <div class="aviso">Cargando…</div>
+  </div>
+
+</div>
+
+<script>
+// ####################################################################
+//  Página pública del equipo (paso 9.3). Sin login, sin datos privados:
+//  solo lee lo que la base deja leer a cualquiera (metas, días no
+//  laborables, el ranking ya calculado, y de jornadas SOLO fecha,
+//  propias y si está cerrada — nunca el detalle por vendedor ni por
+//  tienda). Las reglas de cálculo (reparto de fin de semana, meta del
+//  día) son las mismas que usa el administrador en su pestaña "Vista
+//  del vendedor" — pruebas/test-vendedor-publico.js comprueba que las
+//  dos den siempre el mismo número, para que no se desarmen con el tiempo.
+// ####################################################################
+function claveFecha(y, m, d) {
+  return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+var DIAS  = ["dom","lun","mar","mié","jue","vie","sáb"];
+var MESES_L = ["enero","febrero","marzo","abril","mayo","junio",
+               "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function fdate(k){ var p=k.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function bonita(k){ if(!k) return "—"; var p=k.split("-");
+  var MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  return DIAS[fdate(k).getDay()]+" "+p[2]+"-"+MESES[+p[1]-1]; }
+function esc(t) {
+  return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+// --- festivos de Colombia (idéntico a quin-admin.html) ---
+function pascua(y) {
+  var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,
+      f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,
+      i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+      mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return new Date(y,mes-1,dia);
+}
+function sumarDias(f,n){ var x=new Date(f); x.setDate(x.getDate()+n); return x; }
+function alLunes(f){ var x=new Date(f),w=x.getDay(); if(w!==1) x.setDate(x.getDate()+((8-w)%7)); return x; }
+var cacheFestivos = {};
+function festivosColombia(y) {
+  if (cacheFestivos[y]) return cacheFestivos[y];
+  var P = pascua(y), R = {};
+  function fijo(m,d,n){ R[claveFecha(y,m,d)] = n; }
+  function mov(m,d,n){ var f=alLunes(new Date(y,m-1,d));
+    R[claveFecha(f.getFullYear(),f.getMonth()+1,f.getDate())] = n; }
+  function pas(n,nom,mv){ var f=sumarDias(P,n); if(mv) f=alLunes(f);
+    R[claveFecha(f.getFullYear(),f.getMonth()+1,f.getDate())] = nom; }
+  fijo(1,1,"Año Nuevo");   fijo(5,1,"Día del Trabajo");  fijo(7,20,"Independencia");
+  fijo(8,7,"Batalla de Boyacá"); fijo(12,8,"Inmaculada"); fijo(12,25,"Navidad");
+  mov(1,6,"Reyes Magos");  mov(3,19,"San José");         mov(6,29,"San Pedro y San Pablo");
+  mov(8,15,"Asunción");    mov(10,12,"Día de la Raza");  mov(11,1,"Todos los Santos");
+  mov(11,11,"Independencia de Cartagena");
+  pas(-3,"Jueves Santo",false); pas(-2,"Viernes Santo",false);
+  pas(43,"Ascensión",true); pas(64,"Corpus Christi",true); pas(71,"Sagrado Corazón",true);
+  if (y >= 2026) mov(7,9,"Virgen de Chiquinquirá");
+  cacheFestivos[y] = R;
+  return R;
+}
+function porQueNoLaborable(clave) {
+  if (diasManuales[clave]) return "marcado a mano";
+  var p = clave.split("-"), f = fdate(clave);
+  var fest = festivosColombia(+p[0])[clave];
+  if (fest) return fest;
+  if (f.getDay() === 6) return "sábado";
+  if (f.getDay() === 0) return "domingo";
+  return null;
+}
+function repartir(total, n) {
+  var base = Math.floor(total / n), sobrante = total - base * n, r = [];
+  for (var i = 0; i < n; i++) r.push(base);
+  r[n - 1] += sobrante;
+  return r;
+}
+function armarBloques(claves) {
+  var bloques = [], act = null;
+  claves.forEach(function (k, i) {
+    var seguido = i === 0 ? true : (fdate(k) - fdate(claves[i-1])) === 86400000;
+    if (porQueNoLaborable(k)) {
+      if (!act || !seguido) { act = { dias: [] }; bloques.push(act); }
+      act.dias.push(k);
+    } else act = null;
+  });
+  return bloques;
+}
+function mesDeHoy(){
+  var f = new Date();
+  return f.getFullYear() + "-" + String(f.getMonth()+1).padStart(2,"0");
+}
+var META_TOTAL = 200, META_PROPIAS = 160;
+function metasOrden(){
+  return metas.slice().sort(function(a,b){
+    if (a.desde !== b.desde) return a.desde < b.desde ? -1 : 1;
+    return a.id - b.id;
+  });
+}
+function metaEn(clave){
+  var r = { total:META_TOTAL, propias:META_PROPIAS, desde:null };
+  metasOrden().forEach(function(m){
+    if (m.desde <= clave) r = { total:m.total, propias:m.propias, desde:m.desde };
+  });
+  return r;
+}
+function hoyClave(){ var f=new Date(); return claveFecha(f.getFullYear(), f.getMonth()+1, f.getDate()); }
+function metaHoy(){ return metaEn(hoyClave()); }
+function kpi(et,n,pie,dest){
+  return "<div class='kpi"+(dest?" destacado":"")+"'><p class='et'>"+et+"</p>" +
+         "<p class='n"+(dest?" cian":"")+"'>"+n+"</p>" +
+         (pie?"<p class='pie'>"+pie+"</p>":"")+"</div>";
+}
+function vendGraficaEquipo(id, etiquetas, datos, claves, metaDia){
+  var el = document.getElementById(id); if (!el) return;
+  var metaMax = Math.max.apply(null, metaDia);
+  new Chart(el, {
+    type:"bar",
+    data:{ labels:etiquetas, datasets:[{ label:"Propias del equipo", data:datos,
+      backgroundColor:"#2a78d6", borderRadius:4 }]},
+    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{
+          title:function(i){ return bonita(claves[i[0].dataIndex]); },
+          footer:function(i){ var x=i[0].dataIndex, v=datos[x], m=metaDia[x];
+            return "Meta del equipo " + m + " (" + (v>=m ? "cumplida" : "faltan "+(m-v)) + ")"; } } } },
+      scales:{ x:{ grid:{display:false}, ticks:{autoSkip:false,font:{size:11},color:"#898781"} },
+               y:{ beginAtZero:true, suggestedMax:metaMax, grid:{color:"#e1e0d9"},
+                   ticks:{font:{size:11},color:"#898781"} } } }
+  });
+}
+
+// ---- datos (los llena cargarDatos() con lo que responde Supabase) ----
+var jornadas = {};    // { 'YYYY-MM-DD': { p:número, cerrada:true } } — solo días ya cerrados
+var metas = [];
+var diasManuales = {};
+var rankingMes = [];  // [{ puesto, nombre }, ...] ya ordenado, sin cifras
+
+function datosDelMesPublico(mSel){
+  var s = {};
+  Object.keys(jornadas).forEach(function(k){
+    if (k.slice(0,7) === mSel) s[k] = jornadas[k];
+  });
+  return s;
+}
+function pintarVendedorPublico(){
+  var mesActual = mesDeHoy(), p = mesActual.split("-");
+  vendMes.textContent = "Mes en curso: " + MESES_L[+p[1]-1] + " " + p[0] + ". Cifras del equipo, ya cerradas.";
+
+  var D = datosDelMesPublico(mesActual), claves = Object.keys(D).sort();
+  if (!claves.length) {
+    vendContenido.innerHTML = "<div class='aviso'><b>Todavía no hay jornadas cerradas este mes.</b></div>";
+    return;
+  }
+
+  var eqDia = {}, eqRep = {}, eqEnMeta = 0;
+  claves.forEach(function(k){ eqDia[k] = D[k].p; eqRep[k] = D[k].p; });
+  armarBloques(claves).forEach(function(b){
+    var suma = 0;
+    b.dias.forEach(function(k){ suma += eqDia[k]; });
+    var r = repartir(suma, b.dias.length);
+    b.dias.forEach(function(k,i){ eqRep[k] = r[i]; });
+  });
+  var metaPro = claves.map(function(k){ return metaEn(k).propias; });
+  claves.forEach(function(k,i){ if (eqRep[k] >= metaPro[i]) eqEnMeta++; });
+
+  var n = claves.length;
+  var eqTotal = claves.reduce(function(a,k){ return a + eqDia[k]; }, 0);
+  var eqProm = n ? Math.round(eqTotal/n) : 0;
+  var mHoy = metaHoy().propias;
+  var mejor = null;
+  claves.forEach(function(k){ if (!mejor || eqRep[k] > mejor.t) mejor = { k:k, t:eqRep[k] }; });
+
+  var h = "<h2>Cómo va el equipo</h2><div class='kpis'>" +
+    kpi("Prendas propias del equipo", eqTotal, "en " + n + " día" + (n===1?"":"s"), true) +
+    kpi("Promedio por día", eqProm, "meta de " + mHoy) +
+    kpi("Días en meta", eqEnMeta, "de " + n + " día" + (n===1?"":"s")) +
+    kpi("Mejor día del equipo", mejor ? mejor.t : "—", mejor ? bonita(mejor.k) : "") +
+    "</div>";
+
+  h += "<div class='caja' style='margin-top:12px'>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>" +
+    "Prendas propias de todo el equipo, con la línea de la meta. " +
+    "Los fines de semana y festivos van <b>repartidos</b> entre sus días. " +
+    "No hay meta individual: la meta es del equipo.</p>" +
+    "<div class='leyenda'><span><i class='cuad' style='background:#2a78d6'></i>Propias del equipo</span>" +
+    "<span><i class='cuad' style='background:#d03b3b;height:2px;width:18px;border-radius:0'></i>Meta del equipo</span></div>" +
+    "<div class='graf'><canvas id='gEquipo'></canvas></div></div>";
+
+  h += "<h2>Ranking del mes</h2><div class='caja'><table><thead><tr>" +
+    "<th>#</th><th>Vendedor</th></tr></thead><tbody>";
+  rankingMes.slice(0,10).forEach(function(x,i){
+    h += "<tr><td>" + (i===0 ? "🏆 1" : x.puesto) + "</td><td>" + esc(x.nombre) + "</td></tr>";
+  });
+  h += "</tbody></table>";
+  if (rankingMes.length > 10) h += "<p style='margin:10px 0 0;font-size:13px;color:#6b7280'>" +
+    "Se muestran los 10 primeros de " + rankingMes.length + ".</p>";
+  h += "</div>";
+
+  vendContenido.innerHTML = h;
+
+  var et = claves.map(function(k){ return k.split("-")[2]; });
+  vendGraficaEquipo("gEquipo", et, claves.map(function(k){ return eqRep[k]; }), claves, metaPro);
+}
+
+// ---- traer de la nube (solo lo público) ----
+var SUPABASE_URL = "https://vhczimiicebyuytikdat.supabase.co";
+var SUPABASE_KEY = "sb_publishable_l2PnEnItch_emRRYyoBohQ_STf5yj_V";
+var sb = (typeof window !== "undefined" && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+function cargarDatos(){
+  if (!sb) return;
+  var mesActual = mesDeHoy();
+  Promise.all([
+    sb.from("jornadas").select("fecha,propias,cerrada").eq("cerrada", true),
+    sb.from("metas").select("*"),
+    sb.from("dias_manuales").select("*"),
+    sb.from("ranking_publico").select("puesto,nombre").eq("mes", mesActual).order("puesto")
+  ]).then(function(r){
+    var rJor=r[0], rMet=r[1], rDia=r[2], rRank=r[3];
+    if (rJor.error || rMet.error || rDia.error || rRank.error) throw (rJor.error||rMet.error||rDia.error||rRank.error);
+    jornadas = {};
+    (rJor.data||[]).forEach(function(x){ jornadas[x.fecha] = { p:x.propias, cerrada:true }; });
+    metas = (rMet.data||[]).map(function(x){ return { id:x.id, desde:x.desde, total:x.total, propias:x.propias }; });
+    diasManuales = {};
+    (rDia.data||[]).forEach(function(x){ diasManuales[x.fecha] = true; });
+    rankingMes = rRank.data || [];
+    pintarVendedorPublico();
+  }).catch(function(){
+    vendContenido.innerHTML = "<div class='aviso'><b>No se pudo conectar.</b> Probá de nuevo en un momento.</div>";
+  });
+}
+cargarDatos();
+</script>
+</body>
+</html>
