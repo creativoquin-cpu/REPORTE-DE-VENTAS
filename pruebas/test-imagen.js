@@ -2,9 +2,9 @@
 // jsdom no trae canvas, así que se usa un lienzo falso que ANOTA todo lo que se
 // dibuja. Así se puede comprobar cada número, cada texto y cada barra.
 const fs = require('fs');
-const { JSDOM } = require('/tmp/node_modules/jsdom');
+const { JSDOM } = require('jsdom');
 
-const HTML = fs.readFileSync('/sessions/zen-laughing-fermi/mnt/REPORTE DE VENTAS/quin-admin.html', 'utf8');
+const HTML = fs.readFileSync(require('path').join(__dirname, '..', 'quin-admin.html'), 'utf8');
 
 let fallos = 0, pruebas = 0;
 function ok(nombre, cond, extra) {
@@ -252,6 +252,66 @@ console.log('\n=== 6b. El mes de la imagen no depende del selector del tablero =
   ok('si hay archivo cargado, manda el mes del archivo', w.mesImagen() === '2026-08', w.mesImagen());
 }
 
+console.log('\n=== 6c. La imagen de VENTAS PROPIAS ===');
+{
+  const w = arrancar({ 'quin.jornadas': JUL }, '2026-07-20');
+  w.mostrar(2);
+  const d = w.imgDatos();
+
+  // propias repartidas: 150,140,120 y el bloque sáb+dom 80 → 40/40
+  ok('propias del mes = 490', d.totalP === 490, String(d.totalP));
+  ok('barras de propias: 150,140,120,40,40',
+     d.claves.map(k => d.repP[k]).join(',') === '150,140,120,40,40',
+     d.claves.map(k => d.repP[k]).join(','));
+  ok('promedio de propias = 98', d.promP === 98, String(d.promP));
+  ok('la meta de propias del día = 160', d.metaDiaP === 160, String(d.metaDiaP));
+  ok('días en meta de propias = 0 (ninguno llega a 160)', d.enMetaP === 0, String(d.enMetaP));
+
+  const ctx = w.document.createElement('canvas').getContext('2d');
+  w.imgDibujar(ctx, d, null, 'propias');
+  const T = textos(ctx);
+
+  ok('el título dice que es de propias', T.includes('Ventas propias'));
+  ok('aclara que es solo Effi', T.some(t => t.includes('solo Effi')), T[2]);
+  ok('la cifra grande son las propias del día (40)', T.includes('40'));
+  ok('la meta del encabezado es la de propias', T.includes('Meta 160 prendas'));
+  ok('dice cuánto faltó contra la meta de propias', T.includes('Faltaron 120 para la meta'));
+  ok('cuadro de total del mes', T.includes('Total del mes') && T.includes('490'));
+  ok('cuadro de promedio del mes', T.includes('Promedio del mes') && T.includes('98'));
+  ok('cuadro de días en meta', T.includes('Días en meta') && T.includes('0 de 5'));
+  ok('el pie aclara que no incluye Dropi',
+     T.some(t => t.includes('No incluye Dropi')));
+  ok('NO lleva cuadro de Dropi', !T.includes('Dropi'));
+  ok('la leyenda no menciona Dropi', !T.some(t => t === 'Dropi'));
+  ok('el total del mes bajo la gráfica es el de propias',
+     T.some(t => t === '490 prendas en 5 días'),
+     (T.find(t => /prendas en \d+ d/.test(t)) || ''));
+
+  // barras: solo azules, ninguna verde
+  ok('todas las barras son azules (propias)', barras(ctx, '#2a78d6').length === 5,
+     String(barras(ctx, '#2a78d6').length));
+  ok('no hay barras verdes de Dropi', barras(ctx, '#1baf7a').length === 0,
+     String(barras(ctx, '#1baf7a').length));
+
+  // las alturas son proporcionales a las propias, no al total
+  const B = barras(ctx, '#2a78d6');
+  ok('la barra más alta es la del día de 150 propias',
+     B[0].h === Math.max(...B.map(b => b.h)), B.map(b => b.h).join(','));
+  ok('los dos últimos días (40 y 40) quedan iguales', B[3].h === B[4].h);
+
+  ok('NO lleva VS ni nombres de personas',
+     !T.some(t => /\bAna\b|\bVS\b|TiendaX/.test(t)));
+
+  // la imagen consolidada del mismo día sigue dando lo suyo
+  const ctx2 = w.document.createElement('canvas').getContext('2d');
+  w.imgDibujar(ctx2, d, null, 'total');
+  const T2 = textos(ctx2);
+  ok('la consolidada sigue con su meta 200 y su cifra 48',
+     T2.includes('Meta 200 prendas') && T2.includes('48'));
+  ok('la consolidada sigue mostrando Dropi', T2.includes('Dropi'));
+  ok('la consolidada suma 645 en el mes', T2.some(t => t === '645 prendas en 5 días'));
+}
+
 console.log('\n=== 7. Descarga y casos borde ===');
 {
   const w = arrancar({ 'quin.jornadas': JUL }, '2026-07-20');
@@ -264,10 +324,16 @@ console.log('\n=== 7. Descarga y casos borde ===');
     return el;
   };
   w.document.getElementById('btnImg').click();
-  return new Promise(res => setTimeout(() => {
-    ok('el botón descarga un PNG', enlaces.length === 1 &&
-       String(enlaces[0].href).startsWith('data:image/png'), JSON.stringify(enlaces.map(e => e.name)));
-    ok('el nombre del archivo lleva el día', enlaces[0].name === 'quin-2026-07-19.png', enlaces[0].name);
+  return new Promise(res => setTimeout(() => {          // espera a la 2ª descarga (700 ms)
+    ok('un solo botón baja DOS imágenes', enlaces.length === 2,
+       JSON.stringify(enlaces.map(e => e.name)));
+    ok('las dos son PNG', enlaces.every(e => String(e.href).startsWith('data:image/png')));
+    ok('la primera es la consolidada y lleva el día',
+       enlaces[0] && enlaces[0].name === 'quin-consolidado-2026-07-19.png',
+       enlaces[0] && enlaces[0].name);
+    ok('la segunda es la de propias y lleva el día',
+       enlaces[1] && enlaces[1].name === 'quin-propias-2026-07-19.png',
+       enlaces[1] && enlaces[1].name);
 
     // mes sin datos: avisa en vez de romperse
     const w2 = arrancar({}, '2026-07-20');
@@ -302,5 +368,5 @@ console.log('\n=== 7. Descarga y casos borde ===');
 
     console.log('\n' + (fallos ? 'FALLARON ' + fallos + ' de ' + pruebas : 'Pasaron las ' + pruebas + ' pruebas'));
     process.exit(fallos ? 1 : 0);
-  }, 50));
+  }, 1200));
 }

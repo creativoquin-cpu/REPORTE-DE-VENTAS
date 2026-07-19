@@ -1,8 +1,8 @@
 // Prueba del Paso 14 — metas editables con historial sellado por día
 const fs = require('fs');
-const { JSDOM } = require('/tmp/node_modules/jsdom');
+const { JSDOM } = require('jsdom');
 
-const HTML = fs.readFileSync('/sessions/zen-laughing-fermi/mnt/REPORTE DE VENTAS/quin-admin.html', 'utf8');
+const HTML = fs.readFileSync(require('path').join(__dirname, '..', 'quin-admin.html'), 'utf8');
 
 let fallos = 0, pruebas = 0;
 function ok(nombre, cond, extra) {

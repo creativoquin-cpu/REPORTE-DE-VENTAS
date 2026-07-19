@@ -48,7 +48,7 @@ Archivos del intento viejo que **no se tocan**: `reporte-ventas.html`, `prompt_r
 
 ## Decisiones tomadas (corrigen o precisan el documento maestro)
 
-1. **Effi no usa la jornada horaria.** Ya viene filtrado en la fuente; se agrupa por la fecha de `Fecha creación`. Solo Dropi aplica el corte 8am / sábado 7am. *(§3.3)*
+1. ~~**Effi no usa la jornada horaria.**~~ **CORREGIDO el 19-jul-2026: Effi SÍ usa el corte de jornada,** igual que Dropi (8am entre semana, 7am los sábados). Lo vendido en la madrugada pertenece a la jornada del día anterior. Salió al correr el motor con el Excel real: 9 unidades del sábado entre las 02:00 y las 06:09 estaban cayendo en el sábado en vez del viernes. El dueño confirmó que va con la regla de jornada. Si la celda de fecha no trae hora, el día se toma tal cual. *(§3.3)*
 
 2. **Las exclusiones se identifican solas.** La app lee los archivos y arma la lista de estatus y vendedores encontrados, con casillas para marcar. No se escriben a mano. Un valor nuevo aparece solo. *(§6.3)*
 
@@ -76,7 +76,7 @@ Archivos del intento viejo que **no se tocan**: `reporte-ventas.html`, `prompt_r
 
 14. **La imagen siempre es del último día cargado y del mes que se está registrando**, no del mes elegido en el tablero, para que no se mande por error la de un mes viejo. Pedido por el dueño al ver la primera versión.
 
-15. **Una sola imagen, encabezada por el día.** Se empezó con dos (Total y Propias, ambas mensuales) y el dueño las cambió por una sola con el total del día en grande y los cuadros de propias, Dropi y promedio. Corrige el §13, que pedía dos formatos mensuales.
+15. **Dos imágenes del DÍA, un solo botón.** Se empezó con dos mensuales (Total y Propias), el dueño las cambió por una sola del día, y después pidió volver a dos —pero ambas del día—: una **consolidada** (propias + Dropi, la que ya existía) y otra de **ventas propias** solamente. El botón *Imágenes para WhatsApp (2)* baja las dos de una vez (`quin-consolidado-FECHA.png` y `quin-propias-FECHA.png`), con 700 ms entre una y otra porque algunos navegadores ignoran la segunda descarga si salen juntas. La de propias usa la **meta de propias**, una sola barra azul, y sus cuadros son Total del mes, Promedio del mes y Días en meta. Corrige el §13.
 
 16. **La vista del vendedor queda bloqueada al mes en curso** y vive por ahora como pestaña 5 del mismo archivo. Se separará cuando exista el login.
 
@@ -100,6 +100,15 @@ Ninguno: el lado del administrador quedó completo.
 - Las jornadas congeladas antes del Paso 5 no guardaron el detalle por vendedor. El tablero avisa cuántas faltan; se arregla reabriéndolas y cerrándolas de nuevo.
 - El guardado vive solo en ese computador y ese navegador. Si se limpian los datos de navegación se pierde. Hay botón **Descargar respaldo** para llevarse un `.json`. Se resuelve de raíz con Supabase.
 - Falta validar con un export completo y recién descargado contra la hoja manual *(§17)*. Las muestras son parciales y por eso no cuadran.
+
+**Hallazgos al correr el motor con los Excel reales de la carpeta** (`pruebas/test-motor-real.js`, 50 pruebas)
+
+Se cargaron los dos archivos tal cual, sin inventar datos, y se compararon con los números de referencia del §17. El motor no se rompió en nada, pero salieron cuatro cosas:
+
+1. **Ventas de madrugada — RESUELTO.** El archivo de Effi trae 9 unidades del sábado 11-jul entre las 02:00 y las 06:09, o sea antes del corte de las 7am, y estaban cayendo en el sábado. El dueño decidió aplicarle a Effi la regla de jornada: ahora van al viernes y las 98 quedan juntas en la jornada del viernes, como decía el §17. Ver decisión 1.
+2. **`DROPI - ROCKETFY` — RESUELTO.** Aparece como vendedor dentro del archivo de Effi (1 unidad en esta muestra). El dueño confirmó que **es venta propia** y no está duplicada en el archivo de Dropi. Se deja contando como propia.
+3. **`miguel angel angarita ariza` viene apagado por defecto**, así que de las 99 unidades del archivo el motor cuenta 98. Es lo esperado, queda anotado para que nadie lo lea como un descuadre.
+4. **El bloque de fin de semana solo se arma con los días que existen.** Como el archivo se exportó el domingo a las 11am, el rango termina el sábado y las 8 unidades se quedan ahí; el domingo y el lunes festivo todavía no existen. Al cargar el archivo del lunes el bloque se arma solo y el reparto se corrige. Se comprobó que con el bloque completo reparte 2/2/4 (base 2 y el sobrante al último día, decisión 6). El §17 decía 2/3/3, que es anterior a esa decisión: **el desactualizado es el documento, no el código**.
 - Quedó sin ubicar la columna del «contacto de la tienda» en el Excel de Dropi. Dejó de ser bloqueante al definirse que la tienda es el vendedor.
 
 ---

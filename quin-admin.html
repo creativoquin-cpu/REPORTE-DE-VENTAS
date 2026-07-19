@@ -6,6 +6,7 @@
 <title>Quin — Administrador</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root { --cian:#17C3C3; --linea:#e4e7e9; --gris:#6b7280; --rojo:#c62828; }
   * { box-sizing:border-box; }
@@ -16,6 +17,12 @@
   h2 { font-size:15px; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--cian); }
   .sub { color:var(--gris); font-size:13px; margin:0 0 12px; }
   .caja { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+
+  .estadoNube { display:inline-block; font-size:12px; font-weight:600; padding:3px 10px;
+    border-radius:20px; background:#f2fbfb; color:var(--gris); border:1px solid var(--linea); }
+  .estadoNube.nube-ok   { background:#eafaf1; color:#0a7d38; border-color:#bfe9d2; }
+  .estadoNube.nube-mal  { background:#fdf3ec; color:#b7791f; border-color:#f3ddc2; }
+  .estadoNube.nube-sinc { background:#eef4fc; color:#2a5ea6; border-color:#cfe0f5; }
 
   .nav { display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--linea); flex-wrap:wrap; }
   .nav button { background:none; color:var(--gris); border:0; border-bottom:3px solid transparent;
@@ -132,7 +139,7 @@
 <body>
 <div class="wrap">
 
-  <h1>Quin — Administrador</h1>
+  <h1>Quin — Administrador <span id="estadoNube" class="estadoNube"></span></h1>
   <p class="sub">Consolida las ventas de Dropi y Effi en prendas. Solo el administrador entra aquí.</p>
 
   <div class="nav">
@@ -176,7 +183,7 @@
         Incluir días sin cerrar (bosquejo)
       </label>
       <span style="flex:1"></span>
-      <button class="gris" id="btnImg">Imagen para WhatsApp</button>
+      <button class="gris" id="btnImg">Imágenes para WhatsApp (2)</button>
       <span id="avisoImg" style="font-size:12px;color:#6b7280;width:100%"></span>
     </div>
     <div id="contenido"></div>
@@ -302,15 +309,31 @@ function jornadaDe(y, m, d, hora) {
   if (hora < corte) f.setDate(f.getDate() - 1);
   return claveFecha(f.getFullYear(), f.getMonth() + 1, f.getDate());
 }
-function fechaEffi(celda) {
+// Lee la celda de fecha de Effi y devuelve { y, m, d, h } — h en horas decimales,
+// o null si la celda no trae hora.
+function partesEffi(celda) {
   if (celda instanceof Date)
-    return claveFecha(celda.getFullYear(), celda.getMonth() + 1, celda.getDate());
+    return { y:celda.getFullYear(), m:celda.getMonth()+1, d:celda.getDate(),
+             h: celda.getHours() + celda.getMinutes()/60 + celda.getSeconds()/3600 };
   var t = String(celda == null ? "" : celda).trim();
-  var m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return claveFecha(+m[1], +m[2], +m[3]);
-  m = t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-  if (m) return claveFecha(+m[3], +m[2], +m[1]);
+  var m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return { y:+m[1], m:+m[2], d:+m[3],
+                  h: m[4]==null ? null : (+m[4] + (+m[5])/60 + (+(m[6]||0))/3600) };
+  m = t.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return { y:+m[3], m:+m[2], d:+m[1],
+                  h: m[4]==null ? null : (+m[4] + (+m[5])/60 + (+(m[6]||0))/3600) };
   return null;
+}
+
+// Día operativo de una venta de Effi. Igual que Dropi: lo vendido en la madrugada
+// pertenece a la jornada del día anterior (corte 8am, 7am los sábados). Si la celda
+// no trae hora, se toma el día tal cual.
+// Decidido por el dueño el 19-jul-2026, corrige la decisión 1 de la bitácora.
+function fechaEffi(celda) {
+  var p = partesEffi(celda);
+  if (!p) return null;
+  if (p.h == null) return claveFecha(p.y, p.m, p.d);
+  return jornadaDe(p.y, p.m, p.d, p.h);
 }
 
 // --- festivos de Colombia (se calculan, no se teclean) ---
@@ -399,7 +422,12 @@ var LLAVE_JOR = "quin.jornadas", LLAVE_AJU = "quin.ajustes",
 // { estado:"cerrado"|"abierto", cerrado:"texto"|null, auto:bool,
 //   resumen:{...}|null, traza:[{ que, cuando, quien, total }] }
 var mesesCerrados = {};
-function guardar(ll, d){ try{ localStorage.setItem(ll, JSON.stringify(d)); return true; }catch(e){ return false; } }
+function guardar(ll, d){
+  var ok = true;
+  try{ localStorage.setItem(ll, JSON.stringify(d)); }catch(e){ ok = false; }
+  sincronizarNube(ll, d);
+  return ok;
+}
 function leer(ll){ try{ var t=localStorage.getItem(ll); return t?JSON.parse(t):null; }catch(e){ return null; } }
 function cargarTodo(){
   jornadas = leer(LLAVE_JOR) || {};
@@ -416,7 +444,210 @@ function guardarAjustes(){
   var est={}, ven={};
   listaEstatus.forEach(function(x){ est[x.valor]=x.cuenta; });
   listaVend.forEach(function(x){ ven[x.valor]=x.cuenta; });
-  guardar(LLAVE_AJU, { diasManuales:diasManuales, descartarNovedad:descartarNovedad, est:est, ven:ven });
+  guardar(LLAVE_AJU, { diasManuales:diasManuales, descartarNovedad:descartarNovedad, est:est, ven:ven,
+    actualizado:new Date().toISOString() });
+}
+
+// ####################################################################
+//  NUBE (Supabase) — paso 9.1
+//  El navegador sigue siendo la copia rápida: la pantalla se pinta al
+//  toque con lo que hay guardado aquí mismo. Esto es un espejo por detrás.
+//  Sin internet la app funciona exactamente igual, solo local.
+//  Nota: mientras no exista el login (paso 9.2), la base solo deja leer y
+//  escribir lo público (metas y días no laborables). Jornadas, ajustes y
+//  meses cerrados quedan bloqueados por la propia base hasta el login —
+//  el código ya queda listo para cuando eso exista.
+// ####################################################################
+var SUPABASE_URL = "https://vhczimiicebyuytikdat.supabase.co";
+var SUPABASE_KEY = "sb_publishable_l2PnEnItch_emRRYyoBohQ_STf5yj_V";
+var sb = (typeof window !== "undefined" && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+var LLAVE_SNAP = "quin.nube.snapshot"; // qué filas de cada tabla quedaron bien subidas la última vez
+var hayPendientes = false;
+
+function marcarEstadoNube(clase, texto){
+  var el = document.getElementById("estadoNube"); if (!el) return;
+  el.className = "estadoNube " + (clase || "");
+  el.textContent = texto || "";
+}
+function masReciente(a, b){ // ¿a es más nuevo que b? sin fecha, gana el que sí tiene
+  if (!a) return false; if (!b) return true;
+  return new Date(a).getTime() > new Date(b).getTime();
+}
+function leerSnapshot(){ return leer(LLAVE_SNAP) || {}; }
+function guardarSnapshotTabla(tabla, claves){
+  var s = leerSnapshot(); s[tabla] = claves;
+  try{ localStorage.setItem(LLAVE_SNAP, JSON.stringify(s)); }catch(e){}
+}
+
+// ---- lo local, traducido a filas de cada tabla ----
+function filasDeJornadas(d){
+  var out = {};
+  Object.keys(d || {}).forEach(function(k){
+    var j = d[k];
+    out[k] = { fecha:k, propias:j.oficial.p, dropi:j.oficial.d,
+      ven:j.oficial.ven||{}, tie:j.oficial.tie||{}, cerrada:true,
+      cerrada_el:j.cerrada||null, fotos:j.fotos||[],
+      actualizado:j.actualizado || new Date().toISOString() };
+  });
+  return out;
+}
+function filasDeMetas(d){
+  var out = {};
+  (d||[]).forEach(function(m){
+    out[m.id] = { id:m.id, desde:m.desde, total:m.total, propias:m.propias,
+      cuando:m.cuando||null, quien:m.quien||null, actualizado:new Date().toISOString() };
+  });
+  return out;
+}
+function filasDeMeses(d){
+  var out = {};
+  Object.keys(d || {}).forEach(function(m){
+    out[m] = { mes:m, datos:d[m], sellado_en:d[m].actualizado || new Date().toISOString() };
+  });
+  return out;
+}
+function filaDeAjustes(d){
+  var out = {};
+  out[1] = { id:1, datos:d||{}, actualizado:(d && d.actualizado) || new Date().toISOString() };
+  return out;
+}
+function filasDeDiasManuales(d){
+  var out = {};
+  Object.keys((d && d.diasManuales) || {}).forEach(function(f){
+    out[f] = { fecha:f, motivo:"Marcado a mano" };
+  });
+  return out;
+}
+
+// ---- subir una tabla completa (son pocas filas, no pesa) y borrar lo que ya no está ----
+function sincronizarTabla(tabla, llavePk, filasPorClave){
+  if (!sb) return;
+  var claves = Object.keys(filasPorClave);
+  var snap = leerSnapshot(), previas = snap[tabla] || [];
+  var borrar = previas.filter(function(k){ return claves.indexOf(k) === -1; });
+  var subir = claves.map(function(k){ return filasPorClave[k]; });
+  marcarEstadoNube("nube-sinc", "sincronizando…");
+  var p = subir.length ? sb.from(tabla).upsert(subir) : Promise.resolve({ error:null });
+  p.then(function(r){
+    if (r.error) throw r.error;
+    if (!borrar.length) return { error:null };
+    return sb.from(tabla).delete().in(llavePk, borrar);
+  }).then(function(r){
+    if (r.error) throw r.error;
+    guardarSnapshotTabla(tabla, claves);
+    marcarEstadoNube("nube-ok", "guardado en la nube");
+  }).catch(function(){
+    hayPendientes = true;
+    marcarEstadoNube("nube-mal", "sin conexión, guardado en este equipo");
+  });
+}
+function sincronizarNube(ll, d){
+  if (!sb) return;
+  if (ll === LLAVE_JOR) sincronizarTabla("jornadas", "fecha", filasDeJornadas(d));
+  else if (ll === LLAVE_MET) sincronizarTabla("metas", "id", filasDeMetas(d));
+  else if (ll === LLAVE_MES) sincronizarTabla("meses", "mes", filasDeMeses(d));
+  else if (ll === LLAVE_AJU) {
+    sincronizarTabla("ajustes", "id", filaDeAjustes(d));
+    sincronizarTabla("dias_manuales", "fecha", filasDeDiasManuales(d));
+  }
+}
+function reintentarPendientes(){
+  if (!sb || !hayPendientes) return;
+  hayPendientes = false;
+  sincronizarNube(LLAVE_JOR, jornadas);
+  sincronizarNube(LLAVE_MET, metas);
+  sincronizarNube(LLAVE_MES, mesesCerrados);
+  sincronizarNube(LLAVE_AJU, ajustesGuardados || { diasManuales:diasManuales, descartarNovedad:descartarNovedad });
+}
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("online", reintentarPendientes);
+}
+
+// ---- traer de la nube al abrir y mezclar con lo local (gana lo más reciente) ----
+function repintarTrasNube(){
+  pintarMetas();
+  pintarCierre(autoCerrarMeses());
+  renderCongelado({}, null);
+  if (typeof vista2 !== "undefined" && vista2 && vista2.style.display !== "none") pintarTablero();
+  if (typeof vista3 !== "undefined" && vista3 && vista3.style.display !== "none") pintarCalendarioSel();
+  if (typeof vista4 !== "undefined" && vista4 && vista4.style.display !== "none") pintarComparativo();
+  if (typeof vista5 !== "undefined" && vista5 && vista5.style.display !== "none") pintarVendedor();
+}
+function cargarNube(){
+  if (!sb) return Promise.resolve();
+  marcarEstadoNube("nube-sinc", "sincronizando…");
+  var cambio = false;
+
+  // Metas y días no laborables: el visitante también los puede leer, así que
+  // esto ya funciona hoy mismo, sin esperar al login del paso 9.2.
+  var pMetas = sb.from("metas").select("*").then(function(r){
+    if (r.error || !r.data) return;
+    var idsLocales = {}; metas.forEach(function(m){ idsLocales[m.id] = 1; });
+    r.data.forEach(function(x){
+      if (!idsLocales[x.id]) {
+        metas.push({ id:x.id, desde:x.desde, total:x.total, propias:x.propias,
+          cuando:x.cuando, quien:x.quien });
+        cambio = true;
+      }
+    });
+  }).catch(function(){});
+
+  var pDias = sb.from("dias_manuales").select("*").then(function(r){
+    if (r.error || !r.data) return;
+    r.data.forEach(function(x){
+      if (!diasManuales[x.fecha]) { diasManuales[x.fecha] = true; cambio = true; }
+    });
+  }).catch(function(){});
+
+  // Jornadas, ajustes y meses cerrados: son del administrador. Sin sesión
+  // iniciada, la base no entrega nada de esto todavía (paso 9.2) y estas
+  // tres promesas simplemente no encuentran datos — no rompen nada.
+  var pJor = sb.from("jornadas").select("*").then(function(r){
+    if (r.error || !r.data) return;
+    r.data.forEach(function(x){
+      var loc = jornadas[x.fecha];
+      if (!loc || masReciente(x.actualizado, loc.actualizado)) {
+        jornadas[x.fecha] = { oficial:{ p:x.propias, d:x.dropi, ven:x.ven||{}, tie:x.tie||{} },
+          cerrada:x.cerrada_el || x.fecha, fotos:x.fotos||[], actualizado:x.actualizado };
+        cambio = true;
+      }
+    });
+  }).catch(function(){});
+
+  var pMes = sb.from("meses").select("*").then(function(r){
+    if (r.error || !r.data) return;
+    r.data.forEach(function(x){
+      var loc = mesesCerrados[x.mes];
+      if (!loc || masReciente(x.sellado_en, loc.actualizado)) {
+        var e = x.datos; e.actualizado = x.sellado_en;
+        mesesCerrados[x.mes] = e; cambio = true;
+      }
+    });
+  }).catch(function(){});
+
+  var pAju = sb.from("ajustes").select("*").eq("id", 1).then(function(r){
+    if (r.error || !r.data || !r.data.length) return;
+    var fila = r.data[0], loc = ajustesGuardados;
+    if (!loc || masReciente(fila.actualizado, loc.actualizado)) {
+      var a = fila.datos || {};
+      diasManuales = a.diasManuales || diasManuales;
+      if (typeof a.descartarNovedad === "boolean") descartarNovedad = a.descartarNovedad;
+      ajustesGuardados = a; cambio = true;
+    }
+  }).catch(function(){});
+
+  return Promise.all([pMetas, pDias, pJor, pMes, pAju]).then(function(){
+    if (cambio) {
+      try{ localStorage.setItem(LLAVE_JOR, JSON.stringify(jornadas)); }catch(e){}
+      try{ localStorage.setItem(LLAVE_MET, JSON.stringify(metas)); }catch(e){}
+      try{ localStorage.setItem(LLAVE_MES, JSON.stringify(mesesCerrados)); }catch(e){}
+      try{ localStorage.setItem(LLAVE_AJU, JSON.stringify(ajustesGuardados)); }catch(e){}
+      repintarTrasNube();
+    }
+    marcarEstadoNube("nube-ok", "guardado en la nube");
+  });
 }
 function hoyTexto(){
   var f=new Date();
@@ -593,9 +824,11 @@ function cerrarJornadas(dias, seleccionadas) {
   seleccionadas.forEach(function(k){
     var v = dias[k];
     var cifra = { p:v.propias, d:v.dropi, ven:v.ven||{}, tie:v.tie||{} };
-    if (!jornadas[k]) { jornadas[k] = { oficial:cifra, cerrada:hoyTexto(), fotos:[] }; nuevas++; }
+    if (!jornadas[k]) { jornadas[k] = { oficial:cifra, cerrada:hoyTexto(), fotos:[],
+      actualizado:new Date().toISOString() }; nuevas++; }
     else { jornadas[k].fotos = jornadas[k].fotos||[];
-           jornadas[k].fotos.push({ cuando:hoyTexto(), p:cifra.p, d:cifra.d }); act++; }
+           jornadas[k].fotos.push({ cuando:hoyTexto(), p:cifra.p, d:cifra.d });
+           jornadas[k].actualizado = new Date().toISOString(); act++; }
   });
   guardar(LLAVE_JOR, jornadas);
   var p=[];
@@ -673,7 +906,8 @@ function autoCerrarMeses(){
     var r = resumenMes(m);
     if (!r.dias) return;
     mesesCerrados[m] = { estado:"cerrado", cerrado:hoyTexto(), auto:true, resumen:r,
-      traza:[{ que:"Cerrado automáticamente", cuando:hoyTexto(), quien:"La app", total:r.total }] };
+      traza:[{ que:"Cerrado automáticamente", cuando:hoyTexto(), quien:"La app", total:r.total }],
+      actualizado:new Date().toISOString() };
     nuevos.push(m);
   });
   if (nuevos.length) guardar(LLAVE_MES, mesesCerrados);
@@ -687,6 +921,7 @@ function cerrarMesAMano(m){
   e.estado = "cerrado"; e.cerrado = hoyTexto(); e.auto = false; e.resumen = r;
   e.traza = (e.traza||[]).concat([{ que: reCierre ? "Vuelto a cerrar a mano" : "Cerrado a mano",
     cuando: hoyTexto(), quien:"Administrador", total:r.total }]);
+  e.actualizado = new Date().toISOString();
   mesesCerrados[m] = e;
   guardar(LLAVE_MES, mesesCerrados);
 }
@@ -695,6 +930,7 @@ function reabrirMes(m){
   var antes = e.resumen ? e.resumen.total : null;
   e.estado = "abierto"; e.cerrado = null; e.auto = false;
   e.traza = (e.traza||[]).concat([{ que:"Reabierto", cuando:hoyTexto(), quien:"Administrador", total:antes }]);
+  e.actualizado = new Date().toISOString();
   mesesCerrados[m] = e;
   guardar(LLAVE_MES, mesesCerrados);
 }
@@ -1334,7 +1570,8 @@ incBos.addEventListener("change", function(){ pintarMeses(); pintarTablero(); })
 
 function pintarTablero(){
   var mi = mesImagen().split("-");
-  avisoImg.textContent = "La imagen sale siempre del último día que cargaste, con el mes que estás " +
+  avisoImg.textContent = "Se bajan dos imágenes: una consolidada (propias + Dropi) y otra solo de " +
+    "ventas propias. Ambas salen del último día que cargaste, con el mes que estás " +
     "registrando (" + MESES_L[+mi[1]-1] + " " + mi[0] + "), sin importar el mes que elijas arriba.";
   var ms = mesesTablero();
   if (!ms.length) {
@@ -1587,15 +1824,28 @@ function imgDatos(){
     b.dias.forEach(function(k,i){ repP[k] = rp[i]; repD[k] = rd[i]; rep[k] = rp[i] + rd[i]; });
   });
 
-  var metas = claves.map(function(k){ return metaEn(k).total; });
-  var total = claves.reduce(function(a,k){ return a + rep[k]; }, 0);
+  var metas  = claves.map(function(k){ return metaEn(k).total; });
+  var metasP = claves.map(function(k){ return metaEn(k).propias; });
+  var total  = claves.reduce(function(a,k){ return a + rep[k]; }, 0);
+  var totalP = claves.reduce(function(a,k){ return a + repP[k]; }, 0);
   var n = claves.length;
   var dia = claves[n-1];                        // el día que se está reportando
 
-  return { m:m, claves:claves, rep:rep, repP:repP, repD:repD, metas:metas,
-           total:total, n:n, prom: n ? Math.round(total/n) : 0,
+  // días que alcanzaron la meta (uno para cada informe)
+  var enMeta = 0, enMetaP = 0;
+  claves.forEach(function(k, i){
+    if (rep[k]  >= metas[i])  enMeta++;
+    if (repP[k] >= metasP[i]) enMetaP++;
+  });
+
+  return { m:m, claves:claves, rep:rep, repP:repP, repD:repD,
+           metas:metas, metasP:metasP,
+           total:total, totalP:totalP, n:n,
+           prom:  n ? Math.round(total/n)  : 0,
+           promP: n ? Math.round(totalP/n) : 0,
+           enMeta:enMeta, enMetaP:enMetaP,
            dia:dia, diaTotal:rep[dia], diaP:repP[dia], diaD:repD[dia],
-           metaDia: metaEn(dia).total,
+           metaDia: metaEn(dia).total, metaDiaP: metaEn(dia).propias,
            sinCerrar: claves.filter(function(k){ return !D[k].cerrada; }).length };
 }
 
@@ -1609,9 +1859,21 @@ function imgRedondo(c, x, y, w, h, r){
   c.closePath();
 }
 
-function imgDibujar(c, d, mascota){
+// modo: "total"   → ventas consolidadas (propias + Dropi)
+//       "propias" → solo las ventas propias (Effi)
+function imgDibujar(c, d, mascota, modo){
   var CIAN = "#14c4c4", AZUL = "#2a78d6", VERDE = "#1baf7a",
       ROJO = "#d03b3b", TINTA = "#111318", GRIS = "#6b7280";
+
+  var soloP = modo === "propias";
+
+  // valores que cambian según el informe
+  var vDia   = soloP ? d.diaP   : d.diaTotal;
+  var vMeta  = soloP ? d.metaDiaP : d.metaDia;
+  var vTotal = soloP ? d.totalP : d.total;
+  var vProm  = soloP ? d.promP  : d.prom;
+  var vSerie = soloP ? d.repP   : d.rep;
+  var vMetas = soloP ? d.metasP : d.metas;
 
   c.fillStyle = "#ffffff"; c.fillRect(0, 0, IMG_W, IMG_H);
   c.fillStyle = CIAN; c.fillRect(0, 0, IMG_W, 14);
@@ -1625,15 +1887,15 @@ function imgDibujar(c, d, mascota){
   c.fillText("QUIN", M, 120);
   c.fillStyle = TINTA;
   c.font = "800 72px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText("Ventas del día", M, 210);
+  c.fillText(soloP ? "Ventas propias" : "Ventas del día", M, 210);
   c.fillStyle = GRIS;
   c.font = "400 42px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText(bonita(d.dia), M, 268);
+  c.fillText(bonita(d.dia) + (soloP ? " · solo Effi" : " · propias + Dropi"), M, 268);
 
-  var txtMeta = "Meta " + d.metaDia + " prendas";
+  var txtMeta = "Meta " + vMeta + " prendas";
   c.font = "700 36px -apple-system,Segoe UI,Roboto,sans-serif";
   var wp = c.measureText(txtMeta).width + 56;
-  var cumple = d.diaTotal >= d.metaDia;
+  var cumple = vDia >= vMeta;
   c.fillStyle = cumple ? "#e8f7f0" : "#fdecec";
   imgRedondo(c, M, 300, wp, 66, 33); c.fill();
   c.fillStyle = cumple ? VERDE : ROJO;
@@ -1642,21 +1904,25 @@ function imgDibujar(c, d, mascota){
   // ---- cifra grande del día
   c.fillStyle = TINTA;
   c.font = "800 200px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText(String(d.diaTotal), M, 560);
-  var wn = c.measureText(String(d.diaTotal)).width;
+  c.fillText(String(vDia), M, 560);
+  var wn = c.measureText(String(vDia)).width;
   c.fillStyle = GRIS;
   c.font = "400 44px -apple-system,Segoe UI,Roboto,sans-serif";
   c.fillText("prendas", M + wn + 24, 560);
   c.fillStyle = cumple ? VERDE : ROJO;
   c.font = "700 38px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText(cumple ? "Meta cumplida" : "Faltaron " + (d.metaDia - d.diaTotal) + " para la meta", M, 616);
+  c.fillText(cumple ? "Meta cumplida" : "Faltaron " + (vMeta - vDia) + " para la meta", M, 616);
 
-  // ---- tres cuadros: propias, Dropi y promedio del mes
+  // ---- tres cuadros
+  var cuadros = soloP
+    ? [["Total del mes",     String(d.totalP), AZUL],
+       ["Promedio del mes",  String(d.promP),  TINTA],
+       ["Días en meta",      d.enMetaP + " de " + d.n, VERDE]]
+    : [["Propias (Effi)",    String(d.diaP),   AZUL],
+       ["Dropi",             String(d.diaD),   VERDE],
+       ["Promedio del mes",  String(d.prom),   TINTA]];
   var cw = (IMG_W - M*2 - 40) / 3, cy = 660, ch = 170;
-  [["Propias (Effi)", String(d.diaP), AZUL],
-   ["Dropi", String(d.diaD), VERDE],
-   ["Promedio del mes", String(d.prom), TINTA]
-  ].forEach(function(t, i){
+  cuadros.forEach(function(t, i){
     var x = M + i*(cw+20);
     c.fillStyle = "#f6f7f9"; imgRedondo(c, x, cy, cw, ch, 22); c.fill();
     c.fillStyle = t[2]; imgRedondo(c, x, cy, 10, ch, 5); c.fill();
@@ -1666,7 +1932,7 @@ function imgDibujar(c, d, mascota){
     c.fillStyle = TINTA;
     c.font = "800 68px -apple-system,Segoe UI,Roboto,sans-serif";
     c.fillText(t[1], x + 32, cy + 130);
-    if (i === 2) {
+    if (t[0] === "Promedio del mes") {
       c.fillStyle = GRIS;
       c.font = "400 24px -apple-system,Segoe UI,Roboto,sans-serif";
       c.fillText("por día", x + 32, cy + 158);
@@ -1680,12 +1946,12 @@ function imgDibujar(c, d, mascota){
   c.fillText("El mes día por día · " + MESES_L[+p[1]-1] + " " + p[0], M, 910);
   c.fillStyle = GRIS;
   c.font = "400 28px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText(d.total + " prendas en " + d.n + " día" + (d.n===1?"":"s"), M, 952);
+  c.fillText(vTotal + " prendas en " + d.n + " día" + (d.n===1?"":"s"), M, 952);
 
   var gx = M, gw = IMG_W - M*2, gTop = 1010, gBase = 1490;
   var maxV = 0;
-  d.claves.forEach(function(k){ maxV = Math.max(maxV, d.rep[k]); });
-  d.metas.forEach(function(v){ maxV = Math.max(maxV, v); });
+  d.claves.forEach(function(k){ maxV = Math.max(maxV, vSerie[k]); });
+  vMetas.forEach(function(v){ maxV = Math.max(maxV, v); });
   maxV = maxV || 1;
   var esc = (gBase - gTop) / (maxV * 1.06);
 
@@ -1695,14 +1961,21 @@ function imgDibujar(c, d, mascota){
   var fDia = n > 22 ? 19 : 23;
 
   d.claves.forEach(function(k, i){
-    var xc = gx + paso*i + paso/2, v = d.rep[k];
+    var xc = gx + paso*i + paso/2, v = vSerie[k];
     var h  = Math.round(v * esc);
-    var hp = Math.round(d.repP[k] * esc), hd = Math.max(h - hp, 0);
     var hoy = k === d.dia;
-    c.fillStyle = VERDE;
-    imgRedondo(c, xc - ancho/2, gBase - h, ancho, Math.max(hd,2), 8); c.fill();
-    c.fillStyle = AZUL;
-    c.fillRect(xc - ancho/2, gBase - hp, ancho, Math.max(hp,2));
+    if (soloP) {
+      // una sola barra azul: las propias
+      c.fillStyle = AZUL;
+      imgRedondo(c, xc - ancho/2, gBase - h, ancho, Math.max(h,2), 8); c.fill();
+    } else {
+      // barra partida: abajo las propias, encima Dropi
+      var hp = Math.round(d.repP[k] * esc), hd = Math.max(h - hp, 0);
+      c.fillStyle = VERDE;
+      imgRedondo(c, xc - ancho/2, gBase - h, ancho, Math.max(hd,2), 8); c.fill();
+      c.fillStyle = AZUL;
+      c.fillRect(xc - ancho/2, gBase - hp, ancho, Math.max(hp,2));
+    }
     c.fillStyle = hoy ? TINTA : GRIS; c.textAlign = "center";
     c.font = (hoy ? "800 " : "700 ") + fNum + "px -apple-system,Segoe UI,Roboto,sans-serif";
     if (v) c.fillText(String(v), xc, gBase - h - 14);
@@ -1719,7 +1992,7 @@ function imgDibujar(c, d, mascota){
   c.strokeStyle = ROJO; c.lineWidth = 4; c.setLineDash([14, 10]);
   c.beginPath();
   d.claves.forEach(function(k, i){
-    var y = gBase - d.metas[i] * esc;
+    var y = gBase - vMetas[i] * esc;
     if (y < gTop - 40) return;
     c.moveTo(gx + paso*i, y);
     c.lineTo(gx + paso*(i+1), y);
@@ -1730,10 +2003,10 @@ function imgDibujar(c, d, mascota){
   c.fillStyle = ROJO;
   c.font = "700 26px -apple-system,Segoe UI,Roboto,sans-serif";
   d.claves.forEach(function(k, i){
-    if (i && d.metas[i] === d.metas[i-1]) return;
-    var y = gBase - d.metas[i] * esc;
+    if (i && vMetas[i] === vMetas[i-1]) return;
+    var y = gBase - vMetas[i] * esc;
     if (y < gTop - 20) return;
-    var et = "Meta " + d.metas[i];
+    var et = "Meta " + vMetas[i];
     var w = c.measureText(et).width + 18;
     var x = Math.min(gx + paso*i + 6, gx + gw - w);
     c.fillStyle = "#ffffff"; c.fillRect(x - 6, y - 32, w, 30);
@@ -1750,7 +2023,7 @@ function imgDibujar(c, d, mascota){
     return x + 38 + c.measureText(txt).width + 34;
   }
   var lx = cuadro(M, AZUL, "Propias (Effi)");
-  lx = cuadro(lx, VERDE, "Dropi");
+  if (!soloP) lx = cuadro(lx, VERDE, "Dropi");
   c.fillStyle = ROJO; c.fillRect(lx, ly-14, 34, 5);
   c.fillStyle = GRIS;
   c.font = "400 26px -apple-system,Segoe UI,Roboto,sans-serif";
@@ -1759,7 +2032,8 @@ function imgDibujar(c, d, mascota){
   // ---- pie
   c.fillStyle = GRIS;
   c.font = "400 28px -apple-system,Segoe UI,Roboto,sans-serif";
-  c.fillText("Fines de semana y festivos repartidos entre sus días.", M, 1670);
+  c.fillText(soloP ? "Solo ventas propias (Effi). No incluye Dropi."
+                   : "Fines de semana y festivos repartidos entre sus días.", M, 1670);
   c.fillText("Actualizado " + hoyTexto(), M, 1714);
   if (d.sinCerrar) c.fillText("Incluye " + d.sinCerrar + " día" + (d.sinCerrar===1?"":"s") +
     " sin cerrar: puede cambiar.", M, 1758);
@@ -1781,18 +2055,28 @@ function imgCargarMascota(){
   });
 }
 
+// Un solo botón baja DOS imágenes: la consolidada (propias + Dropi) y la de
+// ventas propias. Se bajan una tras otra con una pausa corta, porque algunos
+// navegadores ignoran la segunda descarga si sale en el mismo instante.
 function descargarImagen(){
   var d = imgDatos();
   if (!d) { alert("Todavía no hay datos de ese mes para armar la imagen."); return; }
-  var cv = document.createElement("canvas");
-  cv.width = IMG_W; cv.height = IMG_H;
-  var c = cv.getContext("2d");
+
   imgCargarMascota().then(function(mascota){
-    imgDibujar(c, d, mascota);
-    var a = document.createElement("a");
-    a.href = cv.toDataURL("image/png");
-    a.download = "quin-" + d.dia + ".png";
-    a.click();
+    var informes = [["total", "consolidado"], ["propias", "propias"]];
+    informes.forEach(function(inf, i){
+      setTimeout(function(){
+        var cv = document.createElement("canvas");
+        cv.width = IMG_W; cv.height = IMG_H;
+        imgDibujar(cv.getContext("2d"), d, mascota, inf[0]);
+        var a = document.createElement("a");
+        a.href = cv.toDataURL("image/png");
+        a.download = "quin-" + inf[1] + "-" + d.dia + ".png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i * 700);
+    });
   });
 }
 
@@ -2308,6 +2592,7 @@ cargarTodo();
 pintarMetas();
 pintarCierre(autoCerrarMeses());
 renderCongelado({}, null);
+cargarNube(); // pinta al toque con lo local (arriba); esto llega después y refresca solo
 </script>
 </body>
 </html>
