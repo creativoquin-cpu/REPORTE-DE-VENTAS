@@ -1,6 +1,6 @@
 # Bitácora Quin — registro de la construcción
 
-> Resumen compacto de lo hecho, lo decidido y lo que falta. Se lee junto con `jornada-quin-cowork.md` (la fuente de verdad). Última actualización: 18-jul-2026 (pasos 14 a 17: metas, cierre mensual, vista del vendedor e imágenes para WhatsApp).
+> Resumen compacto de lo hecho, lo decidido y lo que falta. Se lee junto con `jornada-quin-cowork.md` (la fuente de verdad). Última actualización: 20-jul-2026 (paso 9 completo: Supabase, login y PWA publicados; paso 10 en curso: diagnóstico de la estética con el mockup).
 
 ---
 
@@ -90,8 +90,26 @@ Ninguno: el lado del administrador quedó completo.
 
 **Siguientes pasos del plan**
 
-- Estética Quino usando `Jornada Quin.html` como referencia *(§19 paso 8)* — **va de último y se hace en Antigravity**, no aquí, para que no se altere lo que ya funciona.
-- Login de dos roles + Supabase + PWA *(§19 paso 9)*
+- ~~Login de dos roles + Supabase + PWA~~ **HECHO** (pasos 9.1 a 9.6): `quin-admin.html` con login real y guardado en Supabase, `index.html` como vista pública sin login, la app instalable como PWA, publicada en Vercel (`reportedeventasagenciaquin.vercel.app`) con deploy automático al hacer push a `main`.
+- **Paso 10 — vestir la app real con el diseño del mockup: EN CURSO.** Ver detalle abajo.
+
+### Paso 10 — estética con el mockup `Jornada Quin Actual.html`
+
+Objetivo: que `index.html` y `quin-admin.html` se vean como el mockup, sin perder funciones ni cambiar números. El mockup no va al repositorio, vive solo local.
+
+**10.1 — Diagnóstico (hecho, 20-jul-2026).**
+
+Punto de partida: las 308 pruebas automáticas pasan (`cd pruebas && TZ=America/Bogota node test-X.js` para cada una — hace falta que Node encuentre `jsdom`/`xlsx`, instalados en la carpeta temporal del sistema).
+
+*Causa del congelamiento al hacer scroll — encontrada y confirmada:* en `quin-admin.html`, cada vez que se cambia de pestaña (Tablero, Comparativo, Vista del vendedor) el código vuelve a dibujar las gráficas con `new Chart(...)` pero **nunca borra la gráfica anterior** con `.destroy()`. Quedan vivas, apiladas unas sobre otras, todas reaccionando a cualquier cambio de tamaño de la pantalla. Prueba hecha sobre la app publicada, con datos reales: entrar y salir de la pestaña Tablero 5 veces hizo que las gráficas vivas pasaran de 4 a 14. Cuando se acumulan muchas, el scroll (que dispara recálculos de tamaño) hace que todas intenten redibujarse a la vez y la pestaña se congela varios segundos. Los tres lugares del código con este problema: `grafica()` (pestaña Tablero, gráficas "gReal" y "gRep"), `vendGraficaEquipo()` (pestaña Vista del vendedor, "gEquipo") y `graficaMeses()` (pestaña Comparativo, "gCmp"). El arreglo es chico: guardar cada gráfica en una variable y destruirla antes de dibujar la siguiente. No toca diseño ni cálculos. `index.html` (la vista pública) tiene el mismo patrón sin `.destroy()`, pero como ahí la gráfica solo se dibuja una vez por carga de página, no se acumula igual — de todas formas se corrige de una vez ya que se toca el mismo código.
+
+*Huecos del mockup frente a la app real y cómo se piensan resolver:* carga de Excel, bloque Jornadas, Metas del equipo, Cierre mensual, días no laborables, respaldo `.json`, indicador de guardado, tabla día por día, selector de mes + bosquejo, comparativo completo — ninguno está dibujado en el mockup pero todos se quedan, reusando la anatomía de tarjetas/calendario/listas que el mockup sí trae. El botón de imágenes para WhatsApp casi coincide con la sección "Formatos verticales" del mockup — se reusa esa sección, sin tocar el dibujo del PNG en sí (eso es `pruebas/test-imagen.js`).
+
+*Los tres choques ya conocidos, confirmados al ver el mockup andando:* saludo por nombre → se cambia por encabezado de equipo; cifras junto a cada vendedor en la vista del VENDEDOR (en la vista de administrador sí se dejan, ahí el admin ve todo) → se quitan, queda solo puesto y medalla; selector de rol al entrar → no se implementa, cada quien ya tiene su página y su login real.
+
+**Pendiente de tu confirmación antes de tocar código:**
+1. El mockup usa dos paletas distintas: panel administrador con fondo oscuro/negro, vista del vendedor con fondo claro. ¿Es intencional o querés que las dos compartan el mismo fondo?
+2. `index.html` tiene un primer intento de estética sin comitear (Montserrat + teal `#00A89D`), anterior al mockup. Se descarta y se parte del mockup — falta tu confirmación final.
 
 **Cosas sueltas anotadas**
 
