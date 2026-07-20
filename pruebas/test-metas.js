@@ -13,10 +13,13 @@ function ok(nombre, cond, extra) {
 
 // ---- Chart.js falso: guarda lo que se le pide dibujar -------------------
 const graficas = {};
+const instanciasChart = {};
 function ChartFalso(el, cfg) {
   graficas[el.id] = cfg;
-  this.destroy = () => {};
+  instanciasChart[el.id] = this;
+  this.destroy = () => { delete instanciasChart[el.id]; };
 }
+ChartFalso.getChart = el => instanciasChart[(typeof el === 'string') ? el : el.id];
 
 function arrancar(estado) {
   const dom = new JSDOM(HTML, {

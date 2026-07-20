@@ -14,39 +14,75 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root { --cian:#17C3C3; --linea:#e4e7e9; --gris:#6b7280; --rojo:#c62828; }
+  /* Sistema visual Quin — tema oscuro del panel administrador,
+     tomado de Jornada Quin Actual.html (mismos nombres de variable
+     que la sección "TEMA OSCURO" de ese archivo). */
+  :root {
+    --d-bg:#070f11; --d-sup:#0e1c1e; --d-sup-2:#14282b; --d-sup-3:#0a1719;
+    --d-txt:#eaf4f3; --d-txt-2:#8fa5a7; --d-txt-3:#7d9396;
+    --turquesa:#17c3c3; --turquesa-osc:#078f94; --turquesa-prof:#06777b; --d-dropi:#5b8f94;
+    --d-borde:rgba(255,255,255,.075); --d-borde-2:rgba(255,255,255,.13);
+    --d-sombra:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.36);
+    --r:18px; --r-sm:12px; --r-lg:26px;
+    /* alias: el resto del archivo ya usaba estos cuatro nombres cientos de veces */
+    --cian:var(--turquesa); --linea:var(--d-borde-2); --gris:var(--d-txt-2); --rojo:#ff6b6b;
+  }
   * { box-sizing:border-box; }
-  body { font-family:-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; padding:14px;
-         background:#fafbfc; color:#111; line-height:1.4; font-size:14px; }
-  .wrap { max-width:1200px; margin:0 auto; }
-  h1 { font-size:20px; margin:0 0 2px; }
-  h2 { font-size:15px; margin:18px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--cian); }
+  body { font-family:"Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,"Inter","Helvetica Neue",Arial,sans-serif;
+         margin:0; padding:14px; background:var(--d-bg); color:var(--d-txt); line-height:1.4; font-size:16px; }
+  .wrap { max-width:1240px; margin:0 auto; padding:0 24px; }
+  h1 { font-size:20px; margin:0 0 2px; font-weight:800; letter-spacing:-.01em; }
+  h2 { font-size:22px; margin:26px 0 12px; font-weight:900; letter-spacing:-.016em; color:var(--d-txt); }
   .sub { color:var(--gris); font-size:13px; margin:0 0 12px; }
-  .caja { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .caja { background:var(--d-sup); border:1px solid var(--d-borde); border-radius:var(--r); padding:18px 20px; margin-bottom:16px; }
+
+  .kicker { font-size:13px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; color:var(--turquesa); }
+  .card-title { font-size:25px; font-weight:900; letter-spacing:-.018em; color:var(--d-txt); margin:0 0 4px; }
+  .sec-title { font-size:34px; font-weight:900; letter-spacing:-.024em; color:var(--d-txt); margin:4px 0 0; }
+  [class*="tabular"], .kpi .n, .rank-val, .meta-value, .barra, td.total,
+  .kpi-value, .card-title, .sec-title { font-variant-numeric:tabular-nums; }
+
+  /* ---- Cabecera ---- */
+  .topbar { position:sticky; top:0; z-index:20; background:var(--d-sup); border-bottom:1px solid var(--d-borde);
+            display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 20px; margin:0 -24px 22px; }
+  .topbar-mascot { width:52px; height:52px; flex-shrink:0; }
+  .topbar-txt { flex:1; min-width:200px; }
+  .topbar-title { font-size:26px; font-weight:900; color:var(--d-txt); letter-spacing:-.02em; line-height:1.15; }
+  .topbar-date { font-size:14px; color:var(--d-txt-2); margin-top:2px; }
+  .topbar-side { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pill-btn { display:inline-block; background:var(--d-sup-2); color:var(--d-txt); border:1px solid var(--d-borde-2);
+              border-radius:999px; padding:9px 18px; font-size:13px; font-weight:700; text-decoration:none;
+              cursor:pointer; transition:filter .16s, transform .16s; }
+  .pill-btn:hover { filter:brightness(1.35); transform:translateY(-1px); }
 
   .estadoNube { display:inline-block; font-size:12px; font-weight:600; padding:3px 10px;
-    border-radius:20px; background:#f2fbfb; color:var(--gris); border:1px solid var(--linea); }
-  .estadoNube.nube-ok   { background:#eafaf1; color:#0a7d38; border-color:#bfe9d2; }
-  .estadoNube.nube-mal  { background:#fdf3ec; color:#b7791f; border-color:#f3ddc2; }
-  .estadoNube.nube-sinc { background:#eef4fc; color:#2a5ea6; border-color:#cfe0f5; }
+    border-radius:20px; background:var(--d-sup-2); color:var(--gris); border:1px solid var(--d-borde); }
+  .estadoNube.nube-ok   { background:rgba(23,195,195,.14); color:#5fe3d8; border-color:rgba(23,195,195,.3); }
+  .estadoNube.nube-mal  { background:rgba(255,152,0,.14); color:#ffb74d; border-color:rgba(255,152,0,.3); }
+  .estadoNube.nube-sinc { background:rgba(100,181,246,.14); color:#64b5f6; border-color:rgba(100,181,246,.3); }
 
   /* Por defecto se ve el login y el panel queda oculto: así no hay ni una
      fracción de segundo en la que se alcance a ver el panel sin sesión.
      iniciarSesionUI() decide, apenas carga, cuál de los dos se queda. */
   .cajaLogin { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:14px; }
   #wrap { display:none; }
-  .loginBox { background:#fff; border:1px solid var(--linea); border-radius:12px;
-              padding:26px 24px; width:100%; max-width:320px; }
-  .loginBox input { width:100%; padding:8px 10px; border:1px solid var(--linea);
-              border-radius:8px; font-size:14px; margin-top:4px; }
+  .loginBox { background:var(--d-sup); border:1px solid var(--d-borde); border-radius:12px;
+              padding:26px 24px; width:100%; max-width:320px; box-shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.36); }
+  .loginBox input { width:100%; padding:8px 10px; border:1px solid var(--linea); background:var(--d-sup-3);
+              color:var(--d-txt); border-radius:8px; font-size:14px; margin-top:4px; }
   .loginBox button { width:100%; margin-top:16px; }
   button.salir { background:none; color:var(--gris); font-weight:600; font-size:12px;
               padding:3px 8px; margin-left:6px; text-decoration:underline; }
+  .btnSecundario { display:block; width:100%; box-sizing:border-box; text-align:center;
+              background:var(--d-sup-2); color:var(--d-txt); border:1px solid var(--linea);
+              border-radius:8px; padding:7px 13px; font-size:13px; font-weight:600;
+              text-decoration:none; margin-top:10px; }
+  .btnSecundario:hover { background:rgba(23,195,195,.14); }
 
-  .nav { display:flex; gap:4px; margin-bottom:14px; border-bottom:1px solid var(--linea); flex-wrap:wrap; }
-  .nav button { background:none; color:var(--gris); border:0; border-bottom:3px solid transparent;
-                padding:8px 14px; font-size:14px; font-weight:600; cursor:pointer; border-radius:0; }
-  .nav button.on { color:#111; border-bottom-color:var(--cian); }
+  .nav { display:flex; gap:6px; margin:0 0 22px; flex-wrap:wrap; }
+  .nav button { background:var(--d-sup); color:var(--d-txt-2); border:1px solid var(--d-borde);
+                border-radius:999px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+  .nav button.on { background:var(--turquesa); color:#06171a; border-color:var(--turquesa); }
 
   .carga { display:flex; flex-wrap:wrap; gap:12px; }
   .carga > div { flex:1; min-width:240px; }
@@ -56,25 +92,28 @@
     .zonaConfig .lista { max-height:340px; }
   }
   label.tit { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
-  input[type=file] { width:100%; font-size:13px; }
+  input[type=file] { width:100%; font-size:13px; color:var(--d-txt); }
   .estado { font-size:13px; color:var(--gris); margin-top:6px; min-height:18px; }
-  .ok { color:#0a7d38; font-weight:600; }
+  .ok { color:#5fe3a8; font-weight:600; }
   .err { color:var(--rojo); font-weight:600; }
 
-  table { border-collapse:collapse; width:100%; font-size:13px; }
-  th, td { border:1px solid var(--linea); padding:5px 8px; text-align:right; }
-  th { background:#f2fbfb; font-weight:600; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border:0; border-bottom:1px solid var(--d-borde); padding:10px 8px; text-align:right;
+           font-variant-numeric:tabular-nums; }
+  th { background:none; font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+       color:var(--d-txt-3); }
   th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align:left; }
-  tfoot td { font-weight:700; background:#f7f8f9; }
-  .total { color:var(--cian); font-weight:700; }
+  tbody tr:hover { background:var(--d-sup-2); }
+  tfoot td { font-weight:700; background:none; border-bottom:0; border-top:1px solid var(--d-borde-2); }
+  .total { color:var(--turquesa); font-weight:700; }
 
   .dosCols { display:flex; flex-wrap:wrap; gap:16px; }
   .dosCols > div { flex:1; min-width:270px; }
   .lista { border:1px solid var(--linea); border-radius:8px; max-height:260px; overflow:auto; }
-  .item { display:flex; align-items:center; gap:8px; padding:5px 9px; border-bottom:1px solid #f0f2f3;
+  .item { display:flex; align-items:center; gap:8px; padding:5px 9px; border-bottom:1px solid var(--d-borde);
           font-size:13px; cursor:pointer; }
   .item:last-child { border-bottom:0; }
-  .item:hover { background:#f7fdfd; }
+  .item:hover { background:var(--d-sup-2); }
   .item input { width:17px; height:17px; accent-color:var(--cian); flex:none; cursor:pointer; }
   .item .nom { flex:1; word-break:break-word; }
   .item .num { color:var(--gris); font-size:12px; white-space:nowrap; }
@@ -84,63 +123,81 @@
          background:none; border:0; padding:0 8px 0 0; }
   .vacio { padding:14px; color:var(--gris); font-size:13px; text-align:center; }
 
-  button { background:var(--cian); color:#fff; border:0; border-radius:8px;
-           padding:7px 13px; font-size:13px; font-weight:600; cursor:pointer; }
-  button:disabled { background:#c9ced3; cursor:default; }
-  select, input[type=date] { padding:6px 10px; border:1px solid var(--linea);
-           border-radius:8px; font-size:14px; background:#fff; }
+  button { background:var(--turquesa); color:#06171a; border:0; border-radius:14px;
+           padding:10px 18px; font-size:14px; font-weight:800; cursor:pointer;
+           transition:filter .16s, transform .16s; }
+  button:hover { filter:brightness(1.08); transform:translateY(-1px); }
+  button:disabled { background:var(--d-sup-2); color:var(--d-txt-3); cursor:default; transform:none; filter:none; }
+  button.gris { background:var(--d-sup-2); color:var(--d-txt); border:1px solid var(--d-borde-2); }
+  button.gris:hover { background:var(--d-sup-3); }
+  button.rojo, button.destructivo { background:transparent; color:var(--rojo); border:1.5px solid var(--rojo); }
+  button.rojo:hover, button.destructivo:hover { background:rgba(255,107,107,.1); }
+  select, input[type=date], input[type=text], input[type=email], input[type=password], input[type=number] {
+    padding:12px 16px; border:1.5px solid var(--d-borde-2); border-radius:14px; font-size:15px;
+    background:var(--d-sup-2); color:var(--d-txt); font-family:inherit; transition:border-color .18s, box-shadow .18s;
+  }
+  select:focus, input[type=date]:focus, input[type=text]:focus, input[type=email]:focus,
+  input[type=password]:focus, input[type=number]:focus {
+    outline:none; border-color:var(--turquesa); box-shadow:0 0 0 4px rgba(23,195,195,.16);
+  }
 
   details { margin-top:10px; }
   summary { cursor:pointer; font-weight:600; font-size:13px; padding:4px 0; }
   .mini { font-size:12px; }
   .mini td, .mini th { padding:5px 7px; }
-  .nota, .aviso { background:#fffbe6; border:1px solid #f0e0a0; border-radius:8px;
-          padding:10px 12px; font-size:13px; margin-top:10px; }
+  .nota, .aviso { background:rgba(255,183,77,.12); border:1px solid rgba(255,183,77,.35); border-radius:8px;
+          padding:10px 12px; font-size:13px; margin-top:10px; color:var(--d-txt); }
   .descartada { color:var(--rojo); }
-  .pill { display:inline-block; background:#f2fbfb; border:1px solid #cfeeee; border-radius:20px;
+  .pill { display:inline-block; background:rgba(23,195,195,.12); border:1px solid rgba(23,195,195,.3); border-radius:20px;
           padding:2px 10px; font-size:12px; margin-right:6px; }
 
-  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
-  .kpi { background:#fff; border:1px solid var(--linea); border-radius:10px; padding:10px 12px; }
-  .kpi .et { font-size:12px; color:var(--gris); margin:0 0 4px; }
-  .kpi .n  { font-size:23px; font-weight:700; margin:0; line-height:1.1; }
-  .kpi .pie{ font-size:12px; color:var(--gris); margin:2px 0 0; }
-  .kpi.destacado { border-color:#cfeeee; background:#f7fdfd; }
-  .kpi .n.cian { color:var(--cian); }
+  .kpis { display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:22px; }
+  @media (max-width:1100px){ .kpis { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:620px){ .kpis { grid-template-columns:repeat(2,1fr); } }
+  .kpi { background:var(--d-sup); border:1px solid var(--d-borde); border-radius:var(--r); padding:22px;
+         display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .kpi .et { font-size:16px; font-weight:600; color:var(--d-txt-2); margin:0 0 3px; line-height:1.3; }
+  .kpi .n  { font-size:48px; font-weight:900; margin:0; line-height:1.02; color:var(--d-txt); letter-spacing:-.035em; }
+  .kpi .pie{ font-size:16px; font-weight:400; color:var(--d-txt-3); margin:2px 0 0; }
+  .kpi.destacado { border:1.5px solid rgba(23,195,195,.34); background:linear-gradient(150deg,#17383a 0%,#0d2224 100%); }
+  .kpi .n.cian { color:var(--turquesa); }
+  .kpi.solido { background:var(--turquesa); border-color:var(--turquesa); }
+  .kpi.solido .et, .kpi.solido .n, .kpi.solido .pie { color:#06171a; }
   .graf { position:relative; width:100%; height:270px; }
-  .leyenda { display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--gris); margin-bottom:8px; }
-  .leyenda span { display:flex; align-items:center; gap:5px; }
-  .cuad { width:11px; height:11px; border-radius:2px; display:inline-block; }
+  .leyenda { display:flex; flex-wrap:wrap; gap:18px; font-size:14px; font-weight:600; color:var(--d-txt-2); margin-bottom:10px; }
+  .leyenda span { display:flex; align-items:center; gap:7px; }
+  .cuad { width:11px; height:11px; border-radius:3px; display:inline-block; }
 
   /* ---- Calendario tipo Excel ---- */
   .calNav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .calNav .rango { font-weight:600; font-size:15px; flex:1; min-width:180px; }
-  .calNav button.gris { background:#eef1f3; color:#111; }
+  .calNav .rango { font-weight:600; font-size:15px; flex:1; min-width:180px; color:var(--d-txt); }
+  .calNav button.gris { background:var(--d-sup-2); color:var(--d-txt); }
   .meses { display:flex; flex-wrap:wrap; gap:16px; user-select:none; -webkit-user-select:none; }
   .mesCal { flex:1; min-width:290px; }
-  .mesCal h3 { font-size:14px; margin:0 0 8px; text-transform:capitalize; }
+  .mesCal h3 { font-size:14px; margin:0 0 8px; text-transform:capitalize; color:var(--d-txt); }
   .rejilla { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
   .rejilla .dow { font-size:11px; color:var(--gris); text-align:center; font-weight:600; padding-bottom:2px; }
-  .celda { border:1px solid var(--linea); border-radius:6px; background:#fff; min-height:40px;
+  .celda { border:1px solid var(--d-borde); border-radius:6px; background:var(--d-sup-2); min-height:40px;
            padding:2px 4px; cursor:pointer; touch-action:none; }
-  .celda .dnum { font-size:11px; color:var(--gris); line-height:1.1; }
-  .celda .dval { font-size:15px; font-weight:700; text-align:right; line-height:1.2; }
-  .celda.vacia { background:#fafbfc; color:#c9ced3; cursor:default; }
-  .celda.vacia .dval { color:#c9ced3; font-weight:400; }
-  .celda.nolab { background:#f6f7f8; }
-  .celda.nolab .dnum { color:#9aa1a8; }
-  .celda.pend .dval { color:#9aa1a8; font-weight:600; }
-  .celda.pend .dnum { color:#b4bac0; }
-  .celda.sel { background:#e6f9f9; border-color:var(--cian); box-shadow:inset 0 0 0 1px var(--cian); }
+  .celda .dnum { font-size:11px; color:var(--d-txt-2); line-height:1.1; }
+  .celda .dval { font-size:15px; font-weight:700; text-align:right; line-height:1.2; color:var(--d-txt); }
+  .celda.vacia { background:transparent; border-color:transparent; color:var(--d-txt-3); cursor:default; }
+  .celda.vacia .dval { color:var(--d-txt-3); font-weight:400; }
+  .celda.nolab { background:var(--d-sup-3); }
+  .celda.nolab .dnum { color:var(--d-txt-3); }
+  .celda.pend .dval { color:var(--d-txt-3); font-weight:600; }
+  .celda.pend .dnum { color:var(--d-txt-3); }
+  .celda.sel { background:var(--cian); border-color:var(--cian); box-shadow:0 4px 14px rgba(23,195,195,.34); }
+  .celda.sel .dnum, .celda.sel .dval { color:#06171a; }
   .celda.hueco { visibility:hidden; }
   .rejilla.mini { gap:3px; margin-top:8px; }
   .rejilla.mini .celda { min-height:34px; padding:1px 3px; }
   .rejilla.mini .celda .dval { font-size:13px; }
-  .celda.cong { border-color:#cfeeee; background:#f7fdfd; }
-  .celda.revisada { box-shadow:inset 0 -3px 0 #c07800; }
+  .celda.cong { border-color:rgba(23,195,195,.34); background:rgba(23,195,195,.10); }
+  .celda.revisada { box-shadow:inset 0 -3px 0 #e0a030; }
   .celda.abierta { border-color:var(--cian); box-shadow:inset 0 0 0 2px var(--cian); }
-  details.mesJor { border:1px solid var(--linea); border-radius:8px;
-          padding:3px 10px; margin:0 0 4px; background:#fff; }
+  details.mesJor { border:1px solid var(--d-borde); border-radius:8px;
+          padding:3px 10px; margin:0 0 4px; background:var(--d-sup); }
   details.mesJor > summary { font-size:13px; padding:3px 0; }
   details.mesJor[open] { padding-bottom:12px; }
   @media (min-width:900px){
@@ -153,9 +210,59 @@
     details.mesJor[open] .detJor .caja { margin-top:34px; }
   }
   .panelSel { position:sticky; top:0; z-index:5; }
+
+  /* ---- Rankings, anatomía tomada de Jornada Quin Actual.html (admin) ---- */
+  .rank-list { margin-top:8px; display:flex; flex-direction:column; gap:3px; }
+  .rank-row { display:grid; grid-template-columns:28px 1fr auto; align-items:center; gap:12px;
+              padding:9px 10px; border-radius:10px; }
+  .rank-row.suelto { opacity:.75; }
+  .rank-pos { width:27px; height:27px; border-radius:50%; background:var(--d-sup-2); color:var(--d-txt-2);
+              font-size:13px; font-weight:800; display:grid; place-items:center; flex-shrink:0; }
+  .rank-row:nth-child(1) .rank-pos { background:var(--cian); color:#06171a; }
+  .rank-row:nth-child(2) .rank-pos { background:rgba(23,195,195,.4); color:#06171a; }
+  .rank-row:nth-child(3) .rank-pos { background:rgba(23,195,195,.22); color:var(--cian); }
+  .rank-name { font-size:14px; font-weight:600; color:var(--d-txt); white-space:nowrap;
+               overflow:hidden; text-overflow:ellipsis; }
+  .rank-bar { height:6px; background:var(--d-sup-3); border-radius:999px; overflow:hidden; margin-top:5px; }
+  .rank-bar > i { display:block; height:100%; background:var(--cian); border-radius:999px;
+                  width:0; transition:width .9s cubic-bezier(.22,1,.36,1); }
+  .rank-val { font-size:14px; font-weight:800; color:var(--d-txt); font-variant-numeric:tabular-nums; }
+
+  /* ---- Meta con barra de progreso, anatomía tomada del mismo archivo ---- */
+  .meta-card { display:flex; flex-direction:column; }
+  .meta-kicker { margin-bottom:5px; }
+  .meta-title { font-size:28px; font-weight:900; color:var(--d-txt); letter-spacing:-.02em; margin:0 0 14px; line-height:1.15; }
+  .meta-value { font-size:30px; font-weight:900; color:var(--d-txt); margin:0 0 12px;
+                letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .barra { height:15px; background:var(--d-sup-3); border-radius:999px; overflow:hidden; }
+  .barra-fill { height:100%; border-radius:999px;
+                background:linear-gradient(90deg,var(--turquesa) 0%,var(--turquesa-osc) 100%);
+                width:0; transition:width 1.1s cubic-bezier(.22,1,.36,1); }
+  .meta-pill { display:inline-block; background:rgba(23,195,195,.15); color:var(--turquesa);
+               font-size:14px; font-weight:800; padding:6px 16px; border-radius:999px; margin-top:14px; }
+  .meta-note { font-size:14px; font-weight:400; color:var(--d-txt-2); margin-top:12px; }
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="quino" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="93" rx="27" ry="4.5" fill="#091315" opacity=".07"/>
+    <rect x="46.5" y="9" width="7" height="12" rx="3.5" fill="#c7d3d4"/>
+    <circle cx="50" cy="8" r="6" fill="#17c3c3"/>
+    <rect x="18" y="20" width="64" height="52" rx="21" fill="#ffffff" stroke="#d4dfe0" stroke-width="2"/>
+    <rect x="24.5" y="28" width="51" height="33" rx="15" fill="#123b3d"/>
+    <circle cx="39" cy="44" r="6.2" fill="#17c3c3"/>
+    <circle cx="61" cy="44" r="6.2" fill="#17c3c3"/>
+    <circle cx="40.8" cy="42" r="2.1" fill="#ffffff" opacity=".92"/>
+    <circle cx="62.8" cy="42" r="2.1" fill="#ffffff" opacity=".92"/>
+    <path d="M43 54 Q50 59.5 57 54" stroke="#17c3c3" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <rect x="6" y="36" width="9" height="19" rx="4.5" fill="#17c3c3"/>
+    <rect x="85" y="36" width="9" height="19" rx="4.5" fill="#17c3c3"/>
+    <rect x="27" y="74" width="46" height="15" rx="7.5" fill="#ffffff" stroke="#d4dfe0" stroke-width="2"/>
+    <circle cx="50" cy="81.5" r="4" fill="#17c3c3"/>
+  </symbol>
+</svg>
 
 <div id="loginNube" class="cajaLogin">
   <form id="formLogin" class="loginBox">
@@ -167,15 +274,25 @@
     <input type="password" id="loginClave" autocomplete="current-password" required>
     <button type="submit" id="btnLogin">Entrar</button>
     <div class="estado" id="loginEstado"></div>
+    <a href="index.html" class="btnSecundario">Ver panel de vendedor</a>
   </form>
 </div>
 
 <div class="wrap" id="wrap">
 
-  <h1>Quin — Administrador <span id="estadoNube" class="estadoNube"></span>
-    <button id="btnLogout" class="salir" style="display:none">Cerrar sesión</button>
-  </h1>
-  <p class="sub">Consolida las ventas de Dropi y Effi en prendas. Solo el administrador entra aquí.</p>
+  <header class="topbar">
+    <svg class="quino topbar-mascot" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+    <div class="topbar-txt">
+      <div class="kicker">PANEL ADMINISTRADOR</div>
+      <div class="topbar-title">Agencia Quin</div>
+      <div class="topbar-date" id="fechaHoyTxt"></div>
+    </div>
+    <div class="topbar-side">
+      <span id="estadoNube" class="estadoNube"></span>
+      <a href="index.html" class="pill-btn">Ver panel de vendedor</a>
+      <button id="btnLogout" class="pill-btn" style="display:none">Cerrar sesión</button>
+    </div>
+  </header>
 
   <div class="nav">
     <button id="tab1" class="on">1 · Cargar y validar</button>
@@ -188,12 +305,12 @@
   <div id="vista1">
     <div class="caja carga">
       <div>
-        <label class="tit">Excel de Dropi <span style="font-weight:400;color:#6b7280">(ordenes_productos…)</span></label>
+        <label class="tit">Excel de Dropi <span style="font-weight:400;color:var(--gris)">(ordenes_productos…)</span></label>
         <input type="file" id="fDropi" accept=".xlsx,.xls">
         <div class="estado" id="eDropi"></div>
       </div>
       <div>
-        <label class="tit">Excel de Effi <span style="font-weight:400;color:#6b7280">(Reporte de conceptos…)</span></label>
+        <label class="tit">Excel de Effi <span style="font-weight:400;color:var(--gris)">(Reporte de conceptos…)</span></label>
         <input type="file" id="fEffi" accept=".xlsx,.xls">
         <div class="estado" id="eEffi"></div>
       </div>
@@ -219,7 +336,7 @@
       </label>
       <span style="flex:1"></span>
       <button class="gris" id="btnImg">Imágenes para WhatsApp (2)</button>
-      <span id="avisoImg" style="font-size:12px;color:#6b7280;width:100%"></span>
+      <span id="avisoImg" style="font-size:12px;color:var(--gris);width:100%"></span>
     </div>
     <div id="contenido"></div>
   </div>
@@ -235,9 +352,9 @@
     <div id="calDiag"></div>
     <div id="calResumen"></div>
     <div class="caja"><div class="meses" id="calMeses"></div></div>
-    <p style="font-size:13px;color:#6b7280;margin:0">
+    <p style="font-size:13px;color:var(--gris);margin:0">
       Arrastra sobre los días para seleccionar un rango (puede cruzar de un mes a otro).
-      Un toque suelto agrega o quita ese día. En <b style="color:#9aa1a8">gris</b> van los días que ya
+      Un toque suelto agrega o quita ese día. En <b style="color:var(--gris)">gris</b> van los días que ya
       subiste pero que todavía no has cerrado: se ven, pero no suman.
     </p>
   </div>
@@ -257,10 +374,8 @@
   </div>
 
   <div id="vista5" style="display:none">
-    <div class="caja">
-      <span id="vendMes" style="font-size:13px;color:#6b7280"></span>
-    </div>
-    <div id="vendContenido"></div>
+    <p class="aviso" style="margin-bottom:16px">Así es exactamente como se ve <b>index.html</b>, la página pública que ve el equipo — con los datos ya guardados en la nube (no incluye un Excel que acabes de cargar y todavía no cierres).</p>
+    <iframe id="marcoVendedor" title="Vista del vendedor" style="width:100%;border:1px solid var(--d-borde);border-radius:var(--r);background:#fff;min-height:400px"></iframe>
   </div>
 
 </div>
@@ -823,7 +938,15 @@ function mostrar(n){
   if (n===2) { pintarMeses(); pintarTablero(); }
   if (n===3) pintarCalendarioSel();
   if (n===4) pintarComparativo();
-  if (n===5) pintarVendedor();
+  if (n===5 && !marcoVendedor.src) {
+    marcoVendedor.addEventListener("load", function(){
+      try {
+        var alto = marcoVendedor.contentWindow.document.documentElement.scrollHeight;
+        marcoVendedor.style.height = (alto + 20) + "px";
+      } catch (e) {}
+    });
+    marcoVendedor.src = "index.html";
+  }
 }
 
 // ####################################################################
@@ -887,7 +1010,7 @@ function construirFiltros() {
 
   filtros.innerHTML =
     "<h2>Qué cuenta y qué no</h2><div class='caja'>" +
-      "<p style='margin:0 0 14px;font-size:13px;color:#6b7280'>" +
+      "<p style='margin:0 0 14px;font-size:13px;color:var(--gris)'>" +
       "Esta lista sale de <b>tus propios archivos</b>. Lo <b>marcado</b> cuenta como venta; " +
       "lo <b>desmarcado</b> se descarta. Los números se recalculan solos.</p>" +
       "<div class='dosCols'><div>" + bloqueLista("Estatus encontrados en Dropi", listaEstatus, "est", !filasDropi) +
@@ -916,7 +1039,7 @@ function construirFiltros() {
 }
 function bloqueLista(titulo, lista, tipo, vacio) {
   var h = "<label class='tit'>" + titulo +
-          (vacio?"":" <span style='font-weight:400;color:#6b7280'>("+lista.length+")</span>") + "</label>";
+          (vacio?"":" <span style='font-weight:400;color:var(--gris)'>("+lista.length+")</span>") + "</label>";
   if (vacio || !lista.length)
     return h + "<div class='lista'><div class='vacio'>Carga el archivo para ver la lista</div></div>";
   h += "<div style='margin-bottom:6px'>" +
@@ -935,7 +1058,7 @@ function construirCalendario() {
   if (!filasDropi && !filasEffi) { calendario.innerHTML=""; return; }
   var man = Object.keys(diasManuales).sort();
   var h = "<h2>Días no laborables</h2><div class='caja'>" +
-    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:var(--gris)'>" +
     "Sábados, domingos y festivos de Colombia se detectan solos. " +
     "Aquí solo agregas los días extra que decidas cerrar.</p>" +
     "<div style='display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px'>" +
@@ -943,11 +1066,11 @@ function construirCalendario() {
   if (man.length) {
     h += "<div style='display:flex;flex-wrap:wrap;gap:6px'>";
     man.forEach(function(k){
-      h += "<span class='pill' style='background:#fff5e6;border-color:#f0d0a0'>"+bonita(k)+
-           " <button class='acc quitar' data-k='"+k+"' style='color:#c62828;padding:0 0 0 4px'>quitar</button></span>";
+      h += "<span class='pill' style='background:rgba(255,183,77,.12);border-color:rgba(255,183,77,.35)'>"+bonita(k)+
+           " <button class='acc quitar' data-k='"+k+"' style='color:var(--rojo);padding:0 0 0 4px'>quitar</button></span>";
     });
     h += "</div>";
-  } else h += "<p style='margin:0;font-size:13px;color:#6b7280'>Ningún día extra marcado.</p>";
+  } else h += "<p style='margin:0;font-size:13px;color:var(--gris)'>Ningún día extra marcado.</p>";
   calendario.innerHTML = h + "</div>";
 
   var b = document.getElementById("btnManual");
@@ -988,18 +1111,18 @@ function detalleJornada(k){
   var of = j.oficial.p + j.oficial.d;
   var fo = j.fotos||[], u = fo.length ? fo[fo.length-1] : null;
   var ac = u ? u.p+u.d : null, dif = ac==null ? null : ac-of;
-  return "<div class='caja' style='margin:10px 0 0;background:#f7fdfd'>" +
+  return "<div class='caja' style='margin:10px 0 0;background:rgba(23,195,195,.10)'>" +
     "<p style='margin:0 0 8px;font-weight:600'>"+bonita(k)+"</p>" +
     "<table class='mini'><tbody>" +
     "<tr><td style='text-align:left'>Oficial</td><td><b>"+of+"</b> ("+j.oficial.p+" propias · "+j.oficial.d+" Dropi)</td></tr>" +
     "<tr><td style='text-align:left'>Última revisión</td><td>"+(ac==null?"—":ac+" · "+esc(u.cuando))+"</td></tr>" +
     "<tr><td style='text-align:left'>Diferencia</td><td style='color:" +
-      (dif==null?"#6b7280":(dif<0?"#c62828":(dif>0?"#0a7d38":"#6b7280"))) + "'>" +
+      (dif==null?"var(--gris)":(dif<0?"var(--rojo)":(dif>0?"#5fe3a8":"var(--gris)"))) + "'>" +
       (dif==null?"—":(dif>0?"+"+dif:dif))+"</td></tr>" +
     "<tr><td style='text-align:left'>Cerrada el</td><td>"+esc(j.cerrada)+"</td></tr>" +
     "</tbody></table>" +
     "<p style='margin:10px 0 0'><button class='borrarJor' data-k='"+esc(k)+"' " +
-    "style='background:#c62828'>Reabrir esta jornada</button></p></div>";
+    "class='rojo'>Reabrir esta jornada</button></p></div>";
 }
 
 // ####################################################################
@@ -1106,7 +1229,7 @@ function pintarCierre(nuevos){
   var ms = Object.keys(lista).sort().reverse();
 
   var h = "<h2>Cierre mensual</h2><div class='caja'>";
-  h += "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>" +
+  h += "<p style='margin:0 0 10px;font-size:13px;color:var(--gris)'>" +
     "Cada mes se cierra <b>solo</b> la primera vez que abres la app en el mes siguiente. " +
     "Al cerrarse, su resumen queda <b>sellado</b> y ya no cambia, aunque después entren reportes tarde. " +
     "Si necesitas incluirlos, <b>reabre</b> el mes y vuélvelo a cerrar.</p>";
@@ -1115,7 +1238,7 @@ function pintarCierre(nuevos){
     nuevos.map(cmpNombreMes).join(", ") + ".</b> Su resumen quedó sellado.</p>";
 
   if (!ms.length) {
-    panelCierre.innerHTML = h + "<p style='margin:0;color:#6b7280'>" +
+    panelCierre.innerHTML = h + "<p style='margin:0;color:var(--gris)'>" +
       "Todavía no hay ningún mes con jornadas cerradas.</p></div>";
     return;
   }
@@ -1124,14 +1247,14 @@ function pintarCierre(nuevos){
        "<th>Estado</th><th></th></tr></thead><tbody>";
   ms.forEach(function(m){
     var est = estadoMes(m), e = mesesCerrados[m], r = resumenMes(m), dm = difMesSellado(m);
-    var texto, color = "#6b7280", accion = "";
+    var texto, color = "var(--gris)", accion = "";
     if (est === "cerrado") {
       texto = "Cerrado " + (e.auto ? "solo" : "a mano") + " el " + e.cerrado;
       color = "#1baf7a";
       accion = "<button class='gris cierreReabrir' data-m='"+m+"' style='padding:3px 9px;font-size:12px'>Reabrir</button>";
     } else if (est === "reabierto") {
       texto = "Reabierto — no se cierra solo, ciérralo tú";
-      color = "#b7791f";
+      color = "#ffb74d";
       accion = "<button class='cierreCerrar' data-m='"+m+"' style='padding:3px 9px;font-size:12px'>Cerrar ahora</button>";
     } else if (est === "en curso") {
       texto = "En curso — se cierra solo en " + cmpNombreMes(mesSiguiente(m));
@@ -1141,7 +1264,7 @@ function pintarCierre(nuevos){
       accion = "<button class='cierreCerrar' data-m='"+m+"' style='padding:3px 9px;font-size:12px'>Cerrar ahora</button>";
     }
     var difTxt = "";
-    if (dm && dm.dif !== 0) difTxt = "<br><span style='color:#c62828'>Hoy hay " +
+    if (dm && dm.dif !== 0) difTxt = "<br><span style='color:var(--rojo)'>Hoy hay " +
       (dm.dif > 0 ? "+" + dm.dif : dm.dif) + " prendas frente al sello" +
       (dm.diasAhora !== dm.diasSellados ? " (" + dm.diasAhora + " días vs " + dm.diasSellados + ")" : "") +
       ". Reábrelo y ciérralo de nuevo para actualizarlo.</span>";
@@ -1164,8 +1287,8 @@ function pintarCierre(nuevos){
       mesesCerrados[m].traza.slice().reverse().forEach(function(t){
         h += "<tr><td>"+cmpNombreMes(m)+"</td><td style='text-align:left'>"+esc(t.que)+"</td>" +
           "<td class='total'>"+(t.total==null?"—":t.total)+"</td>" +
-          "<td style='font-size:13px;color:#6b7280'>"+esc(t.cuando||"—")+"</td>" +
-          "<td style='font-size:13px;color:#6b7280'>"+esc(t.quien||"—")+"</td></tr>";
+          "<td style='font-size:13px;color:var(--gris)'>"+esc(t.cuando||"—")+"</td>" +
+          "<td style='font-size:13px;color:var(--gris)'>"+esc(t.quien||"—")+"</td></tr>";
       });
     });
     h += "</tbody></table>";
@@ -1201,7 +1324,7 @@ function refrescarTrasCierre(){
 function metaFila(et, id, val){
   return "<label style='font-size:13px;font-weight:600'>"+et+"<br>" +
     "<input type='number' min='0' step='1' id='"+id+"' value='"+val+"' " +
-    "style='width:110px;margin-top:4px;padding:6px 8px;border:1px solid #d6d4cc;border-radius:7px;font-size:14px'></label>";
+    "style='width:110px;margin-top:4px;padding:6px 8px;border:1px solid var(--linea);border-radius:7px;font-size:14px'></label>";
 }
 function pintarMetas(){
   var m = metaHoy(), L = metasOrden(), hoyK = hoyClave();
@@ -1222,11 +1345,11 @@ function pintarMetas(){
       metaFila("Propias", "metaP", m.propias) +
       "<label style='font-size:13px;font-weight:600'>Aplica desde<br>" +
       "<input type='date' id='metaD' value='"+hoyK+"' " +
-      "style='margin-top:4px;padding:6px 8px;border:1px solid #d6d4cc;border-radius:7px;font-size:14px'></label>" +
+      "style='margin-top:4px;padding:6px 8px;border:1px solid var(--linea);border-radius:7px;font-size:14px'></label>" +
       "<button id='metaGuardar'>Guardar meta</button>" +
       "<span id='metaAviso' style='font-size:13px'></span>" +
     "</div>" +
-    "<p style='margin:10px 0 0;font-size:13px;color:#6b7280'>" +
+    "<p style='margin:10px 0 0;font-size:13px;color:var(--gris)'>" +
     "Los días <b>anteriores</b> a esa fecha conservan la meta que tenían. El cambio aplica de ahí en adelante " +
     "y queda registrado abajo. Nada del historial se borra." +
     (m.propias > m.total ? "" : "") + "</p>";
@@ -1248,21 +1371,21 @@ function pintarMetas(){
              (prev.total!==x.total && prev.propias!==x.propias ? " · " : "") +
              (prev.propias!==x.propias ? "propias "+prev.propias+" → "+x.propias : ""))
         : "meta inicial (antes "+META_TOTAL+" / "+META_PROPIAS+")";
-      h += "<tr style='"+(reemplazada?"opacity:.55;":"")+(vigente?"background:#f7fdfd":"")+"'>" +
+      h += "<tr style='"+(reemplazada?"opacity:.55;":"")+(vigente?"background:rgba(23,195,195,.10)":"")+"'>" +
         "<td>"+bonita(x.desde)+
           (vigente?" <b style='color:#1baf7a'>· vigente</b>":"") +
-          (futura?" <b style='color:#b7791f'>· programada</b>":"") +
-          (reemplazada?" <span style='color:#6b7280'>· reemplazada</span>":"") + "</td>" +
+          (futura?" <b style='color:#ffb74d'>· programada</b>":"") +
+          (reemplazada?" <span style='color:var(--gris)'>· reemplazada</span>":"") + "</td>" +
         "<td class='total'>"+x.total+"</td><td class='total'>"+x.propias+"</td>" +
-        "<td style='font-size:13px;color:#6b7280'>"+esc(cambio)+"</td>" +
-        "<td style='font-size:13px;color:#6b7280'>"+esc(x.cuando||"—")+"</td>" +
-        "<td style='font-size:13px;color:#6b7280'>"+esc(x.quien||"Administrador")+"</td>" +
+        "<td style='font-size:13px;color:var(--gris)'>"+esc(cambio)+"</td>" +
+        "<td style='font-size:13px;color:var(--gris)'>"+esc(x.cuando||"—")+"</td>" +
+        "<td style='font-size:13px;color:var(--gris)'>"+esc(x.quien||"Administrador")+"</td>" +
         "<td>"+(futura?"<button class='gris metaQuitar' data-id='"+x.id+"' " +
               "style='padding:3px 9px;font-size:12px'>Quitar</button>":"")+"</td></tr>";
     });
     h += "</tbody></table>";
   } else {
-    h += "<p style='margin:14px 0 0;font-size:13px;color:#6b7280'>" +
+    h += "<p style='margin:14px 0 0;font-size:13px;color:var(--gris)'>" +
       "Todavía no has cambiado ninguna meta. Se están usando los valores de arranque: " +
       "<b>"+META_TOTAL+"</b> total y <b>"+META_PROPIAS+"</b> propias.</p>";
   }
@@ -1318,23 +1441,23 @@ function renderCongelado(dias, claves) {
   var histTot = Object.keys(jornadas).length;
 
   var h = "<h2>Jornadas</h2><div class='caja'>" +
-    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:var(--gris)'>" +
     "Al <b>cerrar</b> una jornada su cifra queda <b>oficial</b> y ya no cambia. " +
     "Si vuelves a subir ese mismo día, el oficial se respeta y la cifra nueva se guarda como comparación.</p>";
 
   if (!listaM.length) {
-    congelado.innerHTML = h + "<p style='margin:0;color:#6b7280;font-size:13px'>" +
+    congelado.innerHTML = h + "<p style='margin:0;color:var(--gris);font-size:13px'>" +
       "Sube los dos Excel para ver aquí las jornadas.</p></div>";
     return;
   }
 
   h += "<div class='leyenda' style='margin-bottom:10px'>" +
-    "<span><i class='cuad' style='background:#f7fdfd;border:1px solid #cfeeee'></i>Cerrada (oficial)</span>" +
+    "<span><i class='cuad' style='background:rgba(23,195,195,.10);border:1px solid rgba(23,195,195,.3)'></i>Cerrada (oficial)</span>" +
     "<span><i class='cuad' style='background:#fff;border:1px solid var(--linea)'></i>Cargada sin cerrar</span>" +
-    "<span><i class='cuad' style='background:#c07800'></i>Con revisión posterior</span>" +
-    "<span><i class='cuad' style='background:#fafbfc;border:1px solid var(--linea)'></i>Sin datos</span>" +
+    "<span><i class='cuad' style='background:#e0a030'></i>Con revisión posterior</span>" +
+    "<span><i class='cuad' style='background:var(--d-sup-3);border:1px solid var(--linea)'></i>Sin datos</span>" +
     "</div>" +
-    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:var(--gris)'>" +
     (claves.length ? "<b>"+claves.length+"</b> día"+(claves.length===1?"":"s")+" en el archivo cargado · " +
                      "<b>"+pendTot+"</b> sin cerrar · " : "") +
     "<b>"+histTot+"</b> en el historial · <b>"+listaM.length+"</b> mes"+(listaM.length===1?"":"es")+"</p>";
@@ -1354,9 +1477,9 @@ function renderCongelado(dias, claves) {
     }
     h += "<details class='mesJor'"+(m===abierto?" open":"")+" data-m='"+m+"'>" +
       "<summary style='text-transform:capitalize'>" + MESES_L[+pp[1]-1] + " " + pp[0] +
-      " <span style='font-weight:400;color:#6b7280;text-transform:none'>· " + ksMes.length + " día" +
+      " <span style='font-weight:400;color:var(--gris);text-transform:none'>· " + ksMes.length + " día" +
       (ksMes.length===1?"":"s") + " · " + suma + " prendas · " +
-      (pend ? "<b style='color:#c07800'>"+pend+" sin cerrar</b>" : "todas cerradas") +
+      (pend ? "<b style='color:#e0a030'>"+pend+" sin cerrar</b>" : "todas cerradas") +
       (rev ? " · " + rev + " con revisión" : "") + "</span></summary>" +
       (pend ? "<p style='margin:6px 0 0'><button class='acc marcarMesPend' data-m='"+m+"'>" +
               "marcar las " + pend + " sin cerrar de este mes</button>" +
@@ -1367,15 +1490,15 @@ function renderCongelado(dias, claves) {
 
   h += "<p style='margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center'>" +
        "<button id='btnCerrar' disabled>Cerrar seleccionadas</button>" +
-       "<span id='avisoSel' style='font-size:13px;color:#6b7280'></span></p>";
+       "<span id='avisoSel' style='font-size:13px;color:var(--gris)'></span></p>";
 
   if (ultimoResumen) h += "<p class='nota'><b>Listo:</b> "+esc(ultimoResumen)+"</p>";
 
-  if (histTot) h += "<p style='margin:14px 0 0;font-size:12px;color:#6b7280'>" +
+  if (histTot) h += "<p style='margin:14px 0 0;font-size:12px;color:var(--gris)'>" +
     "Toca un día <b>cerrado</b> para ver su detalle y reabrirlo. Toca un día <b>sin cerrar</b> para marcarlo.</p>" +
     "<p style='margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap'>" +
     "<button id='btnRespaldo'>Descargar respaldo</button>" +
-    "<button id='btnBorrarTodo' style='background:#c62828'>Borrar todo el historial</button></p>";
+    "<button id='btnBorrarTodo' class='rojo'>Borrar todo el historial</button></p>";
 
   congelado.innerHTML = h + "</div>";
 
@@ -1567,26 +1690,26 @@ function calcular() {
   // ---- tabla ----
   var tP=0,tD=0,trP=0,trD=0;
   var html = "<h2>Prendas por día</h2><div class='caja'>" +
-    "<p style='margin:0 0 12px;font-size:13px;color:#6b7280'>" +
+    "<p style='margin:0 0 12px;font-size:13px;color:var(--gris)'>" +
     "<b>Real</b> = lo que cayó ese día. <b>Repartida</b> = el fin de semana o festivo repartido entre sus días.</p>" +
     (claves.length > 40 ? "<details><summary>Ver la tabla día por día (" + claves.length + " días)</summary>" : "") +
     "<table><thead><tr><th rowspan='2'>Fecha</th><th rowspan='2'>Día</th>" +
     "<th rowspan='2' style='text-align:left'>Estado</th>" +
     "<th colspan='3' style='text-align:center'>REAL</th>" +
-    "<th colspan='3' style='text-align:center;background:#eefafa'>REPARTIDA</th></tr>" +
+    "<th colspan='3' style='text-align:center;background:rgba(23,195,195,.10)'>REPARTIDA</th></tr>" +
     "<tr><th>Prop.</th><th>Dropi</th><th>Total</th>" +
-    "<th style='background:#eefafa'>Prop.</th><th style='background:#eefafa'>Dropi</th>" +
-    "<th style='background:#eefafa'>Total</th></tr></thead><tbody>";
+    "<th style='background:rgba(23,195,195,.10)'>Prop.</th><th style='background:rgba(23,195,195,.10)'>Dropi</th>" +
+    "<th style='background:rgba(23,195,195,.10)'>Total</th></tr></thead><tbody>";
   claves.forEach(function(k){
     var v=dias[k], p=k.split("-"), esB = v.motivo!=null;
     tP+=v.propias; tD+=v.dropi; trP+=v.repP; trD+=v.repD;
-    html += "<tr"+(esB?" style='background:#fcfdfd'":"")+">" +
+    html += "<tr"+(esB?" style='background:rgba(23,195,195,.06)'":"")+">" +
       "<td>"+p[2]+"-"+MESES[+p[1]-1]+"</td><td>"+bonita(k).split(" ")[0]+"</td>" +
-      "<td style='text-align:left;font-size:12px;color:"+(esB?"#c07800":"#6b7280")+"'>"+
+      "<td style='text-align:left;font-size:12px;color:"+(esB?"#e0a030":"var(--gris)")+"'>"+
         (esB?esc(v.motivo):"laborable")+"</td>" +
       "<td>"+v.propias+"</td><td>"+v.dropi+"</td><td class='total'>"+(v.propias+v.dropi)+"</td>" +
-      "<td style='background:#f7fdfd'>"+v.repP+"</td><td style='background:#f7fdfd'>"+v.repD+"</td>" +
-      "<td class='total' style='background:#f7fdfd'>"+(v.repP+v.repD)+"</td></tr>";
+      "<td style='background:rgba(23,195,195,.10)'>"+v.repP+"</td><td style='background:rgba(23,195,195,.10)'>"+v.repD+"</td>" +
+      "<td class='total' style='background:rgba(23,195,195,.10)'>"+(v.repP+v.repD)+"</td></tr>";
   });
   html += "</tbody><tfoot><tr><td colspan='3'>TOTAL</td><td>"+tP+"</td><td>"+tD+"</td><td>"+(tP+tD)+
           "</td><td>"+trP+"</td><td>"+trD+"</td><td>"+(trP+trD)+"</td></tr></tfoot></table>" +
@@ -1613,16 +1736,16 @@ function calcular() {
   // Tarjeta de resumen al lado de los dos cargadores (aprovecha el espacio libre)
   var pendCarga = claves.filter(function(k){ return !jornadas[k]; }).length;
   var mesesCarga = {}; claves.forEach(function(k){ mesesCarga[k.slice(0,7)]=1; });
-  resumenCarga.innerHTML = "<div style='border:1px solid #cfeeee;background:#f7fdfd;border-radius:10px;" +
+  resumenCarga.innerHTML = "<div style='border:1px solid rgba(23,195,195,.3);background:rgba(23,195,195,.10);border-radius:10px;" +
     "padding:12px 14px;font-size:13px'>" +
     "<p style='margin:0 0 6px;font-weight:600;font-size:14px'>Lo que trae el archivo</p>" +
     "<p style='margin:0 0 3px'><b>" + (tP+tD) + "</b> prendas · <b>" + claves.length + "</b> día" +
       (claves.length===1?"":"s") + " · <b>" + Object.keys(mesesCarga).length + "</b> mes" +
       (Object.keys(mesesCarga).length===1?"":"es") + "</p>" +
-    "<p style='margin:0 0 3px;color:#6b7280'>" +
+    "<p style='margin:0 0 3px;color:var(--gris)'>" +
       (claves.length ? bonita(claves[0]) + " → " + bonita(claves[claves.length-1]) : "sin fechas") + "</p>" +
-    "<p style='margin:0;color:#6b7280'>" + tP + " propias · " + tD + " Dropi · " +
-      "<b style='color:" + (pendCarga?"#c07800":"#0a7d38") + "'>" +
+    "<p style='margin:0;color:var(--gris)'>" + tP + " propias · " + tD + " Dropi · " +
+      "<b style='color:" + (pendCarga?"#e0a030":"#5fe3a8") + "'>" +
       (pendCarga ? pendCarga + " sin cerrar" : "todas cerradas") + "</b></p></div>";
 
   html += "<div class='dosCols'><div>" +
@@ -1649,16 +1772,16 @@ function rankingHTML(titulo, mapa, etiqueta, aclaracion) {
   var r = Object.keys(mapa).map(function(n){ return {nom:n, n:mapa[n]}; })
             .sort(function(a,b){ return b.n-a.n; });
   var h = "<h2>"+titulo+"</h2><div class='caja'>";
-  if (aclaracion) h += "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>"+aclaracion+"</p>";
-  if (!r.length) return h + "<p style='margin:0;color:#6b7280'>Sin datos.</p></div>";
+  if (aclaracion) h += "<p style='margin:0 0 10px;font-size:13px;color:var(--gris)'>"+aclaracion+"</p>";
+  if (!r.length) return h + "<p style='margin:0;color:var(--gris)'>Sin datos.</p></div>";
   h += "<table><thead><tr><th>#</th><th>"+etiqueta+"</th><th>Prendas</th></tr></thead><tbody>";
   var pos = 0;
   r.forEach(function(x){
     var suelto = x.nom === SIN_TIENDA;
     if (!suelto) pos++;
-    h += "<tr"+(pos===1&&!suelto?" style='background:#f2fbfb'":"")+"><td>"+
+    h += "<tr"+(pos===1&&!suelto?" style='background:rgba(23,195,195,.10)'":"")+"><td>"+
       (suelto?"—":(pos===1?"🏆 1":pos))+"</td>" +
-      "<td"+(suelto?" style='color:#c62828'":"")+">"+esc(x.nom)+"</td>" +
+      "<td"+(suelto?" style='color:var(--rojo)'":"")+">"+esc(x.nom)+"</td>" +
       "<td class='total'>"+x.n+"</td></tr>";
   });
   return h + "</tbody></table></div>";
@@ -1778,7 +1901,7 @@ function pintarTablero(){
       "<b>Mes cerrado.</b> Se selló el " + esc(eMes.cerrado) + (eMes.auto ? " (automático)" : " (a mano)") +
       " con <b>" + eMes.resumen.total + "</b> prendas en " + eMes.resumen.dias + " días. Esa es la cifra oficial del mes." +
       (dm && dm.dif !== 0
-        ? " <span style='color:#c62828'>Hoy los datos dan " + dm.ahora + " (" +
+        ? " <span style='color:var(--rojo)'>Hoy los datos dan " + dm.ahora + " (" +
           (dm.dif > 0 ? "+" + dm.dif : dm.dif) + "). Para que el sello los incluya, reábrelo y ciérralo de nuevo en " +
           "<i>Cargar y validar</i>.</span>"
         : "") + "</div>";
@@ -1793,24 +1916,42 @@ function pintarTablero(){
     ". Las cifras pueden cambiar hasta que cierres esas jornadas. " +
     "Para ver solo lo oficial, desmarca <i>Incluir días sin cerrar</i>.</div>";
 
-  h += "<h2>Resumen del mes" + (abiertas ? " <span style='font-weight:400;font-size:13px;color:#6b7280'>(bosquejo)</span>" : "") + "</h2><div class='kpis'>" +
+  h += "<h2>Resumen del mes" + (abiertas ? " <span style='font-weight:400;font-size:13px;color:var(--gris)'>(bosquejo)</span>" : "") + "</h2><div class='kpis'>" +
     kpi("Total del mes", total, "prendas" + (abiertas?" · incluye bosquejo":""), true) +
     kpi("Promedio por día", prom, n+" días") +
-    kpi("Propias (Effi)", tP, pct+"% del total") +
+    kpi("Propias (Effi)", tP, pct+"% del total", "solido") +
     kpi("Dropi", tD, (100-pct)+"% del total") +
     kpi("Ventas de hoy", hoy==null?"—":hoy, hoyPie) +
     kpi("Jornadas cerradas", cerradas, abiertas ? abiertas+" sin cerrar" : (conRev?conRev+" con revisión":"sin revisiones")) +
     "</div><div class='kpis' style='margin-top:12px'>" +
-    kpi("Mejor jornada", mejor?mejor.t:"—", mejor?bonita(mejor.k)+(mejor.cerrada?"":" · sin cerrar"):"", true) +
+    kpi("Mejor jornada", mejor?mejor.t:"—", mejor?bonita(mejor.k)+(mejor.cerrada?"":" · sin cerrar"):"") +
     kpi("Jornada más baja", peor?peor.t:"—", peor?bonita(peor.k)+(peor.cerrada?"":" · sin cerrar"):"") +
     kpi("Días en meta total", enMetaT, "de "+n+" · meta "+etMetaT) +
     kpi("Días en meta propias", enMetaP, "de "+n+" · meta "+etMetaP) + "</div>";
 
+  var metaSumaT = metaT.reduce(function(a,m){ return a+m; }, 0);
+  var metaSumaP = metaP.reduce(function(a,m){ return a+m; }, 0);
+  var pctT = metaSumaT ? Math.round(total/metaSumaT*100) : 0;
+  var pctP = metaSumaP ? Math.round(tP/metaSumaP*100) : 0;
+  h += "<h2>Metas del mes</h2><div class='dosCols'>" +
+    "<div class='caja meta-card'><div class='kicker meta-kicker'>META TOTAL</div>" +
+    "<div class='meta-title'>Effi + Dropi</div>" +
+    "<div class='meta-value'>"+total+" de "+metaSumaT+" prendas</div>" +
+    "<div class='barra'><div class='barra-fill' data-w='"+pctT+"'></div></div>" +
+    "<span class='meta-pill'>"+(total>=metaSumaT?"Meta cumplida":"Faltan "+(metaSumaT-total))+"</span>" +
+    "<p class='meta-note'>Suma de la meta de cada día del mes.</p></div>" +
+    "<div class='caja meta-card'><div class='kicker meta-kicker'>META PROPIAS</div>" +
+    "<div class='meta-title'>Solo Effi</div>" +
+    "<div class='meta-value'>"+tP+" de "+metaSumaP+" prendas</div>" +
+    "<div class='barra'><div class='barra-fill' data-w='"+pctP+"'></div></div>" +
+    "<span class='meta-pill'>"+(tP>=metaSumaP?"Meta cumplida":"Faltan "+(metaSumaP-tP))+"</span>" +
+    "<p class='meta-note'>Suma de la meta de propias de cada día del mes.</p></div></div>";
+
   h += "<h2>Ventas reales — día por día</h2><div class='caja'>" +
-    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>Lo que de verdad cayó cada día, sin repartir.</p>" +
+    "<p style='margin:0 0 10px;font-size:13px;color:var(--gris)'>Lo que de verdad cayó cada día, sin repartir.</p>" +
     leyenda(abiertas, etMetaT) + "<div class='graf'><canvas id='gReal'></canvas></div></div>" +
     "<h2>Ventas repartidas — como las ve el vendedor</h2><div class='caja'>" +
-    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>Los bloques repartidos entre sus días, " +
+    "<p style='margin:0 0 10px;font-size:13px;color:var(--gris)'>Los bloques repartidos entre sus días, " +
     "con el sobrante al último.</p>" +
     leyenda(abiertas, etMetaT) + "<div class='graf'><canvas id='gRep'></canvas></div></div>";
 
@@ -1821,10 +1962,15 @@ function pintarTablero(){
     Object.keys(o.ven||{}).forEach(function(v){ acVen[v]=(acVen[v]||0)+o.ven[v]; });
     Object.keys(o.tie||{}).forEach(function(t){ acTie[t]=(acTie[t]||0)+o.tie[t]; });
   });
-  h += "<h2>Ranking de vendedores — Effi (propias)</h2>" + rankMes(acVen,"Vendedor",faltan,n);
-  h += "<h2>Ranking de tiendas — Dropi</h2>" + rankMes(acTie,"Tienda",faltan,n);
+  h += "<div class='dosCols'><div>" +
+    "<h2>Ranking de vendedores — Effi (propias)</h2>" + rankMes(acVen,"Vendedor",faltan,n) +
+    "</div><div>" +
+    "<h2>Ranking de tiendas — Dropi</h2>" + rankMes(acTie,"Tienda",faltan,n) +
+    "</div></div>";
 
+  destruirGraficas(contenido);
   contenido.innerHTML = h;
+  animarBarras(contenido);
 
   var et = claves.map(function(k){ return k.split("-")[2]; });
   var cerr = claves.map(function(k){ return D[k].cerrada; });
@@ -1832,39 +1978,74 @@ function pintarTablero(){
   grafica("gRep",  et, claves.map(function(k){return repP[k];}), claves.map(function(k){return repD[k];}), claves, cerr, metaT);
 }
 
-function kpi(et,n,pie,dest){
-  return "<div class='kpi"+(dest?" destacado":"")+"'><p class='et'>"+et+"</p>" +
-         "<p class='n"+(dest?" cian":"")+"'>"+n+"</p>" +
+// variante: false/undefined = tarjeta normal · true o "osc" = degradado oscuro con cifra turquesa
+// (como "Total del día" en el mockup) · "solido" = fondo turquesa sólido (como "Ventas propias")
+function kpi(et,n,pie,variante){
+  var clase = variante==="solido" ? " solido" : (variante ? " destacado" : "");
+  var valClase = (variante && variante!=="solido") ? " cian" : "";
+  return "<div class='kpi"+clase+"'><p class='et'>"+et+"</p>" +
+         "<p class='n"+valClase+"'>"+n+"</p>" +
          (pie?"<p class='pie'>"+pie+"</p>":"")+"</div>";
 }
 function leyenda(abiertas, etMeta){
   return "<div class='leyenda'>" +
-    (abiertas ? "<span><i class='cuad' style='background:#b6d0ec'></i>" +
-                "<i class='cuad' style='background:#b3e2d0'></i>Días sin cerrar (bosquejo)</span>" : "") +
-    "<span><i class='cuad' style='background:#2a78d6'></i>Propias</span>" +
-    "<span><i class='cuad' style='background:#1baf7a'></i>Dropi</span>" +
-    "<span><i class='cuad' style='background:#d03b3b;height:2px;width:18px;border-radius:0'></i>Meta "+(etMeta||META_TOTAL)+"</span></div>";
+    (abiertas ? "<span><i class='cuad' style='background:#1d4d4f'></i>" +
+                "<i class='cuad' style='background:#1d4a3d'></i>Días sin cerrar (bosquejo)</span>" : "") +
+    "<span><i class='cuad' style='background:#17c3c3'></i>Propias</span>" +
+    "<span><i class='cuad' style='background:#5b8f94'></i>Dropi</span>" +
+    "<span><i class='cuad' style='background:#eaf4f3;height:2px;width:18px;border-radius:0'></i>Meta "+(etMeta||META_TOTAL)+"</span></div>";
 }
+var MEDALLA = {
+  1: "background:var(--cian);color:#06171a",
+  2: "background:rgba(23,195,195,.4);color:#06171a",
+  3: "background:rgba(23,195,195,.22);color:var(--cian)"
+};
 function rankMes(mapa, etiqueta, faltan, total){
   var r = Object.keys(mapa).map(function(n){ return {nom:n,n:mapa[n]}; })
             .sort(function(a,b){ return b.n-a.n; });
   var h = "<div class='caja'>";
   if (faltan) h += "<p class='aviso' style='margin:0 0 12px'><b>Faltan "+faltan+" de "+total+" jornadas.</b> " +
     "Se congelaron antes de que se guardara el detalle por vendedor. Reábrelas y ciérralas de nuevo para incluirlas.</p>";
-  if (!r.length) return h + "<p style='margin:0;color:#6b7280'>Sin detalle guardado todavía.</p></div>";
+  if (!r.length) return h + "<p style='margin:0;color:var(--gris)'>Sin detalle guardado todavía.</p></div>";
   var suma = r.reduce(function(a,x){ return a+x.n; },0);
-  h += "<table><thead><tr><th>#</th><th>"+etiqueta+"</th><th>Prendas</th><th>%</th></tr></thead><tbody>";
+  var max = Math.max.apply(null, r.map(function(x){ return x.n; }));
+  h += "<div class='rank-list'>";
   var pos=0;
   r.forEach(function(x){
     var suelto = x.nom===SIN_TIENDA;
     if (!suelto) pos++;
-    h += "<tr"+(pos===1&&!suelto?" style='background:#f7fdfd'":"")+">" +
-      "<td>"+(suelto?"—":(pos===1?"🏆 1":pos))+"</td>" +
-      "<td"+(suelto?" style='color:#c62828'":"")+">"+esc(x.nom)+"</td>" +
-      "<td class='total'>"+x.n+"</td>" +
-      "<td style='color:#6b7280'>"+Math.round(x.n*100/suma)+"%</td></tr>";
+    var estilo = (!suelto && MEDALLA[pos]) ? " style='"+MEDALLA[pos]+"'" : "";
+    h += "<div class='rank-row"+(suelto?" suelto":"")+"'>" +
+      "<div class='rank-pos'"+estilo+">"+(suelto?"—":pos)+"</div>" +
+      "<div><div class='rank-name'"+(suelto?" style='color:var(--rojo)'":"")+">"+esc(x.nom)+"</div>" +
+      "<div class='rank-bar'><i data-fw='"+(max?Math.round(x.n/max*100):0)+"%'></i></div></div>" +
+      "<div class='rank-val'>"+x.n+" <span style='color:var(--gris);font-weight:600'>· "+Math.round(x.n*100/suma)+"%</span></div></div>";
   });
-  return h + "</tbody></table></div>";
+  h += "</div>";
+  return h + "</div>";
+}
+function animarBarras(raiz){
+  var base = raiz || document;
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      var bs = base.querySelectorAll(".barra-fill[data-w]");
+      for (var i=0;i<bs.length;i++) bs[i].style.width = Math.min(100, parseFloat(bs[i].getAttribute("data-w"))) + "%";
+      var pw = base.querySelectorAll("[data-fw]");
+      for (var j=0;j<pw.length;j++) pw[j].style.width = pw[j].getAttribute("data-fw");
+    }, 90);
+  });
+}
+
+// Antes de reemplazar el HTML de un contenedor hay que borrar las gráficas
+// que tenga adentro: si solo se reemplaza el HTML, el canvas viejo desaparece
+// del documento pero la gráfica de Chart.js atada a él se queda viva en
+// segundo plano — eso es lo que congelaba la página al hacer scroll (paso 10.2).
+function destruirGraficas(contenedor){
+  if (!contenedor) return;
+  Array.prototype.forEach.call(contenedor.querySelectorAll("canvas"), function(cv){
+    var ch = Chart.getChart(cv);
+    if (ch) ch.destroy();
+  });
 }
 
 function grafica(id, etiquetas, propias, dropi, claves, cerradas, metaDia){
@@ -1888,28 +2069,35 @@ function grafica(id, etiquetas, propias, dropi, claves, cerradas, metaDia){
   }
   el.setAttribute("role","img");
   el.setAttribute("aria-label","Prendas por día: propias y Dropi, con línea de meta en "+metaTxt);
+  var previa = Chart.getChart(el);
+  if (previa) previa.destroy();
   new Chart(el, {
     type:"bar",
     data:{ labels:etiquetas, datasets:[
-      { label:"Propias", data:propias, backgroundColor:color("#2a78d6","#b6d0ec"), stack:"a" },
-      { label:"Dropi",   data:dropi,   backgroundColor:color("#1baf7a","#b3e2d0"), stack:"a", borderRadius:4 } ]},
+      { label:"Propias", data:propias, backgroundColor:color("#17c3c3","#123b3d"), stack:"a",
+        borderRadius:{topLeft:0,topRight:0,bottomLeft:4,bottomRight:4} },
+      { label:"Dropi",   data:dropi,   backgroundColor:color("#5b8f94","#1d4a3d"), stack:"a",
+        borderRadius:{topLeft:9,topRight:9,bottomLeft:0,bottomRight:0} } ]},
     options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
       plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{
+        tooltip:{ backgroundColor:"#14282b", titleColor:"#eaf4f3", bodyColor:"#eaf4f3",
+          footerColor:"#8fa5a7", cornerRadius:12, padding:10, displayColors:false,
+          callbacks:{
           title:function(i){ var x=i[0].dataIndex;
             return bonita(claves[x]) + (cerradas && cerradas[x]===false ? "  (sin cerrar)" : ""); },
           footer:function(i){ var x=i[0].dataIndex;
             var t = propias[x]+dropi[x], m = metaDia[x];
             return "Total "+t+"  ·  meta "+m+" ("+(t>=m ? "cumple" : "faltan "+(m-t))+")"; } } } },
-      scales:{ x:{ stacked:true, grid:{display:false},
-                   ticks:{autoSkip:false,font:{size:11},color:"#898781"} },
-               y:{ stacked:true, beginAtZero:true, suggestedMax:metaMax, grid:{color:"#e1e0d9"},
-                   ticks:{font:{size:11},color:"#898781"} } } },
+      scales:{ x:{ stacked:true, grid:{display:false}, border:{display:false},
+                   ticks:{autoSkip:false,font:{size:11},color:"#7d9396"} },
+               y:{ stacked:true, beginAtZero:true, suggestedMax:metaMax, border:{display:false},
+                   grid:{color:"rgba(255,255,255,.05)"},
+                   ticks:{font:{size:11},color:"#7d9396"} } } },
     plugins:[{ id:"extras", afterDatasetsDraw:function(c){
       var ctx=c.ctx;
       ctx.save();
-      ctx.font="600 11px -apple-system,Segoe UI,Roboto,sans-serif";
-      ctx.fillStyle="#111"; ctx.textAlign="center";
+      ctx.font="800 13px -apple-system,Segoe UI,Roboto,sans-serif";
+      ctx.fillStyle="#eaf4f3"; ctx.textAlign="center";
       c.getDatasetMeta(1).data.forEach(function(b,i){
         var t=propias[i]+dropi[i];
         if (t) ctx.fillText(t, b.x, b.y-6);
@@ -1921,7 +2109,7 @@ function grafica(id, etiquetas, propias, dropi, claves, cerradas, metaDia){
         var medio = barras.length > 1
           ? Math.abs(barras[1].x - barras[0].x)/2
           : (c.chartArea.right - c.chartArea.left)/2;
-        ctx.save(); ctx.strokeStyle="#d03b3b"; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+        ctx.save(); ctx.strokeStyle="#eaf4f3"; ctx.lineWidth=2; ctx.setLineDash([5,4]);
         ctx.beginPath();
         barras.forEach(function(b,i){
           var y = c.scales.y.getPixelForValue(metaDia[i]);
@@ -2230,132 +2418,12 @@ function descargarImagen(){
 // ####################################################################
 //  BLOQUE 6b — PESTAÑA 5: VISTA DEL VENDEDOR
 // ####################################################################
-// Lo que un vendedor puede ver (§10): cómo va el EQUIPO contra la meta de
-// propias, y el ranking del mes — solo posiciones y nombres, SIN las cifras de
-// nadie y sin gráfica de comparación. No hay filtro por vendedor: mientras no
-// exista el login (paso 9), la app no sabe quién está mirando, así que no
-// muestra datos personales de nadie.
-// No ve: Dropi, total Effi+Dropi, tiendas, ventas reales sin repartir,
-// comparativos entre meses, calendario, ni ningún botón. Solo el mes en curso.
+// Antes esta pestaña volvía a calcular y a dibujar lo mismo que index.html,
+// con su propia función pintarVendedor(). Eso obligaba a mantener dos
+// implementaciones de la misma pantalla sincronizadas a mano. Ahora la
+// pestaña simplemente muestra index.html adentro de un <iframe> (ver
+// mostrar(n) en el BLOQUE 3) — es literalmente la misma página, no una copia.
 
-// Días del mes en curso (incluye los cargados sin cerrar, para que no salga vacío)
-function vendDatosMes(){ return datosDelMes(mesDeHoy(), true); }
-
-function pintarVendedor(){
-  var p = mesDeHoy().split("-");
-  vendMes.textContent = "Mes en curso: " + MESES_L[+p[1]-1] + " " + p[0] +
-    ". El vendedor solo ve este mes, y solo cifras del equipo.";
-
-  var D = vendDatosMes(), claves = Object.keys(D).sort();
-  if (!claves.length) {
-    vendContenido.innerHTML = "<div class='aviso'><b>Todavía no hay ventas de este mes.</b><br><br>" +
-      "Cuando cargues o cierres jornadas del mes en curso, aquí verás lo que vería un vendedor.</div>";
-    return;
-  }
-
-  // Ranking del mes (Effi). Se ven posiciones y nombres, nunca las cifras.
-  var acVen = {};
-  claves.forEach(function(k){
-    Object.keys(D[k].ven||{}).forEach(function(v){ acVen[v] = (acVen[v]||0) + D[k].ven[v]; });
-  });
-  var rank = Object.keys(acVen).map(function(n){ return { nom:n, n:acVen[n] }; })
-               .sort(function(a,b){ return b.n-a.n || (a.nom<b.nom?-1:1); });
-
-  // Propias del EQUIPO por día, repartidas, contra la meta de propias de cada día
-  var eqDia = {}, eqRep = {}, eqEnMeta = 0;
-  claves.forEach(function(k){ eqDia[k] = D[k].p; eqRep[k] = D[k].p; });
-  armarBloques(claves).forEach(function(b){
-    var suma = 0;
-    b.dias.forEach(function(k){ suma += eqDia[k]; });
-    var r = repartir(suma, b.dias.length);
-    b.dias.forEach(function(k,i){ eqRep[k] = r[i]; });
-  });
-  var metaPro = claves.map(function(k){ return metaEn(k).propias; });
-  claves.forEach(function(k,i){ if (eqRep[k] >= metaPro[i]) eqEnMeta++; });
-
-  var n = claves.length;
-  var eqTotal = claves.reduce(function(a,k){ return a + eqDia[k]; }, 0);
-  var eqProm = n ? Math.round(eqTotal/n) : 0;
-  var mHoy = metaHoy().propias;
-  var abiertas = claves.filter(function(k){ return !D[k].cerrada; }).length;
-  var mejor = null;
-  claves.forEach(function(k){ if (!mejor || eqRep[k] > mejor.t) mejor = { k:k, t:eqRep[k] }; });
-
-  var h = "";
-  if (abiertas) h += "<div class='aviso' style='margin-bottom:14px'>" +
-    "Hay <b>" + abiertas + " día" + (abiertas===1?"":"s") + "</b> que todavía no cierra el administrador. " +
-    "Esas cifras pueden cambiar.</div>";
-
-  h += "<h2>Cómo va el equipo</h2><div class='kpis'>" +
-    kpi("Prendas propias del equipo", eqTotal, "en " + n + " día" + (n===1?"":"s"), true) +
-    kpi("Promedio por día", eqProm, "meta de " + mHoy) +
-    kpi("Días en meta", eqEnMeta, "de " + n + " día" + (n===1?"":"s")) +
-    kpi("Mejor día del equipo", mejor ? mejor.t : "—", mejor ? bonita(mejor.k) : "") +
-    "</div>";
-
-  h += "<div class='caja' style='margin-top:12px'>" +
-    "<p style='margin:0 0 10px;font-size:13px;color:#6b7280'>" +
-    "Prendas propias de todo el equipo, con la línea de la meta. " +
-    "Los fines de semana y festivos van <b>repartidos</b> entre sus días. " +
-    "No hay meta individual: la meta es del equipo.</p>" +
-    "<div class='leyenda'><span><i class='cuad' style='background:#2a78d6'></i>Propias del equipo</span>" +
-    "<span><i class='cuad' style='background:#d03b3b;height:2px;width:18px;border-radius:0'></i>Meta del equipo</span></div>" +
-    "<div class='graf'><canvas id='gEquipo'></canvas></div></div>";
-
-  h += "<h2>Ranking del mes</h2><div class='caja'><table><thead><tr>" +
-    "<th>#</th><th>Vendedor</th></tr></thead><tbody>";
-  rank.slice(0,10).forEach(function(x,i){
-    h += "<tr><td>" + (i===0 ? "🏆 1" : i+1) + "</td><td>" + esc(x.nom) + "</td></tr>";
-  });
-  h += "</tbody></table>";
-  if (rank.length > 10) h += "<p style='margin:10px 0 0;font-size:13px;color:#6b7280'>" +
-    "Se muestran los 10 primeros de " + rank.length + ".</p>";
-  h += "</div>";
-
-  vendContenido.innerHTML = h;
-
-  var et = claves.map(function(k){ return k.split("-")[2]; });
-  vendGraficaEquipo("gEquipo", et, claves.map(function(k){ return eqRep[k]; }), claves, metaPro);
-}
-
-function vendGraficaEquipo(id, etiquetas, datos, claves, metaDia){
-  var el = document.getElementById(id); if (!el) return;
-  var metaMax = Math.max.apply(null, metaDia);
-  new Chart(el, {
-    type:"bar",
-    data:{ labels:etiquetas, datasets:[{ label:"Propias del equipo", data:datos,
-      backgroundColor:"#2a78d6", borderRadius:4 }]},
-    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
-      plugins:{ legend:{display:false},
-        tooltip:{ callbacks:{
-          title:function(i){ return bonita(claves[i[0].dataIndex]); },
-          footer:function(i){ var x=i[0].dataIndex, v=datos[x], m=metaDia[x];
-            return "Meta del equipo " + m + " (" + (v>=m ? "cumplida" : "faltan "+(m-v)) + ")"; } } } },
-      scales:{ x:{ grid:{display:false}, ticks:{autoSkip:false,font:{size:11},color:"#898781"} },
-               y:{ beginAtZero:true, suggestedMax:metaMax, grid:{color:"#e1e0d9"},
-                   ticks:{font:{size:11},color:"#898781"} } } },
-    plugins:[{ id:"extras", afterDatasetsDraw:function(c){
-      var ctx=c.ctx, barras=c.getDatasetMeta(0).data;
-      ctx.save();
-      ctx.font="600 11px -apple-system,Segoe UI,Roboto,sans-serif";
-      ctx.fillStyle="#111"; ctx.textAlign="center";
-      barras.forEach(function(b,i){ if (datos[i]) ctx.fillText(datos[i], b.x, b.y-6); });
-      ctx.restore();
-      if (!barras.length) return;
-      var medio = barras.length>1 ? Math.abs(barras[1].x-barras[0].x)/2
-                                  : (c.chartArea.right-c.chartArea.left)/2;
-      ctx.save(); ctx.strokeStyle="#d03b3b"; ctx.lineWidth=2; ctx.setLineDash([5,4]);
-      ctx.beginPath();
-      barras.forEach(function(b,i){
-        var y=c.scales.y.getPixelForValue(metaDia[i]);
-        if (y < c.chartArea.top || y > c.chartArea.bottom) return;
-        ctx.moveTo(Math.max(b.x-medio,c.chartArea.left), y);
-        ctx.lineTo(Math.min(b.x+medio,c.chartArea.right), y);
-      });
-      ctx.stroke(); ctx.restore();
-    }}]
-  });
-}
 // ####################################################################
 //  BLOQUE 7 — PESTAÑA 4: comparativo entre meses
 // ####################################################################
@@ -2382,11 +2450,11 @@ function cmpResumenMes(m, inc, limite){
 }
 function cmpNombreMes(m){ var p=m.split("-"); return MESES_L[+p[1]-1]+" "+p[0]; }
 function cmpDelta(act, ant){
-  if (ant == null) return "<span style='color:#9aa1a8'>—</span>";
+  if (ant == null) return "<span style='color:var(--d-txt-3)'>—</span>";
   var dif = act - ant;
-  if (!dif) return "<span style='color:#6b7280'>=</span>";
+  if (!dif) return "<span style='color:var(--gris)'>=</span>";
   var pc = ant ? Math.round(Math.abs(dif)*100/ant) : 0;
-  var col = dif>0 ? "#0a7d38" : "var(--rojo)";
+  var col = dif>0 ? "#5fe3a8" : "var(--rojo)";
   return "<span style='color:"+col+";font-weight:600'>" + (dif>0?"▲ +":"▼ ") + dif +
          (ant ? " ("+(dif>0?"+":"−")+pc+"%)" : "") + "</span>";
 }
@@ -2400,7 +2468,7 @@ function cmpTablaPersonas(meses, resumenes, campo, etiqueta){
   resumenes.forEach(function(r){ Object.keys(r[campo]).forEach(function(x){
     nombres[x] = (nombres[x]||0) + r[campo][x]; }); });
   var orden = Object.keys(nombres).sort(function(a,b){ return nombres[b]-nombres[a]; });
-  if (!orden.length) return "<div class='caja'><p style='margin:0;color:#6b7280'>Sin detalle guardado todavía.</p></div>";
+  if (!orden.length) return "<div class='caja'><p style='margin:0;color:var(--gris)'>Sin detalle guardado todavía.</p></div>";
   var h = "<div class='caja' style='overflow-x:auto'><table><thead><tr><th>"+etiqueta+"</th>" +
     meses.map(function(m){ return "<th>"+cmpNombreMes(m)+"</th>"; }).join("") +
     "<th>Total</th><th>Último vs anterior</th></tr></thead><tbody>";
@@ -2438,7 +2506,7 @@ function pintarComparativo(){
   if (meses.length === 1) h += "<div class='aviso' style='margin-bottom:14px'>" +
     "Solo hay <b>un mes</b> con datos, así que no hay contra qué comparar todavía. " +
     "Cuando entren jornadas de otro mes, aquí verás la evolución.</div>";
-  if (corte) h += "<div class='caja' style='margin-bottom:14px;font-size:13px;color:#6b7280'>" +
+  if (corte) h += "<div class='caja' style='margin-bottom:14px;font-size:13px;color:var(--gris)'>" +
     "Comparando <b>los primeros " + corte + " día" + (corte===1?"":"s") + " con datos</b> de cada mes, " +
     "para que el mes en curso no salga castigado frente a los meses completos.</div>";
   if (conAbiertas) h += "<div class='aviso' style='margin-bottom:14px'><b>Hay bosquejo.</b> " +
@@ -2455,9 +2523,9 @@ function pintarComparativo(){
     h += "<tr><td><b>"+cmpNombreMes(r.m)+"</b>" +
          (r.abiertas ? " <span class='pill'>"+r.abiertas+" sin cerrar</span>" : "") +
          (eM && eM.estado === "cerrado"
-            ? "<br><span style='font-size:12px;color:"+(dM && dM.dif ? "#c62828" : "#1baf7a")+"'>sellado en " +
+            ? "<br><span style='font-size:12px;color:"+(dM && dM.dif ? "var(--rojo)" : "#1baf7a")+"'>sellado en " +
               eM.resumen.total + (dM && dM.dif ? " · difiere " + (dM.dif>0?"+":"") + dM.dif : "") + "</span>"
-            : (eM ? "<br><span style='font-size:12px;color:#b7791f'>reabierto</span>" : "")) + "</td>" +
+            : (eM ? "<br><span style='font-size:12px;color:#ffb74d'>reabierto</span>" : "")) + "</td>" +
          "<td>"+r.n+"</td><td class='total'>"+r.total+"</td>" +
          "<td>"+cmpDelta(r.total, ant?ant.total:null)+"</td>" +
          "<td>"+r.p+"</td><td>"+r.d+"</td><td>"+r.pct+"%</td><td>"+r.prom+"</td>" +
@@ -2468,9 +2536,9 @@ function pintarComparativo(){
 
   h += "<h2>Evolución</h2><div class='caja'>" +
     "<div class='leyenda'>" +
-    "<span><i class='cuad' style='background:#2a78d6'></i>Propias</span>" +
+    "<span><i class='cuad' style='background:#17c3c3'></i>Propias</span>" +
     "<span><i class='cuad' style='background:#1baf7a'></i>Dropi</span>" +
-    "<span><i class='cuad' style='background:#c07800;height:2px;width:18px;border-radius:0'></i>Promedio por día</span>" +
+    "<span><i class='cuad' style='background:#e0a030;height:2px;width:18px;border-radius:0'></i>Promedio por día</span>" +
     "</div><div class='graf'><canvas id='gCmp'></canvas></div></div>";
 
   h += "<h2>Top del mes</h2><div class='caja' style='overflow-x:auto'><table><thead><tr>" +
@@ -2484,6 +2552,7 @@ function pintarComparativo(){
   h += "<h2>Vendedores mes a mes — Effi</h2>" + cmpTablaPersonas(meses, R, "ven", "Vendedor");
   h += "<h2>Tiendas mes a mes — Dropi</h2>" + cmpTablaPersonas(meses, R, "tie", "Tienda");
 
+  destruirGraficas(cmpContenido);
   cmpContenido.innerHTML = h;
   graficaMeses("gCmp", R);
 }
@@ -2493,24 +2562,26 @@ function graficaMeses(id, R){
   if (!el) return;
   el.setAttribute("role","img");
   el.setAttribute("aria-label","Prendas por mes: propias y Dropi, con el promedio por día");
+  var previa = Chart.getChart(el);
+  if (previa) previa.destroy();
   new Chart(el, {
     data:{ labels:R.map(function(r){ return cmpNombreMes(r.m); }), datasets:[
       { type:"bar",  label:"Propias", data:R.map(function(r){return r.p;}),
-        backgroundColor:"#2a78d6", stack:"a", yAxisID:"y" },
+        backgroundColor:"#17c3c3", stack:"a", yAxisID:"y" },
       { type:"bar",  label:"Dropi",   data:R.map(function(r){return r.d;}),
         backgroundColor:"#1baf7a", stack:"a", borderRadius:4, yAxisID:"y" },
       { type:"line", label:"Promedio por día", data:R.map(function(r){return r.prom;}),
-        borderColor:"#c07800", backgroundColor:"#c07800", borderWidth:2,
+        borderColor:"#e0a030", backgroundColor:"#e0a030", borderWidth:2,
         pointRadius:3, tension:0.25, yAxisID:"y2" } ]},
     options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:22 } },
       plugins:{ legend:{display:false},
         tooltip:{ callbacks:{ footer:function(i){
           var x=i[0].dataIndex; return "Total "+(R[x].total)+" · "+R[x].n+" días"; } } } },
-      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{font:{size:11},color:"#898781"} },
-               y:{ stacked:true, beginAtZero:true, grid:{color:"#e1e0d9"},
-                   ticks:{font:{size:11},color:"#898781"} },
+      scales:{ x:{ stacked:true, grid:{display:false}, ticks:{font:{size:11},color:"#7d9396"} },
+               y:{ stacked:true, beginAtZero:true, grid:{color:"rgba(255,255,255,.08)"},
+                   ticks:{font:{size:11},color:"#7d9396"} },
                y2:{ position:"right", beginAtZero:true, grid:{display:false},
-                    ticks:{font:{size:11},color:"#c07800"} } } },
+                    ticks:{font:{size:11},color:"#e0a030"} } } },
     plugins:[{ id:"totalMes", afterDatasetsDraw:function(c){
       var ctx=c.ctx;
       ctx.save();
@@ -2571,7 +2642,7 @@ function calDiagnostico(){
   var etiquetas = ms.slice().reverse().map(function(m){
     var p=m.split("-"); return "<button class='acc' data-ir='"+m+"'>"+MESES_L[+p[1]-1]+" "+p[0]+"</button>";
   }).join(" ");
-  calDiag.innerHTML = "<div class='caja' style='margin-bottom:14px;font-size:13px;color:#6b7280'>" +
+  calDiag.innerHTML = "<div class='caja' style='margin-bottom:14px;font-size:13px;color:var(--gris)'>" +
     "<b>" + n + "</b> jornada" + (n===1?"":"s") + " cerrada" + (n===1?"":"s") +
     (pend ? " · <b>" + pend + "</b> día" + (pend===1?"":"s") + " cargado" + (pend===1?"":"s") +
             " sin cerrar (en gris)" : "") +
@@ -2632,7 +2703,7 @@ function calResumenPintar(){
 
   if (!claves.length) {
     calResumen.innerHTML = "<div class='caja' style='margin-bottom:14px'>" +
-      "<p style='margin:0;font-size:13px;color:#6b7280'>Selecciona días en el calendario " +
+      "<p style='margin:0;font-size:13px;color:var(--gris)'>Selecciona días en el calendario " +
       "para ver suma, promedio y número de días.</p></div>";
     return;
   }
@@ -2640,7 +2711,7 @@ function calResumenPintar(){
   var h = "<div class='caja panelSel' style='margin-bottom:14px'>" +
     "<p style='margin:0 0 10px;font-weight:600;font-size:14px'>Selección: " +
     bonita(claves[0]) + (claves.length>1 ? " → " + bonita(claves[claves.length-1]) : "") +
-    " &nbsp;<span style='font-weight:400;color:#6b7280'>" + n + " día" + (n===1?"":"s") +
+    " &nbsp;<span style='font-weight:400;color:var(--gris)'>" + n + " día" + (n===1?"":"s") +
     " con jornada cerrada" +
     (pend ? " · " + pend + " cargado" + (pend===1?"":"s") + " sin cerrar (no cuenta" + (pend===1?"":"n") + ")" : "") +
     (sinDatos ? " · " + sinDatos + " sin datos" : "") +

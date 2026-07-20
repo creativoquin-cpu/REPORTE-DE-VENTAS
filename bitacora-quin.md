@@ -107,9 +107,11 @@ Punto de partida: las 308 pruebas automáticas pasan (`cd pruebas && TZ=America/
 
 *Los tres choques ya conocidos, confirmados al ver el mockup andando:* saludo por nombre → se cambia por encabezado de equipo; cifras junto a cada vendedor en la vista del VENDEDOR (en la vista de administrador sí se dejan, ahí el admin ve todo) → se quitan, queda solo puesto y medalla; selector de rol al entrar → no se implementa, cada quien ya tiene su página y su login real.
 
-**Pendiente de tu confirmación antes de tocar código:**
-1. El mockup usa dos paletas distintas: panel administrador con fondo oscuro/negro, vista del vendedor con fondo claro. ¿Es intencional o querés que las dos compartan el mismo fondo?
-2. `index.html` tiene un primer intento de estética sin comitear (Montserrat + teal `#00A89D`), anterior al mockup. Se descarta y se parte del mockup — falta tu confirmación final.
+**Decisiones ya tomadas (20-jul-2026):**
+1. Dos paletas confirmadas: panel administrador oscuro, `index.html` claro — es a propósito, está en el propio código del mockup (`Alcance exclusivo: #admin-section`).
+2. El intento viejo de `index.html` (Montserrat + teal `#00A89D`) se descartó; se partió del mockup.
+3. **quin-admin.html se reestructura con el Camino A**: se conservan las cinco pestañas, cada una se rediseña por dentro con el sistema del mockup (kickers, KPIs grandes, rankings con círculos y barras, meta con barra de progreso, gráficas Chart.js configuradas para verse como el mockup). Ya quedaron así la cabecera y la pestaña "2 · Tablero del mes" completa (resumen, metas, rankings lado a lado, gráficas).
+4. **La pestaña "5 · Vista del vendedor" se retiró como implementación aparte.** Antes volvía a calcular y a dibujar lo mismo que `index.html` con su propia función `pintarVendedor()` — dos copias de la misma pantalla que había que mantener sincronizadas a mano. Ahora esa pestaña simplemente muestra `index.html` dentro de un `<iframe>`: es literalmente la misma página, no una copia. Por esto se retiró `pruebas/test-vendedor.js` (probaba solo esa función, que ya no existe) y se ajustó `pruebas/test-vendedor-publico.js` para verificar `index.html` sola en vez de compararla contra la pestaña 5. Quedaron 267 pruebas (antes 308).
 
 **Cosas sueltas anotadas**
 

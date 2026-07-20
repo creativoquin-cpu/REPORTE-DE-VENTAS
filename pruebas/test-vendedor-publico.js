@@ -1,12 +1,11 @@
 // Prueba del paso 9.3 — página pública del equipo (index.html) y el
 // ranking público que arma quin-admin.html para alimentarla.
 //
-// La idea central: index.html repite (no comparte) las reglas de cálculo
-// de la pestaña "Vista del vendedor" de quin-admin.html, porque son dos
-// archivos sueltos sin build. Esta prueba toma el MISMO mes de datos y
-// comprueba que las dos páginas den exactamente los mismos números —
-// así, si algún día se cambia una regla en un lado y no en el otro, la
-// prueba avisa en vez de dejarlas desincronizadas en silencio.
+// Hasta el paso 10.5, index.html e index.html-dentro-de-la-pestaña-5 eran dos
+// implementaciones separadas que había que mantener sincronizadas a mano; esta
+// prueba las comparaba entre sí. Desde el paso 10.5 la pestaña 5 muestra
+// index.html directo en un <iframe> — ya no hay una segunda copia — así que
+// ahora esta prueba verifica index.html sola contra números calculados a mano.
 const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
@@ -21,7 +20,13 @@ function ok(nombre, cond, extra) {
 }
 
 const graficas = {};
-function ChartFalso(el, cfg) { graficas[el.id] = cfg; this.destroy = () => {}; }
+const instanciasChart = {};
+function ChartFalso(el, cfg) {
+  graficas[el.id] = cfg;
+  instanciasChart[el.id] = this;
+  this.destroy = () => { delete instanciasChart[el.id]; };
+}
+ChartFalso.getChart = el => instanciasChart[(typeof el === 'string') ? el : el.id];
 
 function arrancar(html, hoy, antesDeUsar) {
   Object.keys(graficas).forEach(k => delete graficas[k]);
@@ -85,20 +90,15 @@ let rankingCalculado;
   ok('el mes queda marcado', rankingCalculado.every(x => x.mes === '2026-07'));
 }
 
-console.log('\n=== 2. index.html, alimentada con esos mismos datos, pinta lo mismo que el administrador ===');
+console.log('\n=== 2. index.html calcula bien con este mismo mes de datos ===');
+// Antes esta sección comparaba index.html contra la pestaña 5 de
+// quin-admin.html (que volvía a calcular todo por su cuenta). Desde que esa
+// pestaña se reemplazó por un <iframe> que muestra index.html tal cual (paso
+// 10.5), ya no hay una segunda implementación con la que comparar — así que
+// acá se verifica contra los números calculados a mano a partir de JUL:
+// propias por día 200/190/150/71/24 (sáb+dom repartidos 71+24=95 → 47/48),
+// total 635 en 5 días, promedio 127, meta de propias 160 salvo el 14-jul en 100.
 {
-  // Lo que la pestaña 5 del administrador muestra con el JUL de siempre:
-  const wAdmin = arrancar(HTML_ADMIN, '2026-07-20', ww => {
-    ww.localStorage.setItem('quin.jornadas', JSON.stringify(JUL));
-  });
-  wAdmin.mostrar(5);
-  const tAdmin = texto(wAdmin);
-  const eqAdmin = graficas.gEquipo.data.datasets[0].data.slice();
-
-  // Lo mismo, del lado público: solo lo que un visitante puede leer.
-  // Los datos se asignan DESPUÉS de arrancar (no en beforeParse): el propio
-  // script de index.html declara "var jornadas = {}" al cargar, así que
-  // asignarlo antes quedaría pisado apenas corre ese script.
   const wPub = arrancar(HTML_PUB, '2026-07-20');
   wPub.jornadas = JUL_PUBLICO;
   wPub.metas = [];
@@ -108,16 +108,12 @@ console.log('\n=== 2. index.html, alimentada con esos mismos datos, pinta lo mis
   const tPub = texto(wPub);
   const eqPub = graficas.gEquipo.data.datasets[0].data.slice();
 
-  ok('prendas propias del equipo = 635 en las dos páginas',
-     tAdmin.includes('Prendas propias del equipo635') && tPub.includes('Prendas propias del equipo635'));
-  ok('promedio por día = 127 en las dos páginas',
-     tAdmin.includes('Promedio por día127') && tPub.includes('Promedio por día127'));
-  ok('días en meta = 2 de 5 en las dos páginas',
-     tAdmin.includes('Días en meta2') && tPub.includes('Días en meta2'));
-  ok('mejor día del equipo = 200 en las dos páginas',
-     tAdmin.includes('Mejor día del equipo200') && tPub.includes('Mejor día del equipo200'));
-  ok('el reparto de fin de semana da exactamente igual en el gráfico',
-     JSON.stringify(eqAdmin) === JSON.stringify(eqPub), eqAdmin.join(',') + ' vs ' + eqPub.join(','));
+  ok('prendas propias del equipo = 635', tPub.includes('Prendas propias del equipo635'));
+  ok('promedio por día = 127', tPub.includes('Promedio por día127'));
+  ok('días en meta = 2 de 5', tPub.includes('Días en meta2'));
+  ok('mejor día del equipo = 200', tPub.includes('Mejor día del equipo200'));
+  ok('el reparto de fin de semana da 200,190,150,47,48 en el gráfico',
+     JSON.stringify(eqPub) === JSON.stringify([200,190,150,47,48]), eqPub.join(','));
   ok('index.html también muestra los tres nombres', tPub.includes('Ana') && tPub.includes('Beto') && tPub.includes('Caro'));
   ok('index.html nunca muestra la cifra de Ana (320)', !tPub.includes('320'));
   ok('index.html nunca muestra la cifra de Beto (210)', !tPub.includes('210'));

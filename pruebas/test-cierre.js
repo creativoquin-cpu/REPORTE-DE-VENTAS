@@ -12,7 +12,13 @@ function ok(nombre, cond, extra) {
 }
 
 const graficas = {};
-function ChartFalso(el, cfg) { graficas[el.id] = cfg; this.destroy = () => {}; }
+const instanciasChart = {};
+function ChartFalso(el, cfg) {
+  graficas[el.id] = cfg;
+  instanciasChart[el.id] = this;
+  this.destroy = () => { delete instanciasChart[el.id]; };
+}
+ChartFalso.getChart = el => instanciasChart[(typeof el === 'string') ? el : el.id];
 
 let confirmar = true;
 const alertas = [];

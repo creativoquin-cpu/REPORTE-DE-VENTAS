@@ -55,7 +55,13 @@ function arrancar(estado, hoy) {
           get(t, p) { return p === 'now' ? () => fijo.getTime() : t[p]; }
         });
       }
-      w.Chart = function () { this.destroy = () => {}; };
+      const instanciasChart = {};
+      function ChartFalso(el) {
+        instanciasChart[el.id] = this;
+        this.destroy = () => { delete instanciasChart[el.id]; };
+      }
+      ChartFalso.getChart = el => instanciasChart[(typeof el === 'string') ? el : el.id];
+      w.Chart = ChartFalso;
       w.XLSX = { read: () => ({}), utils: {} };
       w.alert = m => descargas.push({ alerta: m });
       w.HTMLCanvasElement.prototype.getContext = function () {
@@ -358,10 +364,8 @@ console.log('\n=== 7. Descarga y casos borde ===');
     w3.mostrar(4);
     ok('el comparativo sigue pintando', w3.document.getElementById('cmpContenido').textContent.includes('Mes a mes'));
     w3.mostrar(5);
-    ok('la vista del vendedor sigue pintando',
-       w3.document.getElementById('vendContenido').textContent.includes('Cómo va el equipo'));
-    ok('la vista del vendedor no tiene botones de descarga',
-       w3.document.querySelectorAll('#vista5 button').length === 0);
+    ok('la pestaña 5 muestra index.html en un iframe',
+       w3.document.getElementById('marcoVendedor').src.endsWith('index.html'));
     ok('en el tablero hay un solo botón de imagen',
        w3.document.querySelectorAll('#vista2 button').length === 1,
        w3.document.querySelectorAll('#vista2 button').length + ' botones');
