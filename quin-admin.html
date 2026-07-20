@@ -169,30 +169,46 @@
   .cuad { width:11px; height:11px; border-radius:3px; display:inline-block; }
 
   /* ---- Calendario tipo Excel ---- */
+  .cal-card { border-radius:var(--r-lg); padding:32px; }
   .calNav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .calNav .rango { font-weight:600; font-size:15px; flex:1; min-width:180px; color:var(--d-txt); }
-  .calNav button.gris { background:var(--d-sup-2); color:var(--d-txt); }
+  .calNav .rango { font-weight:800; font-size:19px; flex:1; min-width:180px; color:var(--d-txt);
+                    text-align:center; letter-spacing:-.01em; order:2; }
+  .calNav button.gris { background:var(--d-sup-2); color:var(--d-txt); border:1.5px solid var(--d-borde); }
+  #calAtras, #calAdel { width:46px; height:46px; border-radius:14px; padding:0; font-size:17px; flex-shrink:0; }
+  #calAtras { order:1; } #calAdel { order:3; }
+  #calHoy, #calLimpiar { order:4; }
+  .cal-layout { display:grid; grid-template-columns:1.5fr 1fr; gap:26px; align-items:start; margin-top:22px; }
+  @media (max-width:900px){ .cal-layout { grid-template-columns:1fr; } }
   .meses { display:flex; flex-wrap:wrap; gap:16px; user-select:none; -webkit-user-select:none; }
-  .mesCal { flex:1; min-width:290px; }
-  .mesCal h3 { font-size:14px; margin:0 0 8px; text-transform:capitalize; color:var(--d-txt); }
-  .rejilla { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .rejilla .dow { font-size:11px; color:var(--gris); text-align:center; font-weight:600; padding-bottom:2px; }
-  .celda { border:1px solid var(--d-borde); border-radius:6px; background:var(--d-sup-2); min-height:40px;
-           padding:2px 4px; cursor:pointer; touch-action:none; }
-  .celda .dnum { font-size:11px; color:var(--d-txt-2); line-height:1.1; }
-  .celda .dval { font-size:15px; font-weight:700; text-align:right; line-height:1.2; color:var(--d-txt); }
-  .celda.vacia { background:transparent; border-color:transparent; color:var(--d-txt-3); cursor:default; }
+  .mesCal { flex:1; min-width:260px; }
+  .mesCal h3 { font-size:18px; font-weight:800; margin:0 0 10px; text-transform:capitalize; color:var(--d-txt); letter-spacing:-.01em; }
+  .rejilla { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .rejilla .dow { font-size:12px; color:var(--gris); text-align:center; font-weight:600; padding-bottom:4px; }
+  .celda { border:1.5px solid var(--d-borde); border-radius:13px; background:var(--d-sup-2); min-height:78px;
+           padding:9px 10px 10px; cursor:pointer; touch-action:none;
+           display:flex; flex-direction:column; justify-content:space-between; transition:border-color .14s; }
+  .celda:hover:not(.vacia) { border-color:var(--cian); }
+  .celda .dnum { font-size:12px; font-weight:700; color:var(--d-txt-2); line-height:1; }
+  .celda .dval { font-size:20px; font-weight:700; text-align:right; line-height:1.1; color:var(--d-txt); }
+  .celda.vacia { background:transparent; border-color:transparent; color:var(--d-txt-3); cursor:default; pointer-events:none; }
   .celda.vacia .dval { color:var(--d-txt-3); font-weight:400; }
   .celda.nolab { background:var(--d-sup-3); }
   .celda.nolab .dnum { color:var(--d-txt-3); }
+  .celda.pend { background:rgba(255,183,77,.07); }
   .celda.pend .dval { color:var(--d-txt-3); font-weight:600; }
   .celda.pend .dnum { color:var(--d-txt-3); }
   .celda.sel { background:var(--cian); border-color:var(--cian); box-shadow:0 4px 14px rgba(23,195,195,.34); }
   .celda.sel .dnum, .celda.sel .dval { color:#06171a; }
   .celda.hueco { visibility:hidden; }
   .rejilla.mini { gap:3px; margin-top:8px; }
-  .rejilla.mini .celda { min-height:34px; padding:1px 3px; }
+  .rejilla.mini .celda { min-height:34px; padding:2px 4px; border-radius:8px; }
   .rejilla.mini .celda .dval { font-size:13px; }
+  .sel-grid { display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+  .sel-item { background:var(--d-sup-3); border-radius:14px; padding:16px 18px; }
+  .sel-fila { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .sel-lbl { font-size:15px; font-weight:700; color:var(--d-txt); }
+  .sel-val { font-size:20px; font-weight:800; color:var(--d-txt); font-variant-numeric:tabular-nums; }
+  .sel-sub { font-size:13px; color:var(--d-txt-2); margin-top:4px; }
   .celda.cong { border-color:rgba(23,195,195,.34); background:rgba(23,195,195,.10); }
   .celda.revisada { box-shadow:inset 0 -3px 0 #e0a030; }
   .celda.abierta { border-color:var(--cian); box-shadow:inset 0 0 0 2px var(--cian); }
@@ -342,20 +358,31 @@
   </div>
 
   <div id="vista3" style="display:none">
-    <div class="caja calNav">
-      <button class="gris" id="calAtras">‹ Anterior</button>
-      <span class="rango" id="calRango"></span>
-      <button class="gris" id="calAdel">Siguiente ›</button>
-      <button class="gris" id="calHoy">Hoy</button>
-      <button class="gris" id="calLimpiar">Limpiar selección</button>
-    </div>
+    <div class="kicker">ANÁLISIS TIPO EXCEL</div>
+    <h2 style="margin-top:4px">Explora la jornada por fechas</h2>
     <div id="calDiag"></div>
-    <div id="calResumen"></div>
-    <div class="caja"><div class="meses" id="calMeses"></div></div>
-    <p style="font-size:13px;color:var(--gris);margin:0">
+    <div class="caja cal-card">
+      <div class="calNav">
+        <button class="gris" id="calAtras">‹</button>
+        <span class="rango" id="calRango"></span>
+        <button class="gris" id="calAdel">›</button>
+        <button class="gris" id="calHoy">Hoy</button>
+        <button class="gris" id="calLimpiar">Limpiar selección</button>
+      </div>
+      <div class="leyenda" style="margin:18px 0 0">
+        <span><i class="cuad" style="background:var(--d-sup-2);border:1.5px solid var(--d-borde)"></i>Jornada cerrada</span>
+        <span><i class="cuad" style="background:rgba(255,183,77,.25)"></i>Cargada sin cerrar (no suma)</span>
+        <span><i class="cuad" style="background:var(--d-sup-3)"></i>No laborable</span>
+        <span><i class="cuad" style="background:var(--cian)"></i>Seleccionado</span>
+      </div>
+      <div class="cal-layout">
+        <div class="meses" id="calMeses"></div>
+        <div id="calResumen"></div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--gris);margin:14px 0 0">
       Arrastra sobre los días para seleccionar un rango (puede cruzar de un mes a otro).
-      Un toque suelto agrega o quita ese día. En <b style="color:var(--gris)">gris</b> van los días que ya
-      subiste pero que todavía no has cerrado: se ven, pero no suman.
+      Un toque suelto agrega o quita ese día.
     </p>
   </div>
 
@@ -2702,25 +2729,28 @@ function calResumenPintar(){
   function prom(x){ return n ? Math.round(x*10/n)/10 : 0; }
 
   if (!claves.length) {
-    calResumen.innerHTML = "<div class='caja' style='margin-bottom:14px'>" +
-      "<p style='margin:0;font-size:13px;color:var(--gris)'>Selecciona días en el calendario " +
-      "para ver suma, promedio y número de días.</p></div>";
+    calResumen.innerHTML = "<div class='caja' style='background:var(--d-sup-2);border-radius:22px'>" +
+      "<div class='kicker'>RESULTADO AUTOMÁTICO</div>" +
+      "<p style='margin:6px 0 0;font-size:14px;color:var(--d-txt-2)'>Toca un día para comenzar.</p></div>";
     return;
   }
   var sinDatos = claves.length - n - pend;
-  var h = "<div class='caja panelSel' style='margin-bottom:14px'>" +
-    "<p style='margin:0 0 10px;font-weight:600;font-size:14px'>Selección: " +
+  function item(lbl, suma, n2){
+    return "<div class='sel-item'><div class='sel-fila'>" +
+      "<span class='sel-lbl'>"+lbl+"</span><span class='sel-val'>"+suma+" prendas</span></div>" +
+      "<p class='sel-sub'>Promedio "+prom(suma)+" · "+n2+" día"+(n2===1?"":"s")+"</p></div>";
+  }
+  var h = "<div class='caja' style='background:var(--d-sup-2);border-radius:22px'>" +
+    "<div class='kicker'>RESULTADO AUTOMÁTICO</div>" +
+    "<div class='card-title' style='margin:6px 0 0;font-size:20px'>" + n + " día" + (n===1?"":"s") + " seleccionado" + (n===1?"":"s") + "</div>" +
+    "<p style='margin:6px 0 0;font-size:14px;color:var(--d-txt-2)'>" +
     bonita(claves[0]) + (claves.length>1 ? " → " + bonita(claves[claves.length-1]) : "") +
-    " &nbsp;<span style='font-weight:400;color:var(--gris)'>" + n + " día" + (n===1?"":"s") +
-    " con jornada cerrada" +
     (pend ? " · " + pend + " cargado" + (pend===1?"":"s") + " sin cerrar (no cuenta" + (pend===1?"":"n") + ")" : "") +
     (sinDatos ? " · " + sinDatos + " sin datos" : "") +
-    "</span></p>" +
-    "<table><thead><tr><th>&nbsp;</th><th>Suma</th><th>Promedio</th><th># días</th></tr></thead><tbody>" +
-    "<tr><td><b>Total</b></td><td class='total'>"+sT+"</td><td>"+prom(sT)+"</td><td>"+n+"</td></tr>" +
-    "<tr><td>Propias (Effi)</td><td>"+sP+"</td><td>"+prom(sP)+"</td><td>"+n+"</td></tr>" +
-    "<tr><td>Dropi</td><td>"+sD+"</td><td>"+prom(sD)+"</td><td>"+n+"</td></tr>" +
-    "</tbody></table></div>";
+    "</p>" +
+    "<div class='sel-grid'>" +
+    item("Total", sT, n) + item("Propias (Effi)", sP, n) + item("Dropi", sD, n) +
+    "</div></div>";
   calResumen.innerHTML = h;
 }
 
