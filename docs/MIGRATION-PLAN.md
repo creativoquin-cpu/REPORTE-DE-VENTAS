@@ -61,9 +61,8 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
 
 ## Fases
 
-- [ ] **Fase 0 — Documentación.** `docs/ARCHITECTURE.md`,
-      `docs/BUSINESS-RULES.md`, `docs/MIGRATION-PLAN.md`. *(Completada en
-      esta sesión.)*
+- [x] **Fase 0 — Documentación.** `docs/ARCHITECTURE.md`,
+      `docs/BUSINESS-RULES.md`, `docs/MIGRATION-PLAN.md`.
 - [x] **Fase 1 — Scaffold Next.js.** Hecho en `web/` (ver `web/README.md`):
       Next.js 16 App Router + TypeScript estricto, ESLint/Prettier, Tailwind
       v4 con los tokens de marca portados, conectado de lectura a las
@@ -75,11 +74,19 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       `<ChartCanvas>` con destroy() garantizado, y las 4 pestañas restantes
       como placeholders. `npm run lint`, `tsc --noEmit` y `npm run build`
       pasan limpios. Riesgo: ninguno (no reemplaza nada en producción).
-- [ ] **Fase 2 — Librería de motor (`lib/motor/*.ts`).** Corte de jornada,
-      festivos, reparto, resolución de metas, cálculo día-por-día como
-      funciones puras. Tests Vitest portados 1:1 desde
-      `pruebas/test-motor-real.js` (incluye los Excel reales del repo como
-      fixtures). Riesgo: bajo.
+- [x] **Fase 2 — Librería de motor (`lib/motor/*.ts`).** Hecho: corte de
+      jornada (`jornada.ts`), festivos de Colombia (`festivos.ts`), reparto
+      de bloques (`reparto.ts`), resolución de metas (`metas.ts`), filtros
+      (`filtros.ts`) y cálculo día-por-día (`calcular.ts`) — todo como
+      funciones puras, sin DOM ni estado global (los globales del HTML
+      `diasManuales`/`metas` se pasan como parámetros). Vitest configurado
+      (`vitest.config.ts`, `npm test`) con **69 pruebas verdes** portadas 1:1
+      desde `pruebas/test-motor-real.js` (§7, §8, §9) y `pruebas/test-metas.js`,
+      incluyendo el test de paridad que carga los **dos Excel reales del repo**
+      como fixtures y valida los números de referencia del §17 (98 propias,
+      20 Dropi, 118 combinado, corte de jornada de Effi, reparto 2/2/4,
+      Tiko=9, Lucenith=24). `tsc --noEmit`, `npm run lint` y `npm run build`
+      siguen limpios. Riesgo: bajo — solo lógica pura, verificada por número.
 - [ ] **Fase 3 — Vista pública del equipo (`<VistaEquipo>`).** KPIs,
       gráfica, meta, ranking. Sin login, 4 queries de solo lectura — el
       candidato de menor riesgo, se compara en paralelo contra `index.html`

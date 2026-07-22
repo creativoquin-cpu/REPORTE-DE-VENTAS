@@ -1,4 +1,7 @@
+export * from "./fechas";
 export * from "./jornada";
 export * from "./festivos";
 export * from "./reparto";
 export * from "./metas";
+export * from "./filtros";
+export * from "./calcular";
