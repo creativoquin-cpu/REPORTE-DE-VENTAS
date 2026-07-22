@@ -5,3 +5,4 @@ export * from "./reparto";
 export * from "./metas";
 export * from "./filtros";
 export * from "./calcular";
+export * from "./equipo";

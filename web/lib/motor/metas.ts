@@ -12,6 +12,13 @@ import type { Meta } from "@/types/database";
 export const META_TOTAL_POR_DEFECTO = 200;
 export const META_PROPIAS_POR_DEFECTO = 160;
 
+/**
+ * Campos mínimos de una fila de meta que consume el cálculo. La vista pública
+ * solo lee `id,desde,total,propias` de la nube; el panel admin pasa `Meta`
+ * completo. Ambos satisfacen este tipo.
+ */
+export type MetaHistorial = Pick<Meta, "id" | "desde" | "total" | "propias">;
+
 /** Meta resuelta para un día: solo los dos números que consume el motor. */
 export interface MetaVigente {
   total: number;
@@ -21,7 +28,7 @@ export interface MetaVigente {
 }
 
 /** Ordena el historial por `desde` y, ante empate, por `id`. quin-admin.html:440 */
-export function metasOrden(historial: Meta[]): Meta[] {
+export function metasOrden<T extends MetaHistorial>(historial: T[]): T[] {
   return historial.slice().sort((a, b) => {
     if (a.desde !== b.desde) return a.desde < b.desde ? -1 : 1;
     return a.id - b.id; // misma fecha: manda la registrada después
@@ -29,7 +36,7 @@ export function metasOrden(historial: Meta[]): Meta[] {
 }
 
 /** Meta vigente para la clave "YYYY-MM-DD" dada. quin-admin.html:446 */
-export function metaEn(claveFecha: string, historial: Meta[]): MetaVigente {
+export function metaEn(claveFecha: string, historial: MetaHistorial[]): MetaVigente {
   let r: MetaVigente = {
     total: META_TOTAL_POR_DEFECTO,
     propias: META_PROPIAS_POR_DEFECTO,

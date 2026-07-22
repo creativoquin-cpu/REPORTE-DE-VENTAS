@@ -87,10 +87,22 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       20 Dropi, 118 combinado, corte de jornada de Effi, reparto 2/2/4,
       Tiko=9, Lucenith=24). `tsc --noEmit`, `npm run lint` y `npm run build`
       siguen limpios. Riesgo: bajo — solo lógica pura, verificada por número.
-- [ ] **Fase 3 — Vista pública del equipo (`<VistaEquipo>`).** KPIs,
-      gráfica, meta, ranking. Sin login, 4 queries de solo lectura — el
-      candidato de menor riesgo, se compara en paralelo contra `index.html`
-      en vivo. Riesgo: bajo.
+- [x] **Fase 3 — Vista pública del equipo (`<VistaEquipo>`).** Hecho:
+      `<VistaEquipo>` es ahora un Server Component asíncrono que hace las
+      mismas 4 consultas públicas de solo lectura de `index.html`
+      (`lib/data/equipo.ts`, con la anon key del lado servidor) y calcula el
+      resumen con el motor puro `lib/motor/equipo.ts` (reparto de fin de
+      semana, meta por día, KPIs). La gráfica es `<TeamChart>` sobre
+      `<ChartCanvas>`. Muestra KPIs, gráfica, meta del periodo y ranking (solo
+      puesto+nombre, nunca cifras por persona — regla 9), más los estados
+      vacío / sin conexión / días sin cerrar. Reemplaza los datos de ejemplo y
+      sirve tanto `/` como `/admin/vista-vendedor` (mismo componente, sin
+      iframe). Paridad verificada: 10 pruebas Vitest nuevas portadas de
+      `pruebas/test-vendedor-publico.js` (total 635, promedio 127, 2/5 en
+      meta, reparto [200,190,150,47,48]) — 79 pruebas verdes en total. Además,
+      render real confirmado contra la nube (julio 2026: 1129 prendas, meta
+      2240, ranking encabezado por FUNNELISTH LANDING). `tsc`, `lint` y
+      `build` limpios; `/` pasa a dinámico (datos en vivo). Riesgo: bajo.
 - [ ] **Fase 4 — Auth + pestaña "Cargar y validar".** Login, carga de
       Excel, filtros, calendario de días no laborables, panel de metas,
       cierre mensual, jornadas. La pantalla más grande — se divide en
