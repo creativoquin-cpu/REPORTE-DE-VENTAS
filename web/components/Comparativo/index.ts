@@ -1,0 +1,1 @@
+export { ComparativoPanel } from "./ComparativoPanel";

@@ -222,8 +222,20 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       `mesInicial`, `marcarRango`, `resumenSeleccion`) con **9 tests** → **136
       verdes**. Solo lectura. Reusa el estado del store (jornadas de la nube +
       bosquejo del Excel). `tsc`, `lint`, `build` limpios. Riesgo: bajo.
-- [ ] **Fase 7 — Pestaña "Comparativo".** Tabla mes a mes, gráfica
-      combinada, tablas por persona. Riesgo: medio.
+- [x] **Fase 7 — Pestaña "Comparativo".** Hecho: `<ComparativoPanel>` con los
+      dos toggles del original (incluir bosquejo / comparar el mismo número de
+      días), la tabla **mes a mes** (días, total, delta contra el mes anterior,
+      propias, Dropi, % propias, promedio, mejor y peor día, más el estado del
+      sello con su diferencia si el mes cambió después de cerrarse), la gráfica
+      **Evolución** (`<ComparativoChart>`: barras apiladas propias/Dropi + línea
+      de promedio por día sobre un segundo eje, con el total encima de cada
+      barra), la tabla **Top del mes** y las tablas de **vendedores** y
+      **tiendas** mes a mes. Motor nuevo `lib/motor/comparativo.ts`
+      (`resumenCmp`, `corteComun`, `delta`, `topCmp`, `tablaPersonas`,
+      `mesesComparables`, `difSellado`) con **17 tests** → **153 verdes**.
+      Reusa `datosDelMes()` de la Fase 5, así que el comparativo y el tablero no
+      pueden divergir. Solo lectura: no escribe nada. `tsc`, `lint`, `build`
+      limpios. Riesgo: medio.
 - [ ] **Fase 8 — Vista del vendedor (pestaña 5).** Reutiliza
       `<VistaEquipo>` directo, sin iframe. Riesgo: bajo.
 - [ ] **Fase 9 — Exportar imágenes de WhatsApp.** Canvas 1080×1920,
