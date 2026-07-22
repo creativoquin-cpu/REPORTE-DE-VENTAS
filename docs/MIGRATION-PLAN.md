@@ -107,6 +107,25 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       Excel, filtros, calendario de días no laborables, panel de metas,
       cierre mensual, jornadas. La pantalla más grande — se divide en
       sub-entregas por panel. Riesgo: alto.
+  - [x] **4a — Carga + cálculo + validación (solo cliente).** Hecho: los dos
+        cargadores de Excel parsean con SheetJS en el navegador
+        (`components/Cargar/CargadorExcel.tsx`), el estado vive en un store
+        Zustand (`lib/store/cargar.ts`, puerto de las variables globales +
+        `construirFiltros`), y todo recalcula en vivo con el motor puro. UI:
+        `<Filtros>` (prender/apagar estatus y vendedores + descartar NOVEDAD),
+        `<ResumenCarga>`, `<TablaPorDia>` (real vs repartida + bloques),
+        dos `<RankingTabla>` (Effi / Dropi, nunca mezclados) y `<Descartes>`
+        (cuentan/descartadas + detalle fila por fila). Se añadió el módulo puro
+        `lib/motor/diagnostico.ts` (el "Qué se descartó" separado del render)
+        con **5 pruebas nuevas** que cuadran fila por fila contra `calcular()`
+        y los números del §17 (98 contadas Effi, 20 Dropi) — **84 pruebas
+        verdes** en total. No escribe a la nube ni edita días no laborables
+        (`diasManuales` va vacío: solo aplica sábados/domingos/festivos
+        automáticos). `tsc`, `lint` y `build` limpios. Riesgo: bajo (aditivo,
+        solo lectura).
+  - [ ] **4b — Jornadas + cierre mensual + sync a Supabase.** Riesgo: alto.
+  - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
+  - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
       línea de meta escalonada. Riesgo: medio.
 - [ ] **Fase 6 — Pestaña "Calendario".** 2 meses con selección por
