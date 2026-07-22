@@ -146,9 +146,25 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
           el app viejo (`fotos:{cuando,p,d}`, `ajustes.est/ven` como mapa
           valor→bool, `meses.datos`). Cero escrituras. `tsc`, `lint` y `build`
           limpios. Riesgo: ninguno (solo lectura).
-    - [ ] **4b-2 — Escrituras dirigidas.** Cerrar/reabrir jornada, sellar/reabrir
-          mes, sync del bosquejo y del ranking público — mutaciones puntuales,
-          probadas en un Supabase branch. Riesgo: alto.
+    - [x] **4b-2 — Cerrar/reabrir jornada + ranking (escritura dirigida).**
+          Hecho: cerrar los días seleccionados (upsert de `jornadas`) y reabrir
+          un día (delete de esa fila con `cerrada = true`), más el reemplazo de
+          `ranking_publico` del mes tocado. Todo con **mutaciones puntuales**
+          (un día / un mes), nunca el borrado masivo del patrón snapshot. La
+          lógica de qué se escribe es pura y testeada: `lib/motor/nube.ts`
+          (`filaCierreJornada`, `rankingPublico`, `planificarCierre`,
+          `planificarReapertura`, `resumenCierre`) con **14 tests** → **106
+          verdes**. La capa que ejecuta es `lib/data/escribir-jornadas.ts`
+          (navegador, sesión admin → RLS autoriza). UI: `<JornadasPanel>` ahora
+          selecciona días, cierra y reabre. **Toda escritura pasa por una VISTA
+          PREVIA (dry-run, modo por defecto)** que muestra las filas exactas
+          antes de tocar nada; solo en modo "En vivo" y tras un segundo paso se
+          escribe a producción. NOTA: el MCP de Supabase se desconectó, así que
+          no se pudo crear un branch; el dry-run cumple el rol de "verificar
+          antes de prod". `tsc`, `lint`, `build` limpios.
+    - [ ] **4b-3 — Sellado mensual + sync del bosquejo.** Sellar/reabrir mes
+          (tabla `meses`) y subir el bosquejo (días sin cerrar) para que la vista
+          pública los muestre. Mismo enfoque dry-run. Riesgo: medio-alto.
   - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
   - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con

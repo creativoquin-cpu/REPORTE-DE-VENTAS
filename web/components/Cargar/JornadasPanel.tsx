@@ -1,22 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { claveFecha, bonita, MESES_L, type ResultadoCalculo } from "@/lib/motor";
+import {
+  claveFecha,
+  bonita,
+  hoyTexto,
+  MESES_L,
+  planificarCierre,
+  planificarReapertura,
+  type ResultadoCalculo,
+  type PlanCierre,
+  type PlanReapertura,
+} from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
+import { ejecutarCierre, ejecutarReapertura } from "@/lib/data/escribir-jornadas";
 import type { Jornada } from "@/types/database";
 
 /**
- * Panel "Jornadas" (Fase 4b-1, SOLO LECTURA). Puerto de renderCongelado()
- * (quin-admin.html:1452-1631) sin las acciones que escriben: muestra, mes por
- * mes, un calendario con el estado de cada día (cerrada / cargada sin cerrar /
- * con revisión / sin datos) y, al tocar un día cerrado, su detalle oficial.
+ * Panel "Jornadas" (Fases 4b-1 lectura + 4b-2 escritura). Puerto de
+ * renderCongelado() (quin-admin.html:1452-1631). Muestra, mes por mes, un
+ * calendario con el estado de cada día y permite CERRAR los días sin cerrar y
+ * REABRIR los cerrados.
  *
- * Cerrar, reabrir, marcar y borrar llegan en 4b-2 (escrituras dirigidas).
+ * Toda escritura pasa primero por una VISTA PREVIA (dry-run, el modo por
+ * defecto): se ve exactamente qué filas se escribirían antes de tocar nada. Solo
+ * en modo "En vivo" y tras un segundo paso deliberado se escribe a producción,
+ * con mutaciones puntuales (upsert del día / delete del día + reemplazo del
+ * ranking del mes), nunca borrados masivos.
  */
 
 const DOW = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];
 
-function DetalleJornada({ j }: { j: Jornada }) {
+type Pendiente =
+  | { tipo: "cierre"; plan: PlanCierre }
+  | { tipo: "reapertura"; plan: PlanReapertura };
+
+function DetalleJornada({ j, onReabrir }: { j: Jornada; onReabrir: (fecha: string) => void }) {
   const oficial = j.propias + j.dropi;
   const ultima = j.fotos.length ? j.fotos[j.fotos.length - 1] : null;
   const revisado = ultima ? ultima.p + ultima.d : null;
@@ -53,9 +72,12 @@ function DetalleJornada({ j }: { j: Jornada }) {
           </tr>
         </tbody>
       </table>
-      <p className="mt-2 text-[12px] text-d-txt-2">
-        Reabrir esta jornada llega en la próxima sub-entrega (4b-2).
-      </p>
+      <button
+        onClick={() => onReabrir(j.fecha)}
+        className="mt-3 rounded-full border border-red-500/40 px-3 py-1.5 text-[13px] font-semibold text-red-400 hover:bg-red-500/10"
+      >
+        Reabrir esta jornada
+      </button>
     </div>
   );
 }
@@ -65,13 +87,17 @@ function CalendarioMes({
   jornadas,
   dias,
   abierta,
-  onTocar,
+  seleccion,
+  onTocarCerrada,
+  onToggleSel,
 }: {
   mes: string;
   jornadas: Record<string, Jornada>;
   dias: ResultadoCalculo["dias"];
   abierta: string | null;
-  onTocar: (k: string) => void;
+  seleccion: Set<string>;
+  onTocarCerrada: (k: string) => void;
+  onToggleSel: (k: string) => void;
 }) {
   const [ano, mes1] = mes.split("-").map(Number);
   const hueco = (new Date(ano, mes1 - 1, 1).getDay() + 6) % 7;
@@ -86,7 +112,8 @@ function CalendarioMes({
     let clase = "border border-d-sup-3 bg-d-sup-3/40 text-d-txt-2";
     let val = "·";
     let tip = "";
-    let clickable = false;
+    let onClick: (() => void) | undefined;
+    let extra = "";
     if (j) {
       const revisada = j.fotos.length > 0;
       clase = revisada
@@ -94,19 +121,23 @@ function CalendarioMes({
         : "border border-turquesa/30 bg-turquesa/10 text-d-txt cursor-pointer";
       val = String(j.propias + j.dropi);
       tip = revisada ? "cerrada, con revisión" : "cerrada";
-      clickable = true;
+      onClick = () => onTocarCerrada(k);
+      if (abierta === k) extra = " outline outline-2 outline-turquesa";
     } else if (c) {
-      clase = "border border-d-sup-3 bg-d-sup-2 text-d-txt";
+      const sel = seleccion.has(k);
+      clase = sel
+        ? "border border-turquesa bg-turquesa/25 text-d-txt cursor-pointer"
+        : "border border-d-sup-3 bg-d-sup-2 text-d-txt cursor-pointer";
       val = String(c.propias + c.dropi);
       tip = "cargada, sin cerrar";
+      onClick = () => onToggleSel(k);
     }
-    const sel = abierta === k ? " outline outline-2 outline-turquesa" : "";
     celdas.push(
       <div
         key={k}
         title={tip}
-        onClick={clickable ? () => onTocar(k) : undefined}
-        className={`flex min-h-[46px] flex-col rounded-md p-1 ${clase}${sel}`}
+        onClick={onClick}
+        className={`flex min-h-[46px] flex-col rounded-md p-1 ${clase}${extra}`}
       >
         <span className="text-[11px] leading-none text-d-txt-2">{d}</span>
         <span className="mt-auto text-right text-[13px] font-semibold tabular-nums">{val}</span>
@@ -126,9 +157,91 @@ function CalendarioMes({
   );
 }
 
+function VistaPrevia({
+  pendiente,
+  modoVivo,
+  escribiendo,
+  onConfirmar,
+  onCancelar,
+}: {
+  pendiente: Pendiente;
+  modoVivo: boolean;
+  escribiendo: boolean;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}) {
+  return (
+    <div className="mt-4 rounded-card-sm border border-turquesa/30 bg-turquesa/[0.07] p-4 text-sm">
+      <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.12em] text-turquesa-prof">
+        {modoVivo ? "Confirmar escritura" : "Vista previa — no se escribe nada"}
+      </p>
+
+      {pendiente.tipo === "cierre" ? (
+        <div className="text-d-txt">
+          <p className="mb-2">{pendiente.plan.resumen}</p>
+          <p className="mb-1 font-semibold">
+            Upsert en <code className="text-turquesa">jornadas</code> ({pendiente.plan.jornadas.length}):
+          </p>
+          <ul className="mb-2 space-y-0.5 text-[13px] text-d-txt-2">
+            {pendiente.plan.jornadas.map((f) => (
+              <li key={f.fecha}>
+                {bonita(f.fecha)} → {f.propias} propias · {f.dropi} Dropi ·{" "}
+                {f.fotos.length ? `+1 foto (${f.fotos.length} total)` : `cerrada el ${f.cerrada_el}`}
+              </li>
+            ))}
+          </ul>
+          <p className="text-[13px] text-d-txt-2">
+            Reemplazar <code className="text-turquesa">ranking_publico</code> de:{" "}
+            {pendiente.plan.ranking.map((r) => `${r.mes} (${r.filas.length})`).join(", ") || "—"}
+          </p>
+        </div>
+      ) : (
+        <div className="text-d-txt">
+          <p className="mb-2">
+            Reabrir <b>{bonita(pendiente.plan.fecha)}</b>: se borra esa jornada oficial y deja de ser
+            cifra oficial.
+          </p>
+          <p className="mb-1 text-[13px] text-d-txt-2">
+            Delete en <code className="text-turquesa">jornadas</code> donde fecha ={" "}
+            {pendiente.plan.fecha} y cerrada = true.
+          </p>
+          <p className="text-[13px] text-d-txt-2">
+            Reemplazar <code className="text-turquesa">ranking_publico</code> de:{" "}
+            {pendiente.plan.ranking.map((r) => `${r.mes} (${r.filas.length})`).join(", ")}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-3 flex gap-2">
+        {modoVivo && (
+          <button
+            onClick={onConfirmar}
+            disabled={escribiendo}
+            className="rounded-full bg-red-500 px-4 py-2 text-[13px] font-bold text-white hover:brightness-110 disabled:opacity-60"
+          >
+            {escribiendo ? "Escribiendo…" : "Escribir en producción"}
+          </button>
+        )}
+        <button
+          onClick={onCancelar}
+          disabled={escribiendo}
+          className="rounded-full border border-d-sup-3 px-4 py-2 text-[13px] font-semibold text-d-txt-2 hover:bg-d-sup-2 disabled:opacity-60"
+        >
+          {modoVivo ? "Cancelar" : "Cerrar vista previa"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
-  const { jornadas } = useCargar();
+  const { jornadas, modoEscritura, setModoEscritura, aplicarCierreLocal, aplicarReaperturaLocal } =
+    useCargar();
   const [abierta, setAbierta] = useState<string | null>(null);
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
+  const [pendiente, setPendiente] = useState<Pendiente | null>(null);
+  const [escribiendo, setEscribiendo] = useState(false);
+  const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { dias, claves } = resultado;
 
   const mesesSet = new Set<string>();
@@ -140,9 +253,77 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
 
   const pendTot = claves.filter((k) => !jornadas[k]).length;
   const histTot = Object.keys(jornadas).length;
+  const modoVivo = modoEscritura === "vivo";
 
-  function tocar(k: string) {
+  function toggleDetalle(k: string) {
     setAbierta((prev) => (prev === k ? null : k));
+  }
+  function toggleSel(k: string) {
+    setSeleccion((prev) => {
+      const s = new Set(prev);
+      if (s.has(k)) s.delete(k);
+      else s.add(k);
+      return s;
+    });
+  }
+  function marcarMes(m: string) {
+    setSeleccion((prev) => {
+      const s = new Set(prev);
+      claves.forEach((k) => {
+        if (k.slice(0, 7) === m && !jornadas[k]) s.add(k);
+      });
+      return s;
+    });
+  }
+  function limpiarMes(m: string) {
+    setSeleccion((prev) => {
+      const s = new Set(prev);
+      [...s].forEach((k) => {
+        if (k.slice(0, 7) === m) s.delete(k);
+      });
+      return s;
+    });
+  }
+
+  function prepararCierre() {
+    setMensaje(null);
+    const plan = planificarCierre(
+      [...seleccion],
+      dias,
+      jornadas,
+      hoyTexto(),
+      new Date().toISOString()
+    );
+    if (!plan.jornadas.length) return;
+    setPendiente({ tipo: "cierre", plan });
+  }
+  function prepararReapertura(fecha: string) {
+    setMensaje(null);
+    setPendiente({ tipo: "reapertura", plan: planificarReapertura(fecha, jornadas, dias) });
+  }
+
+  async function confirmar() {
+    if (!pendiente) return;
+    setEscribiendo(true);
+    const res =
+      pendiente.tipo === "cierre"
+        ? await ejecutarCierre(pendiente.plan)
+        : await ejecutarReapertura(pendiente.plan);
+    setEscribiendo(false);
+    if (!res.ok) {
+      setMensaje({ ok: false, texto: `No se pudo escribir: ${res.error}` });
+      return;
+    }
+    if (pendiente.tipo === "cierre") {
+      aplicarCierreLocal(pendiente.plan.jornadas);
+      setSeleccion(new Set());
+      setMensaje({ ok: true, texto: pendiente.plan.resumen });
+    } else {
+      aplicarReaperturaLocal(pendiente.plan.fecha);
+      setAbierta(null);
+      setMensaje({ ok: true, texto: `Reabrí la jornada ${bonita(pendiente.plan.fecha)}.` });
+    }
+    setPendiente(null);
   }
 
   return (
@@ -204,31 +385,101 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
                 <span className="text-d-txt-2">
                   {" · "}
                   {ksMes} día{ksMes === 1 ? "" : "s"} · {suma} prendas ·{" "}
-                  {pend ? (
-                    <b className="text-amber-400">{pend} sin cerrar</b>
-                  ) : (
-                    "todas cerradas"
-                  )}
+                  {pend ? <b className="text-amber-400">{pend} sin cerrar</b> : "todas cerradas"}
                   {rev ? ` · ${rev} con revisión` : ""}
                 </span>
               </summary>
+
+              {pend > 0 && (
+                <p className="mt-2 flex gap-3 text-[12px]">
+                  <button
+                    onClick={() => marcarMes(m)}
+                    className="font-semibold text-turquesa hover:underline"
+                  >
+                    marcar las {pend} sin cerrar
+                  </button>
+                  <button
+                    onClick={() => limpiarMes(m)}
+                    className="font-semibold text-d-txt-2 hover:underline"
+                  >
+                    quitar marcas
+                  </button>
+                </p>
+              )}
+
               <CalendarioMes
                 mes={m}
                 jornadas={jornadas}
                 dias={dias}
                 abierta={abierta}
-                onTocar={tocar}
+                seleccion={seleccion}
+                onTocarCerrada={toggleDetalle}
+                onToggleSel={toggleSel}
               />
               {abierta && abierta.slice(0, 7) === m && jornadas[abierta] && (
-                <DetalleJornada j={jornadas[abierta]} />
+                <DetalleJornada j={jornadas[abierta]} onReabrir={prepararReapertura} />
               )}
             </details>
           );
         })}
 
+        {/* ---- barra de escritura ---- */}
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-d-sup-3 pt-4">
+          <div className="inline-flex overflow-hidden rounded-full border border-d-sup-3 text-[13px]">
+            <button
+              onClick={() => setModoEscritura("preview")}
+              className={`px-3 py-1.5 font-semibold ${
+                !modoVivo ? "bg-turquesa text-d-en-turquesa" : "text-d-txt-2"
+              }`}
+            >
+              Vista previa
+            </button>
+            <button
+              onClick={() => setModoEscritura("vivo")}
+              className={`px-3 py-1.5 font-semibold ${
+                modoVivo ? "bg-red-500 text-white" : "text-d-txt-2"
+              }`}
+            >
+              En vivo
+            </button>
+          </div>
+          <button
+            onClick={prepararCierre}
+            disabled={seleccion.size === 0}
+            className="rounded-full bg-turquesa px-4 py-2 text-[13px] font-bold text-d-en-turquesa hover:brightness-110 disabled:cursor-default disabled:opacity-50"
+          >
+            Cerrar seleccionadas{seleccion.size ? ` (${seleccion.size})` : ""}
+          </button>
+          <span className="text-[12px] text-d-txt-2">
+            {modoVivo
+              ? "Modo en vivo: la confirmación escribe en producción."
+              : "Vista previa: revisás antes de escribir; nada toca la nube."}
+          </span>
+        </div>
+
+        {pendiente && (
+          <VistaPrevia
+            pendiente={pendiente}
+            modoVivo={modoVivo}
+            escribiendo={escribiendo}
+            onConfirmar={confirmar}
+            onCancelar={() => setPendiente(null)}
+          />
+        )}
+
+        {mensaje && (
+          <p
+            className={`mt-3 text-sm ${mensaje.ok ? "text-emerald-400" : "text-red-400"}`}
+          >
+            {mensaje.ok ? "Listo: " : ""}
+            {mensaje.texto}
+          </p>
+        )}
+
         {histTot > 0 && (
           <p className="mt-3 text-[12px] text-d-txt-2">
-            Toca un día <b className="text-d-txt">cerrado</b> para ver su detalle.
+            Toca un día <b className="text-d-txt">cerrado</b> para ver su detalle y reabrirlo. Toca un
+            día <b className="text-d-txt">sin cerrar</b> para marcarlo.
           </p>
         )}
       </div>

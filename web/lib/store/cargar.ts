@@ -45,7 +45,16 @@ interface CargarState {
   ajustesEst: Record<string, boolean>;
   ajustesVen: Record<string, boolean>;
 
+  // --- escritura (4b-2) ---
+  /** "preview" = dry-run (default, no escribe); "vivo" = escribe a producción. */
+  modoEscritura: "preview" | "vivo";
+
   hidratarNube: (e: EstadoAdminInicial) => void;
+  setModoEscritura: (m: "preview" | "vivo") => void;
+  /** Refleja localmente un cierre ya confirmado en la nube. */
+  aplicarCierreLocal: (filas: Jornada[]) => void;
+  /** Refleja localmente una reapertura ya confirmada en la nube. */
+  aplicarReaperturaLocal: (fecha: string) => void;
   ponerEstadoDropi: (e: EstadoArchivo) => void;
   ponerEstadoEffi: (e: EstadoArchivo) => void;
   cargarDropi: (filas: FilaExcel[] | null) => void;
@@ -100,6 +109,21 @@ export const useCargar = create<CargarState>((set) => ({
   nubeError: false,
   ajustesEst: {},
   ajustesVen: {},
+  modoEscritura: "preview",
+
+  setModoEscritura: (modoEscritura) => set({ modoEscritura }),
+  aplicarCierreLocal: (filas) =>
+    set((s) => {
+      const jornadas = { ...s.jornadas };
+      filas.forEach((f) => (jornadas[f.fecha] = f));
+      return { jornadas };
+    }),
+  aplicarReaperturaLocal: (fecha) =>
+    set((s) => {
+      const jornadas = { ...s.jornadas };
+      delete jornadas[fecha];
+      return { jornadas };
+    }),
 
   hidratarNube: (e) =>
     set((s) => {

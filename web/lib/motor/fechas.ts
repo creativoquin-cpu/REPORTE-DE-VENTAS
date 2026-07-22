@@ -34,6 +34,25 @@ export function bonita(k: string | null | undefined): string {
   return DIAS[fdate(k).getDay()] + " " + p[2] + "-" + MESES[+p[1] - 1];
 }
 
+/**
+ * Sello de cierre legible "10-jul-2026 09:05". Puerto de hoyTexto()
+ * (quin-admin.html:940-944). Recibe la fecha como parámetro para ser pura y
+ * testeable; por defecto usa el instante actual.
+ */
+export function hoyTexto(f: Date = new Date()): string {
+  return (
+    f.getDate() +
+    "-" +
+    MESES[f.getMonth()] +
+    "-" +
+    f.getFullYear() +
+    " " +
+    String(f.getHours()).padStart(2, "0") +
+    ":" +
+    String(f.getMinutes()).padStart(2, "0")
+  );
+}
+
 /** Texto → número tolerante a coma decimal y basura. quin-admin.html:419 */
 export function aNumero(v: unknown): number {
   if (v == null || v === "") return 0;

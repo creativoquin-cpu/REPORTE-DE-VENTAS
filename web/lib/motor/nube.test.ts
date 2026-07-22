@@ -1,6 +1,26 @@
 import { describe, it, expect } from "vitest";
-import { filaCierreJornada, resumenCierre, rankingPublico } from "./nube";
+import {
+  filaCierreJornada,
+  resumenCierre,
+  rankingPublico,
+  planificarCierre,
+  planificarReapertura,
+} from "./nube";
 import type { Jornada } from "@/types/database";
+
+function jor(fecha: string, ven: Record<string, number>): Jornada {
+  return {
+    fecha,
+    propias: Object.values(ven).reduce((a, b) => a + b, 0),
+    dropi: 0,
+    ven,
+    tie: {},
+    cerrada: true,
+    cerrada_el: null,
+    fotos: [],
+    actualizado: "I0",
+  };
+}
 
 const cifra = { propias: 10, dropi: 4, ven: { Ana: 7, Beto: 3 }, tie: { T1: 4 } };
 
@@ -95,5 +115,59 @@ describe("rankingPublico", () => {
     const oficiales = { "2026-07-01": { ven: { Ana: 5 } } };
     const r = rankingPublico(oficiales, {}, "2026-07");
     expect(Object.keys(r[0]).sort()).toEqual(["mes", "nombre", "puesto"]);
+  });
+});
+
+describe("planificarCierre", () => {
+  const cifras = {
+    "2026-07-10": { propias: 10, dropi: 4, ven: { Ana: 7, Beto: 3 }, tie: { T1: 4 } },
+    "2026-07-11": { propias: 6, dropi: 2, ven: { Beto: 6 }, tie: { T2: 2 } },
+  };
+
+  it("cierra los días seleccionados y recalcula el ranking del mes", () => {
+    const plan = planificarCierre(["2026-07-10"], cifras, {}, "10-jul 09:00", "I1");
+    expect(plan.nuevas).toBe(1);
+    expect(plan.actualizadas).toBe(0);
+    expect(plan.jornadas).toHaveLength(1);
+    expect(plan.jornadas[0].fecha).toBe("2026-07-10");
+    expect(plan.jornadas[0].cerrada).toBe(true);
+    // Ranking del mes: Ana 7 (cerrada) + Beto 3 (cerrada) + Beto 6 (bosquejo 11) = Beto 9, Ana 7
+    expect(plan.ranking).toHaveLength(1);
+    expect(plan.ranking[0].mes).toBe("2026-07");
+    expect(plan.ranking[0].filas).toEqual([
+      { mes: "2026-07", puesto: 1, nombre: "Beto" },
+      { mes: "2026-07", puesto: 2, nombre: "Ana" },
+    ]);
+  });
+
+  it("días de meses distintos → un reemplazo de ranking por mes", () => {
+    const multi = {
+      "2026-07-10": cifras["2026-07-10"],
+      "2026-06-30": { propias: 5, dropi: 1, ven: { Ana: 5 }, tie: {} },
+    };
+    const plan = planificarCierre(["2026-07-10", "2026-06-30"], multi, {}, "x", "I1");
+    expect(plan.ranking.map((r) => r.mes).sort()).toEqual(["2026-06", "2026-07"]);
+  });
+
+  it("ignora una clave seleccionada sin cifra (no rompe)", () => {
+    const plan = planificarCierre(["2026-07-99"], cifras, {}, "x", "I1");
+    expect(plan.jornadas).toHaveLength(0);
+    expect(plan.resumen).toBe("No había nada que cerrar.");
+  });
+});
+
+describe("planificarReapertura", () => {
+  it("saca ese día del ranking; el resto del mes queda", () => {
+    const jornadas = { "2026-07-01": jor("2026-07-01", { Ana: 5 }), "2026-07-02": jor("2026-07-02", { Beto: 3 }) };
+    const plan = planificarReapertura("2026-07-01", jornadas, {});
+    expect(plan.fecha).toBe("2026-07-01");
+    expect(plan.ranking[0].filas).toEqual([{ mes: "2026-07", puesto: 1, nombre: "Beto" }]);
+  });
+
+  it("si el día reabierto sigue en el Excel, vuelve a contar como bosquejo", () => {
+    const jornadas = { "2026-07-01": jor("2026-07-01", { Ana: 5 }) };
+    const cifras = { "2026-07-01": { propias: 5, dropi: 0, ven: { Ana: 5 }, tie: {} } };
+    const plan = planificarReapertura("2026-07-01", jornadas, cifras);
+    expect(plan.ranking[0].filas).toEqual([{ mes: "2026-07", puesto: 1, nombre: "Ana" }]);
   });
 });
