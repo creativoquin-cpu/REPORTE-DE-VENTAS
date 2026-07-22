@@ -160,6 +160,37 @@ export function planificarCierre(
   return { jornadas: filas, ranking, resumen: resumenCierre(nuevas, actualizadas), nuevas, actualizadas };
 }
 
+/**
+ * Filas de bosquejo (días sin cerrar) para subir a `jornadas` con
+ * `cerrada:false`, de modo que la vista pública muestre las cifras
+ * preliminares. Puerto de filasDeBosquejo() (quin-admin.html:749-758): sube
+ * cada día del cálculo que aún no esté cerrado oficialmente (si ya está
+ * cerrado, eso manda y el bosquejo no lo pisa).
+ */
+export function filasDeBosquejo(
+  cifras: Record<string, CifraDia>,
+  jornadas: Record<string, unknown>,
+  ahoraISO: string
+): Jornada[] {
+  const out: Jornada[] = [];
+  Object.keys(cifras).forEach((k) => {
+    if (jornadas[k]) return;
+    const v = cifras[k];
+    out.push({
+      fecha: k,
+      propias: v.propias,
+      dropi: v.dropi,
+      ven: v.ven ?? {},
+      tie: v.tie ?? {},
+      cerrada: false,
+      cerrada_el: null,
+      fotos: [],
+      actualizado: ahoraISO,
+    });
+  });
+  return out;
+}
+
 /** Qué cambia al reabrir una jornada: se borra ese día y se recalcula su mes. */
 export interface PlanReapertura {
   fecha: string;

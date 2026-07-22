@@ -14,6 +14,7 @@ import {
 } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { ejecutarCierre, ejecutarReapertura } from "@/lib/data/escribir-jornadas";
+import { prepararBosquejo, ejecutarBosquejo, type PlanBosquejo } from "@/lib/data/escribir-bosquejo";
 import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
 import type { Jornada } from "@/types/database";
 
@@ -34,7 +35,8 @@ const DOW = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];
 
 type Pendiente =
   | { tipo: "cierre"; plan: PlanCierre }
-  | { tipo: "reapertura"; plan: PlanReapertura };
+  | { tipo: "reapertura"; plan: PlanReapertura }
+  | { tipo: "bosquejo"; plan: PlanBosquejo };
 
 function DetalleJornada({ j, onReabrir }: { j: Jornada; onReabrir: (fecha: string) => void }) {
   const oficial = j.propias + j.dropi;
@@ -196,7 +198,7 @@ function VistaPrevia({
             {pendiente.plan.ranking.map((r) => `${r.mes} (${r.filas.length})`).join(", ") || "—"}
           </p>
         </div>
-      ) : (
+      ) : pendiente.tipo === "reapertura" ? (
         <div className="text-d-txt">
           <p className="mb-2">
             Reabrir <b>{bonita(pendiente.plan.fecha)}</b>: se borra esa jornada oficial y deja de ser
@@ -205,6 +207,24 @@ function VistaPrevia({
           <p className="mb-1 text-[13px] text-d-txt-2">
             Delete en <code className="text-turquesa">jornadas</code> donde fecha ={" "}
             {pendiente.plan.fecha} y cerrada = true.
+          </p>
+          <p className="text-[13px] text-d-txt-2">
+            Reemplazar <code className="text-turquesa">ranking_publico</code> de:{" "}
+            {pendiente.plan.ranking.map((r) => `${r.mes} (${r.filas.length})`).join(", ")}
+          </p>
+        </div>
+      ) : (
+        <div className="text-d-txt">
+          <p className="mb-2">
+            Publicar los días <b>sin cerrar</b> para que el equipo los vea en la vista pública.
+          </p>
+          <p className="mb-1 text-[13px] text-d-txt-2">
+            Upsert de <b>{pendiente.plan.upserts.length}</b> día(s) sin cerrar en{" "}
+            <code className="text-turquesa">jornadas</code> (cerrada:false).
+          </p>
+          <p className="mb-1 text-[13px] text-d-txt-2">
+            Borrar <b>{pendiente.plan.borrar.length}</b> borrador(es) viejos (solo cerrada:false,
+            nunca oficiales).
           </p>
           <p className="text-[13px] text-d-txt-2">
             Reemplazar <code className="text-turquesa">ranking_publico</code> de:{" "}
@@ -241,6 +261,7 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [pendiente, setPendiente] = useState<Pendiente | null>(null);
   const [escribiendo, setEscribiendo] = useState(false);
+  const [preparando, setPreparando] = useState(false);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
   const { dias, claves } = resultado;
 
@@ -301,6 +322,19 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
     setMensaje(null);
     setPendiente({ tipo: "reapertura", plan: planificarReapertura(fecha, jornadas, dias) });
   }
+  async function prepararBosquejoAccion() {
+    setMensaje(null);
+    setPreparando(true);
+    const f = new Date();
+    const mesActual = `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, "0")}`;
+    const { plan, error } = await prepararBosquejo(dias, jornadas, mesActual);
+    setPreparando(false);
+    if (error || !plan) {
+      setMensaje({ ok: false, texto: `No se pudo preparar el bosquejo: ${error}` });
+      return;
+    }
+    setPendiente({ tipo: "bosquejo", plan });
+  }
 
   async function confirmar() {
     if (!pendiente) return;
@@ -308,7 +342,9 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
     const res =
       pendiente.tipo === "cierre"
         ? await ejecutarCierre(pendiente.plan)
-        : await ejecutarReapertura(pendiente.plan);
+        : pendiente.tipo === "reapertura"
+          ? await ejecutarReapertura(pendiente.plan)
+          : await ejecutarBosquejo(pendiente.plan);
     setEscribiendo(false);
     if (!res.ok) {
       setMensaje({ ok: false, texto: `No se pudo escribir: ${res.error}` });
@@ -318,10 +354,15 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
       aplicarCierreLocal(pendiente.plan.jornadas);
       setSeleccion(new Set());
       setMensaje({ ok: true, texto: pendiente.plan.resumen });
-    } else {
+    } else if (pendiente.tipo === "reapertura") {
       aplicarReaperturaLocal(pendiente.plan.fecha);
       setAbierta(null);
       setMensaje({ ok: true, texto: `Reabrí la jornada ${bonita(pendiente.plan.fecha)}.` });
+    } else {
+      setMensaje({
+        ok: true,
+        texto: `Publiqué ${pendiente.plan.upserts.length} día(s) sin cerrar en la vista pública.`,
+      });
     }
     setPendiente(null);
   }
@@ -433,6 +474,15 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
           >
             Cerrar seleccionadas{seleccion.size ? ` (${seleccion.size})` : ""}
           </button>
+          {pendTot > 0 && (
+            <button
+              onClick={prepararBosquejoAccion}
+              disabled={preparando}
+              className="rounded-full border border-turquesa/40 px-4 py-2 text-[13px] font-semibold text-turquesa hover:bg-turquesa/10 disabled:opacity-50"
+            >
+              {preparando ? "Preparando…" : `Publicar días sin cerrar (${pendTot})`}
+            </button>
+          )}
           <span className="text-[12px] text-d-txt-2">
             {modoVivo
               ? "Modo en vivo: la confirmación escribe en producción."

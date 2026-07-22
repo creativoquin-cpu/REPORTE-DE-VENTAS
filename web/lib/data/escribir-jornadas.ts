@@ -17,7 +17,8 @@ export interface ResultadoEscritura {
   error?: string;
 }
 
-async function reemplazarRanking(
+/** Reemplaza (borra e inserta) las filas de ranking_publico de cada mes dado. */
+export async function reemplazarRanking(
   sb: ReturnType<typeof createClient>,
   ranking: RankingReemplazo[]
 ): Promise<ResultadoEscritura> {

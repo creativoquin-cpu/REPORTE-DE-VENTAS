@@ -5,6 +5,7 @@ import {
   rankingPublico,
   planificarCierre,
   planificarReapertura,
+  filasDeBosquejo,
 } from "./nube";
 import type { Jornada } from "@/types/database";
 
@@ -169,5 +170,31 @@ describe("planificarReapertura", () => {
     const cifras = { "2026-07-01": { propias: 5, dropi: 0, ven: { Ana: 5 }, tie: {} } };
     const plan = planificarReapertura("2026-07-01", jornadas, cifras);
     expect(plan.ranking[0].filas).toEqual([{ mes: "2026-07", puesto: 1, nombre: "Ana" }]);
+  });
+});
+
+describe("filasDeBosquejo", () => {
+  const cifras = {
+    "2026-07-01": { propias: 5, dropi: 1, ven: { Ana: 5 }, tie: { T1: 1 } },
+    "2026-07-02": { propias: 3, dropi: 0, ven: { Beto: 3 }, tie: {} },
+  };
+  it("sube los días sin cerrar como cerrada:false, y omite los ya cerrados", () => {
+    const jornadas = { "2026-07-01": {} }; // 01 ya cerrado
+    const filas = filasDeBosquejo(cifras, jornadas, "I1");
+    expect(filas).toHaveLength(1);
+    expect(filas[0]).toEqual({
+      fecha: "2026-07-02",
+      propias: 3,
+      dropi: 0,
+      ven: { Beto: 3 },
+      tie: {},
+      cerrada: false,
+      cerrada_el: null,
+      fotos: [],
+      actualizado: "I1",
+    });
+  });
+  it("sin nada cerrado, sube todos", () => {
+    expect(filasDeBosquejo(cifras, {}, "I1")).toHaveLength(2);
   });
 });

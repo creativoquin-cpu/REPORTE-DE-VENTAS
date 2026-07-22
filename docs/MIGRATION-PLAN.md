@@ -173,11 +173,17 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
           **automático** del app viejo NO se porta a propósito: acá se sella a
           mano para no escribir en silencio al abrir la página. `tsc`, `lint`,
           `build` limpios. Riesgo: medio.
-    - [ ] **4b-4 — Sync del bosquejo.** Subir los días sin cerrar (cerrada:false)
-          a `jornadas` para que la vista pública los muestre, con reconciliación
-          de borradores viejos y actualización del ranking del mes. Es el write
-          de mayor alcance (varias filas, impacta la vista pública en vivo), por
-          eso va aparte, con dry-run. Riesgo: medio-alto.
+    - [x] **4b-4 — Sync del bosquejo.** Hecho: botón "Publicar días sin cerrar"
+          en `<JornadasPanel>` que sube los días del cálculo aún sin cerrar a
+          `jornadas` con `cerrada:false` para que la vista pública muestre las
+          cifras preliminares. `lib/motor/nube.ts` → `filasDeBosquejo` (pura, +2
+          tests → **113 verdes**); `lib/data/escribir-bosquejo.ts` reconcilia
+          **contra la nube** (lee los borradores existentes y borra los que ya no
+          están en el cálculo) en vez del snapshot de localStorage del app viejo,
+          y recalcula el ranking del mes en curso. Todo borrado lleva el guard
+          `.eq("cerrada", false)`: nunca toca una jornada oficial. Mismo dry-run.
+          `tsc`, `lint`, `build` limpios. Riesgo: medio-alto (impacta la vista
+          pública en vivo) — mitigado por la vista previa.
   - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
   - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
