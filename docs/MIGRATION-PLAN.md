@@ -103,10 +103,12 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       render real confirmado contra la nube (julio 2026: 1129 prendas, meta
       2240, ranking encabezado por FUNNELISTH LANDING). `tsc`, `lint` y
       `build` limpios; `/` pasa a dinámico (datos en vivo). Riesgo: bajo.
-- [ ] **Fase 4 — Auth + pestaña "Cargar y validar".** Login, carga de
-      Excel, filtros, calendario de días no laborables, panel de metas,
-      cierre mensual, jornadas. La pantalla más grande — se divide en
-      sub-entregas por panel. Riesgo: alto.
+- [x] **Fase 4 — Auth + pestaña "Cargar y validar".** Completa (login ya venía
+      de la Fase 1). La pestaña 1 quedó entera: carga de Excel + filtros +
+      validación (4a), lectura de la nube + jornadas + cierre + sync con
+      escrituras dirigidas y dry-run (4b), panel de metas (4c) y editor de días
+      no laborables (4d). Toda escritura a producción pasa por una vista previa
+      (dry-run) por defecto. Riesgo original alto, mitigado por el dry-run.
   - [x] **4a — Carga + cálculo + validación (solo cliente).** Hecho: los dos
         cargadores de Excel parsean con SheetJS en el navegador
         (`components/Cargar/CargadorExcel.tsx`), el estado vive en un store
@@ -194,7 +196,12 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
         antes de escribir). El campo de metas se resincroniza con la vigente en
         render (patrón recomendado, sin efecto). `tsc`, `lint`, `build` limpios.
         Riesgo: bajo-medio.
-  - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
+  - [x] **4d — Editor de días no laborables** (`dias_manuales`). Hecho:
+        `<DiasNoLaborablesPanel>` agrega/quita días extra a mano (upsert/delete
+        puntual en `dias_manuales`), que ya se leían en 4b-1 y alimentan el
+        reparto — también en la vista pública, por eso pasa por el mismo
+        dry-run. `lib/data/escribir-dias.ts` + acciones en el store. `tsc`,
+        `lint`, `build` limpios. Riesgo: bajo.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
       línea de meta escalonada. Riesgo: medio.
 - [ ] **Fase 6 — Pestaña "Calendario".** 2 meses con selección por

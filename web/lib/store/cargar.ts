@@ -62,6 +62,9 @@ interface CargarState {
   aplicarGuardarMetaLocal: (meta: Meta) => void;
   /** Refleja localmente una meta quitada por id. */
   aplicarQuitarMetaLocal: (id: number) => void;
+  /** Refleja localmente un día no laborable marcado/quitado. */
+  aplicarMarcarDiaLocal: (fecha: string) => void;
+  aplicarQuitarDiaLocal: (fecha: string) => void;
   ponerEstadoDropi: (e: EstadoArchivo) => void;
   ponerEstadoEffi: (e: EstadoArchivo) => void;
   cargarDropi: (filas: FilaExcel[] | null) => void;
@@ -136,6 +139,14 @@ export const useCargar = create<CargarState>((set) => ({
   aplicarGuardarMetaLocal: (meta) =>
     set((s) => ({ metas: [...s.metas.filter((m) => m.id !== meta.id), meta] })),
   aplicarQuitarMetaLocal: (id) => set((s) => ({ metas: s.metas.filter((m) => m.id !== id) })),
+  aplicarMarcarDiaLocal: (fecha) =>
+    set((s) => ({ diasManuales: { ...s.diasManuales, [fecha]: true } })),
+  aplicarQuitarDiaLocal: (fecha) =>
+    set((s) => {
+      const diasManuales = { ...s.diasManuales };
+      delete diasManuales[fecha];
+      return { diasManuales };
+    }),
 
   hidratarNube: (e) =>
     set((s) => {
