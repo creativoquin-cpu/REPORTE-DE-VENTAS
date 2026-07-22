@@ -162,9 +162,22 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
           escribe a producción. NOTA: el MCP de Supabase se desconectó, así que
           no se pudo crear un branch; el dry-run cumple el rol de "verificar
           antes de prod". `tsc`, `lint`, `build` limpios.
-    - [ ] **4b-3 — Sellado mensual + sync del bosquejo.** Sellar/reabrir mes
-          (tabla `meses`) y subir el bosquejo (días sin cerrar) para que la vista
-          pública los muestre. Mismo enfoque dry-run. Riesgo: medio-alto.
+    - [x] **4b-3 — Sellado mensual (escritura dirigida).** Hecho: sellar (cerrar
+          a mano) y reabrir un mes desde `<CierrePanel>`, con upsert puntual de
+          una fila de `meses`. Motor puro nuevo en `lib/motor/cierre.ts`
+          (`resumenMes`, `sellarMes`, `reabrirMesDatos`) con **5 tests** → **111
+          verdes**; capa de escritura `lib/data/escribir-meses.ts`. Se sumó
+          `metas` al cargador admin y al store (las necesita el resumen sellado).
+          El toggle Vista previa / En vivo se extrajo a `<ModoEscrituraToggle>`,
+          compartido por jornadas y cierre — misma garantía dry-run. El sellado
+          **automático** del app viejo NO se porta a propósito: acá se sella a
+          mano para no escribir en silencio al abrir la página. `tsc`, `lint`,
+          `build` limpios. Riesgo: medio.
+    - [ ] **4b-4 — Sync del bosquejo.** Subir los días sin cerrar (cerrada:false)
+          a `jornadas` para que la vista pública los muestre, con reconciliación
+          de borradores viejos y actualización del ranking del mes. Es el write
+          de mayor alcance (varias filas, impacta la vista pública en vivo), por
+          eso va aparte, con dry-run. Riesgo: medio-alto.
   - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
   - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con

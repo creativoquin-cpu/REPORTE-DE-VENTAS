@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Jornada, MesCerrado, AjustesDatos } from "@/types/database";
+import type { Jornada, MesCerrado, AjustesDatos, Meta } from "@/types/database";
 
 /**
  * Carga del estado privado del admin para la pestaña "Cargar y validar"
@@ -19,6 +19,8 @@ import type { Jornada, MesCerrado, AjustesDatos } from "@/types/database";
 export interface EstadoAdminInicial {
   /** Jornadas oficiales (cerradas), con su detalle privado. */
   jornadas: Jornada[];
+  /** Historial de metas (para el resumen sellado del mes). */
+  metas: Meta[];
   /** Sellos mensuales. */
   meses: MesCerrado[];
   /** Fechas marcadas a mano como no laborables. */
@@ -31,6 +33,7 @@ export interface EstadoAdminInicial {
 
 const VACIO: EstadoAdminInicial = {
   jornadas: [],
+  metas: [],
   meses: [],
   diasManuales: [],
   ajustes: null,
@@ -40,19 +43,21 @@ const VACIO: EstadoAdminInicial = {
 export async function cargarEstadoAdmin(): Promise<EstadoAdminInicial> {
   const sb = await createClient();
 
-  const [rJor, rMes, rDia, rAju] = await Promise.all([
+  const [rJor, rMet, rMes, rDia, rAju] = await Promise.all([
     sb.from("jornadas").select("*").eq("cerrada", true),
+    sb.from("metas").select("*"),
     sb.from("meses").select("*"),
     sb.from("dias_manuales").select("fecha"),
     sb.from("ajustes").select("datos").eq("id", 1).maybeSingle(),
   ]);
 
-  if (rJor.error || rMes.error || rDia.error) {
+  if (rJor.error || rMet.error || rMes.error || rDia.error) {
     return { ...VACIO, error: true };
   }
 
   return {
     jornadas: (rJor.data ?? []) as Jornada[],
+    metas: (rMet.data ?? []) as Meta[],
     meses: (rMes.data ?? []) as MesCerrado[],
     diasManuales: ((rDia.data ?? []) as { fecha: string }[]).map((x) => x.fecha),
     ajustes: (rAju.data?.datos ?? null) as AjustesDatos | null,

@@ -7,7 +7,7 @@ import {
   type FilaExcel,
   type ItemFiltro,
 } from "@/lib/motor";
-import type { Jornada, MesCerrado } from "@/types/database";
+import type { Jornada, MesCerrado, Meta } from "@/types/database";
 import type { EstadoAdminInicial } from "@/lib/data/admin";
 
 /**
@@ -37,6 +37,7 @@ interface CargarState {
 
   // --- estado de la nube (4b-1, solo lectura) ---
   jornadas: Record<string, Jornada>;
+  metas: Meta[];
   meses: Record<string, MesCerrado>;
   diasManuales: Record<string, true>;
   hidratado: boolean;
@@ -55,6 +56,8 @@ interface CargarState {
   aplicarCierreLocal: (filas: Jornada[]) => void;
   /** Refleja localmente una reapertura ya confirmada en la nube. */
   aplicarReaperturaLocal: (fecha: string) => void;
+  /** Refleja localmente un sellado/reapertura de mes ya confirmado. */
+  aplicarSelloLocal: (mes: MesCerrado) => void;
   ponerEstadoDropi: (e: EstadoArchivo) => void;
   ponerEstadoEffi: (e: EstadoArchivo) => void;
   cargarDropi: (filas: FilaExcel[] | null) => void;
@@ -103,6 +106,7 @@ export const useCargar = create<CargarState>((set) => ({
   descartarNovedad: true,
 
   jornadas: {},
+  metas: [],
   meses: {},
   diasManuales: {},
   hidratado: false,
@@ -124,6 +128,7 @@ export const useCargar = create<CargarState>((set) => ({
       delete jornadas[fecha];
       return { jornadas };
     }),
+  aplicarSelloLocal: (mes) => set((s) => ({ meses: { ...s.meses, [mes.mes]: mes } })),
 
   hidratarNube: (e) =>
     set((s) => {
@@ -144,6 +149,7 @@ export const useCargar = create<CargarState>((set) => ({
 
       return {
         jornadas,
+        metas: e.metas,
         meses,
         diasManuales,
         descartarNovedad,

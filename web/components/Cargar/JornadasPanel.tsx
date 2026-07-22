@@ -14,6 +14,7 @@ import {
 } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { ejecutarCierre, ejecutarReapertura } from "@/lib/data/escribir-jornadas";
+import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
 import type { Jornada } from "@/types/database";
 
 /**
@@ -235,8 +236,7 @@ function VistaPrevia({
 }
 
 export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
-  const { jornadas, modoEscritura, setModoEscritura, aplicarCierreLocal, aplicarReaperturaLocal } =
-    useCargar();
+  const { jornadas, modoEscritura, aplicarCierreLocal, aplicarReaperturaLocal } = useCargar();
   const [abierta, setAbierta] = useState<string | null>(null);
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [pendiente, setPendiente] = useState<Pendiente | null>(null);
@@ -425,24 +425,7 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
 
         {/* ---- barra de escritura ---- */}
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-d-sup-3 pt-4">
-          <div className="inline-flex overflow-hidden rounded-full border border-d-sup-3 text-[13px]">
-            <button
-              onClick={() => setModoEscritura("preview")}
-              className={`px-3 py-1.5 font-semibold ${
-                !modoVivo ? "bg-turquesa text-d-en-turquesa" : "text-d-txt-2"
-              }`}
-            >
-              Vista previa
-            </button>
-            <button
-              onClick={() => setModoEscritura("vivo")}
-              className={`px-3 py-1.5 font-semibold ${
-                modoVivo ? "bg-red-500 text-white" : "text-d-txt-2"
-              }`}
-            >
-              En vivo
-            </button>
-          </div>
+          <ModoEscrituraToggle />
           <button
             onClick={prepararCierre}
             disabled={seleccion.size === 0}
