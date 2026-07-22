@@ -1,0 +1,1 @@
+export { TableroPanel } from "./TableroPanel";

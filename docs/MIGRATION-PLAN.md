@@ -202,8 +202,17 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
         reparto — también en la vista pública, por eso pasa por el mismo
         dry-run. `lib/data/escribir-dias.ts` + acciones en el store. `tsc`,
         `lint`, `build` limpios. Riesgo: bajo.
-- [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
-      línea de meta escalonada. Riesgo: medio.
+- [x] **Fase 5 — Pestaña "Tablero del mes".** Hecho: `<TableroPanel>` con
+      selector de mes + toggle de bosquejo, 10 KPIs del mes, metas del periodo
+      (2 barras de progreso), dos gráficas (`<TableroChart>` sobre
+      `<ChartCanvas>`: barras apiladas propias/Dropi con **línea de meta
+      escalonada** y total encima, días sin cerrar en tono apagado) y los
+      rankings por vendedor/tienda. Motor puro nuevo `lib/motor/tablero.ts`
+      (`datosDelMes`, `resumenTablero`) con **8 tests** → **127 verdes**. Es
+      solo lectura (sin escrituras). Reusa el estado del store: jornadas/metas de
+      la nube + el bosquejo del Excel de la sesión; el estado del Excel persiste
+      entre pestañas (hook `useHidratarNube` compartido). `tsc`, `lint`, `build`
+      limpios. Riesgo: bajo.
 - [ ] **Fase 6 — Pestaña "Calendario".** 2 meses con selección por
       arrastre. Riesgo: medio.
 - [ ] **Fase 7 — Pestaña "Comparativo".** Tabla mes a mes, gráfica

@@ -9,3 +9,4 @@ export * from "./diagnostico";
 export * from "./equipo";
 export * from "./cierre";
 export * from "./nube";
+export * from "./tablero";

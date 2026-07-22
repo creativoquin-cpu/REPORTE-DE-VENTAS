@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { calcular, diagnosticar } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
+import { useHidratarNube } from "@/lib/store/useHidratarNube";
 import type { EstadoAdminInicial } from "@/lib/data/admin";
 import { CargadorExcel } from "./CargadorExcel";
 import { Filtros } from "./Filtros";
@@ -42,14 +43,11 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
     ponerEstadoEffi,
     cargarDropi,
     cargarEffi,
-    hidratarNube,
   } = useCargar();
 
   // El estado de la nube se carga en el servidor (con la sesión admin) y se
   // vuelca al store una vez, al montar.
-  useEffect(() => {
-    hidratarNube(estadoInicial);
-  }, [estadoInicial, hidratarNube]);
+  useHidratarNube(estadoInicial);
 
   const hayDatos = !!filasDropi || !!filasEffi;
 
