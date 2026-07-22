@@ -184,7 +184,16 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
           `.eq("cerrada", false)`: nunca toca una jornada oficial. Mismo dry-run.
           `tsc`, `lint`, `build` limpios. Riesgo: medio-alto (impacta la vista
           pública en vivo) — mitigado por la vista previa.
-  - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
+  - [x] **4c — Panel de metas** (historial versionado). Hecho: `<MetasPanel>`
+        muestra la meta vigente (KPIs), permite guardar una meta nueva (upsert
+        puntual en `metas`) y quitar una meta **programada** (aún sin entrar en
+        vigencia). Historial versionado con marcas vigente/programada/reemplazada
+        y descripción del cambio — nada se borra (regla 6). Motor puro:
+        `validarMeta` en `lib/motor/metas.ts` (+6 tests → **119 verdes**); capa
+        `lib/data/escribir-metas.ts`. Mismo dry-run (vista previa del upsert/delete
+        antes de escribir). El campo de metas se resincroniza con la vigente en
+        render (patrón recomendado, sin efecto). `tsc`, `lint`, `build` limpios.
+        Riesgo: bajo-medio.
   - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
       línea de meta escalonada. Riesgo: medio.

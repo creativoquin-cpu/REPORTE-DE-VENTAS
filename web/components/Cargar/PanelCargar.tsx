@@ -10,6 +10,7 @@ import { ResumenCarga } from "./ResumenCarga";
 import { TablaPorDia } from "./TablaPorDia";
 import { RankingTabla } from "./RankingTabla";
 import { Descartes } from "./Descartes";
+import { MetasPanel } from "./MetasPanel";
 import { JornadasPanel } from "./JornadasPanel";
 import { CierrePanel } from "./CierrePanel";
 
@@ -125,6 +126,7 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
         </>
       )}
 
+      <MetasPanel />
       <JornadasPanel resultado={resultado} />
       <CierrePanel />
     </div>

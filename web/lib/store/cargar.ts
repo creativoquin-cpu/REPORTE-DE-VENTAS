@@ -58,6 +58,10 @@ interface CargarState {
   aplicarReaperturaLocal: (fecha: string) => void;
   /** Refleja localmente un sellado/reapertura de mes ya confirmado. */
   aplicarSelloLocal: (mes: MesCerrado) => void;
+  /** Refleja localmente una meta guardada (nueva o reemplazo por id). */
+  aplicarGuardarMetaLocal: (meta: Meta) => void;
+  /** Refleja localmente una meta quitada por id. */
+  aplicarQuitarMetaLocal: (id: number) => void;
   ponerEstadoDropi: (e: EstadoArchivo) => void;
   ponerEstadoEffi: (e: EstadoArchivo) => void;
   cargarDropi: (filas: FilaExcel[] | null) => void;
@@ -129,6 +133,9 @@ export const useCargar = create<CargarState>((set) => ({
       return { jornadas };
     }),
   aplicarSelloLocal: (mes) => set((s) => ({ meses: { ...s.meses, [mes.mes]: mes } })),
+  aplicarGuardarMetaLocal: (meta) =>
+    set((s) => ({ metas: [...s.metas.filter((m) => m.id !== meta.id), meta] })),
+  aplicarQuitarMetaLocal: (id) => set((s) => ({ metas: s.metas.filter((m) => m.id !== id) })),
 
   hidratarNube: (e) =>
     set((s) => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { metaEn } from "./metas";
+import { metaEn, validarMeta } from "./metas";
 import type { Meta } from "@/types/database";
 
 // Portado de pruebas/test-metas.js §1-§4.
@@ -57,5 +57,27 @@ describe("metaEn — dos metas con la misma fecha: manda la registrada después"
   const h = [meta(10, "2026-07-01", 220, 170), meta(20, "2026-07-01", 210, 165)];
   it("vale la última registrada (id mayor → 210)", () => {
     expect(metaEn("2026-07-05", h).total).toBe(210);
+  });
+});
+
+describe("validarMeta", () => {
+  it("acepta una meta válida y distinta a la vigente", () => {
+    expect(validarMeta([], 240, 180, "2026-07-16")).toBeNull();
+  });
+  it("rechaza sin fecha", () => {
+    expect(validarMeta([], 240, 180, "")).toMatch(/fecha/i);
+  });
+  it("rechaza total no positivo", () => {
+    expect(validarMeta([], 0, 0, "2026-07-16")).toMatch(/mayor que cero/i);
+  });
+  it("rechaza propias negativas", () => {
+    expect(validarMeta([], 240, -1, "2026-07-16")).toMatch(/no puede ser negativa/i);
+  });
+  it("rechaza propias mayor que total", () => {
+    expect(validarMeta([], 100, 120, "2026-07-16")).toMatch(/no puede ser mayor/i);
+  });
+  it("rechaza si es idéntica a la que ya rige desde esa fecha", () => {
+    // sin historial, la meta por defecto (200/160) rige en cualquier fecha
+    expect(validarMeta([], 200, 160, "2026-07-16")).toMatch(/nada que cambiar/i);
   });
 });

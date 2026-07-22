@@ -47,3 +47,25 @@ export function metaEn(claveFecha: string, historial: MetaHistorial[]): MetaVige
   });
   return r;
 }
+
+/**
+ * Valida una meta nueva antes de guardarla. Devuelve el texto del error o null
+ * si es válida. Puerto de metaGuardarClic() (quin-admin.html:1431-1443): la
+ * fecha es obligatoria, total > 0, propias >= 0 y <= total, y no puede ser
+ * idéntica a la que ya rige desde esa fecha.
+ */
+export function validarMeta(
+  historial: MetaHistorial[],
+  total: number,
+  propias: number,
+  desde: string
+): string | null {
+  if (!desde) return "Falta la fecha desde la que aplica.";
+  if (!(total > 0)) return "La meta total tiene que ser un número mayor que cero.";
+  if (!(propias >= 0)) return "La meta de propias no puede ser negativa.";
+  if (propias > total) return "La meta de propias no puede ser mayor que la total.";
+  const ant = metaEn(desde, historial);
+  if (ant.total === total && ant.propias === propias)
+    return "Esa ya es la meta que rige desde esa fecha. No hay nada que cambiar.";
+  return null;
+}
