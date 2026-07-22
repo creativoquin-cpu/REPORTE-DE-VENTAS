@@ -236,8 +236,12 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       Reusa `datosDelMes()` de la Fase 5, así que el comparativo y el tablero no
       pueden divergir. Solo lectura: no escribe nada. `tsc`, `lint`, `build`
       limpios. Riesgo: medio.
-- [ ] **Fase 8 — Vista del vendedor (pestaña 5).** Reutiliza
-      `<VistaEquipo>` directo, sin iframe. Riesgo: bajo.
+- [x] **Fase 8 — Vista del vendedor (pestaña 5).** Hecho de facto en la
+      Fase 3: `app/admin/(panel)/vista-vendedor/page.tsx` renderiza el mismo
+      `<VistaEquipo>` que la vista pública `/`, sin iframe y sin duplicar la
+      lógica — se eliminó el `<iframe src="index.html">` del paso 10.5. Los
+      únicos "iframe" que quedan en el repo son dos comentarios que explican
+      qué era antes. `tsc`, `lint`, `build` limpios. Riesgo: bajo.
 - [ ] **Fase 9 — Exportar imágenes de WhatsApp.** Canvas 1080×1920,
       mismos textos/reglas (nunca VS, nunca nombres). Tests portados desde
       `pruebas/test-imagen.js`. Riesgo: medio (mucho detalle pixel/texto a
