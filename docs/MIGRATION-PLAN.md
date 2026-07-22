@@ -213,8 +213,15 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       la nube + el bosquejo del Excel de la sesión; el estado del Excel persiste
       entre pestañas (hook `useHidratarNube` compartido). `tsc`, `lint`, `build`
       limpios. Riesgo: bajo.
-- [ ] **Fase 6 — Pestaña "Calendario".** 2 meses con selección por
-      arrastre. Riesgo: medio.
+- [x] **Fase 6 — Pestaña "Calendario".** Hecho: `<CalendarioPanel>` con dos
+      meses lado a lado, selección por arrastre (pointer events, mouse + touch,
+      con toque suelto para un día), navegación (‹ › Hoy, saltos por mes) y un
+      resumen automático de la selección (total/propias/Dropi con promedio, más
+      el conteo de días sin cerrar y sin datos). Motor puro nuevo
+      `lib/motor/calendario.ts` (`datoDia`, `correrMes`, `mesesConAlgo`,
+      `mesInicial`, `marcarRango`, `resumenSeleccion`) con **9 tests** → **136
+      verdes**. Solo lectura. Reusa el estado del store (jornadas de la nube +
+      bosquejo del Excel). `tsc`, `lint`, `build` limpios. Riesgo: bajo.
 - [ ] **Fase 7 — Pestaña "Comparativo".** Tabla mes a mes, gráfica
       combinada, tablas por persona. Riesgo: medio.
 - [ ] **Fase 8 — Vista del vendedor (pestaña 5).** Reutiliza

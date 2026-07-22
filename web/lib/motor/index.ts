@@ -10,3 +10,4 @@ export * from "./equipo";
 export * from "./cierre";
 export * from "./nube";
 export * from "./tablero";
+export * from "./calendario";
