@@ -29,10 +29,15 @@ export interface Jornada {
  */
 export type JornadaPublica = Pick<Jornada, "fecha" | "propias" | "cerrada" | "actualizado">;
 
+/**
+ * Una "revisión posterior": cada vez que se vuelve a subir un día ya cerrado,
+ * el app viejo empuja `{ cuando, p, d }` (quin-admin.html:1126). Ese es el
+ * shape REAL guardado en la nube — no `{fecha_subida, propias, dropi}`.
+ */
 export interface JornadaFoto {
-  fecha_subida: string;
-  propias: number;
-  dropi: number;
+  cuando: string;
+  p: number;
+  d: number;
 }
 
 export interface Meta {
@@ -45,25 +50,62 @@ export interface Meta {
   actualizado: string;
 }
 
+/**
+ * Datos de "qué cuenta y qué no". OJO: `est`/`ven` se guardan como mapa
+ * valor→bool (quin-admin.html:621-623 `est[x.valor]=x.cuenta`), no como
+ * arreglo de objetos.
+ */
+export interface AjustesDatos {
+  est?: Record<string, boolean>;
+  ven?: Record<string, boolean>;
+  descartarNovedad?: boolean;
+  diasManuales?: Record<string, true>;
+  actualizado?: string;
+}
+
 export interface Ajustes {
   id: 1;
-  datos: {
-    est?: Array<{ valor: string; cuenta: boolean }>;
-    ven?: Array<{ valor: string; cuenta: boolean }>;
-    descartarNovedad?: boolean;
-    diasManuales?: Record<string, true>;
-  };
+  datos: AjustesDatos;
   actualizado: string;
+}
+
+/** Un evento en la bitácora de cierres/reaperturas (quin-admin.html:1205). */
+export interface TrazaCierre {
+  que: string;
+  cuando: string | null;
+  quien: string | null;
+  total: number | null;
+}
+
+/** Resumen sellado de un mes (salida de resumenMes(), quin-admin.html:1184). */
+export interface ResumenMes {
+  dias: number;
+  total: number;
+  p: number;
+  d: number;
+  prom: number;
+  pct: number;
+  mejor: { k: string; t: number } | null;
+  peor: { k: string; t: number } | null;
+  ven: Record<string, number>;
+  tie: Record<string, number>;
+  enMetaT: number;
+  enMetaP: number;
+  sinDetalle: number;
+}
+
+export interface MesCerradoDatos {
+  estado: "cerrado" | "abierto";
+  cerrado: string | null;
+  auto: boolean;
+  resumen: ResumenMes | null;
+  traza: TrazaCierre[];
+  actualizado?: string;
 }
 
 export interface MesCerrado {
   mes: string; // "YYYY-MM"
-  datos: {
-    estado: "cerrado" | "abierto";
-    auto: boolean;
-    resumen: Record<string, unknown>;
-    traza: Array<{ accion: string; cuando: string }>;
-  };
+  datos: MesCerradoDatos;
   sellado_en: string;
 }
 

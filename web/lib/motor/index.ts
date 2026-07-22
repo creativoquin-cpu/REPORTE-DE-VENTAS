@@ -7,3 +7,4 @@ export * from "./filtros";
 export * from "./calcular";
 export * from "./diagnostico";
 export * from "./equipo";
+export * from "./cierre";

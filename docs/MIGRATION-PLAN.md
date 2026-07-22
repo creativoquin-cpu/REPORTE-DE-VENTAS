@@ -124,6 +124,31 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
         automáticos). `tsc`, `lint` y `build` limpios. Riesgo: bajo (aditivo,
         solo lectura).
   - [ ] **4b — Jornadas + cierre mensual + sync a Supabase.** Riesgo: alto.
+        Se parte en lectura → escritura dirigida (decisión del usuario): primero
+        mostrar el estado real de la nube sin riesgo, luego escrituras puntuales
+        por acción (upsert/delete de ESE día/mes, no el patrón snapshot del app
+        viejo) probadas contra un Supabase branch antes de tocar producción.
+    - [x] **4b-1 — Lectura del estado de la nube + paneles (solo lectura).**
+          Hecho: `lib/data/admin.ts` carga en el servidor (con la sesión de la
+          cookie, RLS `privado.es_admin` devuelve las columnas privadas) las
+          jornadas oficiales (`cerrada = true`), los sellos de `meses`, los
+          `dias_manuales` y los `ajustes`. El store se hidrata una vez
+          (`lib/store/cargar.ts` → `hidratarNube`), sembrando los filtros y el
+          descarte de NOVEDAD desde los ajustes guardados y alimentando el
+          cálculo con los días no laborables reales. UI nueva: `<JornadasPanel>`
+          (calendario por mes con estado por día — cerrada/sin cerrar/con
+          revisión/sin datos — y detalle al tocar un día cerrado) y
+          `<CierrePanel>` (tabla de meses con estado, total de hoy vs sellado y
+          bitácora de cierres); `<ResumenCarga>` ahora muestra "sin cerrar"
+          real. Motor puro nuevo `lib/motor/cierre.ts` (`estadoMes`,
+          `resumenMensualCerrado`) con **8 tests** → **92 verdes**. Se
+          corrigieron los tipos de `types/database.ts` al shape REAL que escribe
+          el app viejo (`fotos:{cuando,p,d}`, `ajustes.est/ven` como mapa
+          valor→bool, `meses.datos`). Cero escrituras. `tsc`, `lint` y `build`
+          limpios. Riesgo: ninguno (solo lectura).
+    - [ ] **4b-2 — Escrituras dirigidas.** Cerrar/reabrir jornada, sellar/reabrir
+          mes, sync del bosquejo y del ranking público — mutaciones puntuales,
+          probadas en un Supabase branch. Riesgo: alto.
   - [ ] **4c — Panel de metas** (historial versionado). Riesgo: medio.
   - [ ] **4d — Editor de días no laborables** (`dias_manuales`). Riesgo: medio.
 - [ ] **Fase 5 — Pestaña "Tablero del mes".** KPIs del mes, 2 gráficas con
