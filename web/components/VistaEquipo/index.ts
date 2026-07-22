@@ -1,0 +1,1 @@
+export { VistaEquipo } from "./VistaEquipo";
