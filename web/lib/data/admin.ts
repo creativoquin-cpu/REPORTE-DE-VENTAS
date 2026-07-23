@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Jornada, MesCerrado, AjustesDatos, Meta } from "@/types/database";
+import { MOTIVO_SIN_VENTAS, type Jornada, type MesCerrado, type AjustesDatos, type Meta } from "@/types/database";
 
 /**
  * Carga del estado privado del admin para la pestaña "Cargar y validar"
@@ -23,8 +23,11 @@ export interface EstadoAdminInicial {
   metas: Meta[];
   /** Sellos mensuales. */
   meses: MesCerrado[];
-  /** Fechas marcadas a mano como no laborables. */
+  /** Fechas marcadas a mano como no laborables (con reparto de fin de semana). */
   diasManuales: string[];
+  /** Fechas marcadas como "día nulo / sin ventas" (descanso): se sacan del
+   * cálculo y sus ventas pasan al día anterior. */
+  diasNulos: string[];
   /** Ajustes guardados de "qué cuenta y qué no", o null si no hay. */
   ajustes: AjustesDatos | null;
   /** true si alguna consulta falló (p. ej. la sesión no es de un admin). */
@@ -36,6 +39,7 @@ const VACIO: EstadoAdminInicial = {
   metas: [],
   meses: [],
   diasManuales: [],
+  diasNulos: [],
   ajustes: null,
   error: false,
 };
@@ -47,7 +51,7 @@ export async function cargarEstadoAdmin(): Promise<EstadoAdminInicial> {
     sb.from("jornadas").select("*").eq("cerrada", true),
     sb.from("metas").select("*"),
     sb.from("meses").select("*"),
-    sb.from("dias_manuales").select("fecha"),
+    sb.from("dias_manuales").select("fecha, motivo"),
     sb.from("ajustes").select("datos").eq("id", 1).maybeSingle(),
   ]);
 
@@ -55,11 +59,13 @@ export async function cargarEstadoAdmin(): Promise<EstadoAdminInicial> {
     return { ...VACIO, error: true };
   }
 
+  const dias = (rDia.data ?? []) as { fecha: string; motivo: string | null }[];
   return {
     jornadas: (rJor.data ?? []) as Jornada[],
     metas: (rMet.data ?? []) as Meta[],
     meses: (rMes.data ?? []) as MesCerrado[],
-    diasManuales: ((rDia.data ?? []) as { fecha: string }[]).map((x) => x.fecha),
+    diasManuales: dias.filter((x) => x.motivo !== MOTIVO_SIN_VENTAS).map((x) => x.fecha),
+    diasNulos: dias.filter((x) => x.motivo === MOTIVO_SIN_VENTAS).map((x) => x.fecha),
     ajustes: (rAju.data?.datos ?? null) as AjustesDatos | null,
     error: false,
   };

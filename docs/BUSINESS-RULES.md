@@ -54,6 +54,27 @@
 - Fuente: `bitacora-quin.md` (decisión 6), `prompt_reporte_ventas.md`,
   `quin-admin.html:556-574` (`repartir`, `armarBloques`).
 
+## 3b. Día nulo (día de descanso / sin ventas)
+
+- Un **día nulo** es un día de descanso del equipo donde no hubo
+  **ninguna** venta (ej. domingo 21-jun-2026). Es DISTINTO de un día no
+  laborable con reparto:
+  - **No cuenta como día**: sale del cálculo, no baja el promedio ni cuenta
+    para la meta.
+  - **No se reparte**: no se agrupa en un bloque de fin de semana ni se
+    divide en partes iguales.
+  - Si ese día tuviera ventas cargadas, esas ventas **pasan al día real
+    anterior** (ej. sábado 315 + domingo nulo 30 → **sábado 345**, domingo
+    afuera). Si es el primer día y no hay uno anterior, sus ventas se
+    descartan.
+- Se marca a mano; se guarda en `dias_manuales` con `motivo = "Sin ventas"`
+  (`MOTIVO_SIN_VENTAS`), separado de los no laborables (`"Marcado a mano"`).
+  Un día es de un solo tipo.
+- Implementación (app nueva): `aplicarDiasNulos` en `web/lib/motor/tablero.ts`
+  (tablero, comparativo, imagen vía `datosDelMes`) y la misma lógica en
+  `resumenEquipo` (vista pública). Es una regla de la app nueva; la app vieja
+  no la tenía.
+
 ## 4. Ingesta de datos (Effi y Dropi)
 
 - Ambas plataformas se miden en **unidades de prenda**, nunca en dinero.

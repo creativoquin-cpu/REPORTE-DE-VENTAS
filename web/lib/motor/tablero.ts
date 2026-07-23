@@ -37,14 +37,55 @@ export interface CifraTablero {
 }
 
 /**
+ * Aplica los "días nulos" (días de descanso / sin ventas) a un mapa de días:
+ * saca cada día nulo del mapa y suma sus ventas al día REAL anterior (el día
+ * previo con datos que no sea nulo). Un día nulo no cuenta como día y no entra
+ * en el reparto de fin de semana; si trae ventas, se atribuyen al día anterior
+ * (ej.: sábado 315 + domingo nulo 30 → sábado 345, domingo afuera). Si el día
+ * nulo es el primero y no hay un día real antes, sus ventas se descartan.
+ *
+ * Es DISTINTO de "no laborable": el no laborable sí entra al reparto (suma y
+ * divide en partes iguales entre los días del bloque); el nulo no reparte, se
+ * lleva sus ventas al día anterior. Ver docs/BUSINESS-RULES.md.
+ */
+export function aplicarDiasNulos(
+  D: Record<string, DiaTablero>,
+  diasNulos: Record<string, unknown>
+): Record<string, DiaTablero> {
+  const claves = Object.keys(D).sort();
+  const out: Record<string, DiaTablero> = {};
+  let ultimoReal: string | null = null;
+  claves.forEach((k) => {
+    if (diasNulos[k]) {
+      if (ultimoReal) {
+        const dst = out[ultimoReal];
+        const src = D[k];
+        dst.p += src.p;
+        dst.d += src.d;
+        Object.keys(src.ven).forEach((v) => (dst.ven[v] = (dst.ven[v] || 0) + src.ven[v]));
+        Object.keys(src.tie).forEach((t) => (dst.tie[t] = (dst.tie[t] || 0) + src.tie[t]));
+      }
+      return; // el día nulo no se agrega al resultado
+    }
+    // Se clonan ven/tie para no mutar la entrada original al acumular.
+    out[k] = { ...D[k], ven: { ...D[k].ven }, tie: { ...D[k].tie } };
+    ultimoReal = k;
+  });
+  return out;
+}
+
+/**
  * Datos del mes: las jornadas cerradas y, si `incluirBosquejo`, también los días
- * del Excel que aún no se cierran (sin pisar lo ya cerrado).
+ * del Excel que aún no se cierran (sin pisar lo ya cerrado). Al final aplica los
+ * `diasNulos` (días de descanso): esos días se sacan del cálculo y sus ventas
+ * pasan al día anterior (ver aplicarDiasNulos).
  */
 export function datosDelMes(
   jornadas: Record<string, JornadaTablero>,
   calcDias: Record<string, CifraTablero>,
   mes: string,
-  incluirBosquejo: boolean
+  incluirBosquejo: boolean,
+  diasNulos: Record<string, unknown> = {}
 ): Record<string, DiaTablero> {
   const D: Record<string, DiaTablero> = {};
   Object.keys(jornadas).forEach((k) => {
@@ -59,7 +100,7 @@ export function datosDelMes(
       D[k] = { p: c.propias, d: c.dropi, ven: c.ven, tie: c.tie, cerrada: false };
     });
   }
-  return D;
+  return aplicarDiasNulos(D, diasNulos);
 }
 
 export interface EntradaRanking {

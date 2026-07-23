@@ -106,6 +106,7 @@ export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdmin
     listaVend,
     descartarNovedad,
     diasManuales,
+    diasNulos,
   } = useCargar();
 
   const [incluirBosquejo, setIncluirBosquejo] = useState(true);
@@ -120,7 +121,7 @@ export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdmin
   // Sin useMemo manual: el React Compiler no puede preservar una memoización
   // cuya dependencia es `calc.dias` (miembro), y lo memoiza solo igual de bien.
   const meses = mesesComparables(jornadas, calc.dias, incluirBosquejo);
-  const datos = meses.map((m) => datosDelMes(jornadas, calc.dias, m, incluirBosquejo));
+  const datos = meses.map((m) => datosDelMes(jornadas, calc.dias, m, incluirBosquejo, diasNulos));
   const corte = mismoNumeroDias ? corteComun(datos.map((D) => Object.keys(D).length)) : 0;
   const R: ResumenCmp[] = meses.map((m, i) => resumenCmp(m, datos[i], corte));
 

@@ -70,3 +70,20 @@ describe("resumenEquipo — bosquejo (días sin cerrar)", () => {
     expect(R.ultimaSubida).toBe("2026-07-20T08:30:00.000Z");
   });
 });
+
+describe("resumenEquipo — día nulo (descanso / sin ventas)", () => {
+  const jornadas: Record<string, JornadaPublicaDia> = {
+    "2026-07-18": cerrado(315), // sábado
+    "2026-07-19": cerrado(30), // domingo, se marcará nulo
+  };
+  const R = resumenEquipo(jornadas, [], {}, "2026-07-20", { "2026-07-19": true });
+
+  it("el domingo nulo sale del mes y sus propias pasan al sábado (315+30=345)", () => {
+    expect(R.claves).toEqual(["2026-07-18"]);
+    expect(R.porDia).toEqual([345]);
+    expect(R.total).toBe(345);
+  });
+  it("no cuenta como día: el promedio es sobre 1 día, no 2", () => {
+    expect(R.promedio).toBe(345);
+  });
+});

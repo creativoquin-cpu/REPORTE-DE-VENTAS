@@ -6,7 +6,7 @@ import {
   type ResumenEquipo,
 } from "@/lib/motor/equipo";
 import { claveFecha } from "@/lib/motor/fechas";
-import type { Meta } from "@/types/database";
+import { MOTIVO_SIN_VENTAS, type Meta } from "@/types/database";
 
 /**
  * Carga de datos de la vista pública del equipo (Fase 3). Hace las MISMAS 4
@@ -54,7 +54,7 @@ export async function cargarVistaEquipo(): Promise<DatosVistaEquipo> {
   const [rJor, rMet, rDia, rRank] = await Promise.all([
     sb.from("jornadas").select("fecha,propias,cerrada,actualizado"),
     sb.from("metas").select("id,desde,total,propias"),
-    sb.from("dias_manuales").select("fecha"),
+    sb.from("dias_manuales").select("fecha, motivo"),
     sb.from("ranking_publico").select("puesto,nombre").eq("mes", mes).order("puesto"),
   ]);
 
@@ -74,11 +74,13 @@ export async function cargarVistaEquipo(): Promise<DatosVistaEquipo> {
 
   const metas = (rMet.data ?? []) as FilaMeta[];
   const diasManuales: Record<string, true> = {};
-  ((rDia.data ?? []) as { fecha: string }[]).forEach((x) => {
-    diasManuales[x.fecha] = true;
+  const diasNulos: Record<string, true> = {};
+  ((rDia.data ?? []) as { fecha: string; motivo: string | null }[]).forEach((x) => {
+    if (x.motivo === MOTIVO_SIN_VENTAS) diasNulos[x.fecha] = true;
+    else diasManuales[x.fecha] = true;
   });
 
-  const resumen = resumenEquipo(jornadasDelMes, metas, diasManuales, clave);
+  const resumen = resumenEquipo(jornadasDelMes, metas, diasManuales, clave, diasNulos);
   const ranking = (rRank.data ?? []) as RankingEntry[];
 
   return { mes, resumen, ranking, error: false };

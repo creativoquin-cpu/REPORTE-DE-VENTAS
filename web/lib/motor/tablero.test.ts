@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { datosDelMes, resumenTablero, type JornadaTablero, type CifraTablero } from "./tablero";
+import {
+  datosDelMes,
+  aplicarDiasNulos,
+  resumenTablero,
+  type DiaTablero,
+  type JornadaTablero,
+  type CifraTablero,
+} from "./tablero";
 
 const jor = (propias: number, dropi: number, ven: Record<string, number> = {}, tie: Record<string, number> = {}): JornadaTablero => ({
   propias,
@@ -33,6 +40,74 @@ describe("datosDelMes", () => {
     expect(Object.keys(D).sort()).toEqual(["2026-07-01", "2026-07-02"]);
     expect(D["2026-07-01"]).toMatchObject({ p: 10, cerrada: true }); // no lo pisó el 99
     expect(D["2026-07-02"]).toMatchObject({ p: 8, d: 2, cerrada: false });
+  });
+  it("un día nulo se saca y sus ventas pasan al día anterior", () => {
+    // sáb 18 = 315 propias, dom 19 nulo con 30 → sábado 345, domingo afuera.
+    const jor2 = { "2026-07-18": jor(315, 0), "2026-07-19": jor(30, 0) };
+    const D = datosDelMes(jor2, {}, "2026-07", false, { "2026-07-19": true });
+    expect(Object.keys(D)).toEqual(["2026-07-18"]);
+    expect(D["2026-07-18"].p).toBe(345);
+  });
+});
+
+describe("aplicarDiasNulos", () => {
+  const dia = (p: number, d: number, ven = {}, tie = {}, cerrada = true): DiaTablero => ({
+    p,
+    d,
+    ven,
+    tie,
+    cerrada,
+  });
+
+  it("el día nulo desaparece y sus ventas (propias, Dropi y detalle) van al anterior", () => {
+    const D = {
+      "2026-07-18": dia(315, 10, { Ana: 315 }, { T1: 10 }),
+      "2026-07-19": dia(30, 5, { Ana: 20, Beto: 10 }, { T2: 5 }),
+    };
+    const R = aplicarDiasNulos(D, { "2026-07-19": true });
+    expect(Object.keys(R)).toEqual(["2026-07-18"]);
+    expect(R["2026-07-18"]).toMatchObject({ p: 345, d: 15 });
+    expect(R["2026-07-18"].ven).toEqual({ Ana: 335, Beto: 10 });
+    expect(R["2026-07-18"].tie).toEqual({ T1: 10, T2: 5 });
+  });
+
+  it("no muta la entrada original", () => {
+    const D = { "2026-07-18": dia(315, 0, { Ana: 315 }), "2026-07-19": dia(30, 0, { Ana: 30 }) };
+    aplicarDiasNulos(D, { "2026-07-19": true });
+    expect(D["2026-07-18"].p).toBe(315); // intacto
+    expect(D["2026-07-18"].ven).toEqual({ Ana: 315 });
+  });
+
+  it("un día nulo sin ventas simplemente desaparece", () => {
+    const D = { "2026-07-18": dia(315, 0), "2026-07-19": dia(0, 0) };
+    const R = aplicarDiasNulos(D, { "2026-07-19": true });
+    expect(Object.keys(R)).toEqual(["2026-07-18"]);
+    expect(R["2026-07-18"].p).toBe(315); // no reparte: se queda con 315
+  });
+
+  it("si el día nulo es el primero, sus ventas se descartan (no hay anterior)", () => {
+    const D = { "2026-07-18": dia(30, 0), "2026-07-19": dia(100, 0) };
+    const R = aplicarDiasNulos(D, { "2026-07-18": true });
+    expect(Object.keys(R)).toEqual(["2026-07-19"]);
+    expect(R["2026-07-19"].p).toBe(100);
+  });
+
+  it("dos días nulos seguidos van al último día real anterior", () => {
+    const D = {
+      "2026-07-18": dia(300, 0),
+      "2026-07-19": dia(20, 0),
+      "2026-07-20": dia(10, 0),
+    };
+    const R = aplicarDiasNulos(D, { "2026-07-19": true, "2026-07-20": true });
+    expect(Object.keys(R)).toEqual(["2026-07-18"]);
+    expect(R["2026-07-18"].p).toBe(330); // 300 + 20 + 10
+  });
+
+  it("sin días nulos, devuelve el mismo contenido", () => {
+    const D = { "2026-07-18": dia(315, 0), "2026-07-19": dia(30, 0) };
+    const R = aplicarDiasNulos(D, {});
+    expect(Object.keys(R)).toEqual(["2026-07-18", "2026-07-19"]);
+    expect(R["2026-07-19"].p).toBe(30);
   });
 });
 

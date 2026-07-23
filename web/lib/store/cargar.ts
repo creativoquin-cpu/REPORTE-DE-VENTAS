@@ -40,6 +40,9 @@ interface CargarState {
   metas: Meta[];
   meses: Record<string, MesCerrado>;
   diasManuales: Record<string, true>;
+  /** Días nulos (descanso / sin ventas): se sacan del cálculo y sus ventas
+   * pasan al día anterior. Distinto de diasManuales (que sí reparte). */
+  diasNulos: Record<string, true>;
   hidratado: boolean;
   nubeError: boolean;
   /** Toggles de filtros guardados en la nube (valor→cuenta), para sembrar. */
@@ -64,6 +67,8 @@ interface CargarState {
   aplicarQuitarMetaLocal: (id: number) => void;
   /** Refleja localmente un día no laborable marcado/quitado. */
   aplicarMarcarDiaLocal: (fecha: string) => void;
+  /** Refleja localmente un día nulo (sin ventas / descanso) marcado. */
+  aplicarMarcarNuloLocal: (fecha: string) => void;
   aplicarQuitarDiaLocal: (fecha: string) => void;
   ponerEstadoDropi: (e: EstadoArchivo) => void;
   ponerEstadoEffi: (e: EstadoArchivo) => void;
@@ -116,6 +121,7 @@ export const useCargar = create<CargarState>((set) => ({
   metas: [],
   meses: {},
   diasManuales: {},
+  diasNulos: {},
   hidratado: false,
   nubeError: false,
   ajustesEst: {},
@@ -140,12 +146,26 @@ export const useCargar = create<CargarState>((set) => ({
     set((s) => ({ metas: [...s.metas.filter((m) => m.id !== meta.id), meta] })),
   aplicarQuitarMetaLocal: (id) => set((s) => ({ metas: s.metas.filter((m) => m.id !== id) })),
   aplicarMarcarDiaLocal: (fecha) =>
-    set((s) => ({ diasManuales: { ...s.diasManuales, [fecha]: true } })),
-  aplicarQuitarDiaLocal: (fecha) =>
+    set((s) => {
+      // No laborable con reparto: sale de "nulos" si estaba ahí (un día es de un
+      // solo tipo).
+      const diasNulos = { ...s.diasNulos };
+      delete diasNulos[fecha];
+      return { diasManuales: { ...s.diasManuales, [fecha]: true }, diasNulos };
+    }),
+  aplicarMarcarNuloLocal: (fecha) =>
     set((s) => {
       const diasManuales = { ...s.diasManuales };
       delete diasManuales[fecha];
-      return { diasManuales };
+      return { diasNulos: { ...s.diasNulos, [fecha]: true }, diasManuales };
+    }),
+  aplicarQuitarDiaLocal: (fecha) =>
+    set((s) => {
+      const diasManuales = { ...s.diasManuales };
+      const diasNulos = { ...s.diasNulos };
+      delete diasManuales[fecha];
+      delete diasNulos[fecha];
+      return { diasManuales, diasNulos };
     }),
 
   hidratarNube: (e) =>
@@ -156,6 +176,8 @@ export const useCargar = create<CargarState>((set) => ({
       e.meses.forEach((m) => (meses[m.mes] = m));
       const diasManuales: Record<string, true> = {};
       e.diasManuales.forEach((f) => (diasManuales[f] = true));
+      const diasNulos: Record<string, true> = {};
+      e.diasNulos.forEach((f) => (diasNulos[f] = true));
       const aj = e.ajustes ?? {};
       const ajustesEst = aj.est ?? {};
       const ajustesVen = aj.ven ?? {};
@@ -170,6 +192,7 @@ export const useCargar = create<CargarState>((set) => ({
         metas: e.metas,
         meses,
         diasManuales,
+        diasNulos,
         descartarNovedad,
         ajustesEst,
         ajustesVen,

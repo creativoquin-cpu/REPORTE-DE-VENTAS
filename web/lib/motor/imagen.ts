@@ -61,9 +61,10 @@ export function datosImagen(
   jornadas: Record<string, JornadaTablero>,
   calcDias: Record<string, CifraTablero>,
   metas: MetaHistorial[],
-  mes: string
+  mes: string,
+  diasNulos: Record<string, unknown> = {}
 ): DatosImagen | null {
-  const D = datosDelMes(jornadas, calcDias, mes, true); // incluye días sin cerrar
+  const D = datosDelMes(jornadas, calcDias, mes, true, diasNulos); // incluye días sin cerrar
   const claves = Object.keys(D).sort();
   if (!claves.length) return null;
 

@@ -159,6 +159,7 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
     listaVend,
     descartarNovedad,
     diasManuales,
+    diasNulos,
   } = useCargar();
 
   const [mesSel, setMesSel] = useState("");
@@ -179,7 +180,7 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
   // La imagen de WhatsApp NO depende del selector del tablero: sale del mes del
   // Excel cargado (o del mes en curso). Ver mesImagen()/imgDatos().
   const mesImg = mesImagen(calc.dias, hoyMes);
-  const datosImg = datosImagen(jornadas, calc.dias, metas, mesImg);
+  const datosImg = datosImagen(jornadas, calc.dias, metas, mesImg, diasNulos);
   const [ay, am] = mesImg.split("-");
   const etMesImg = `${MESES_L[+am - 1]} ${ay}`;
 
@@ -194,7 +195,7 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
   // El React Compiler memoiza esto solo; sin useMemo manual (que no puede
   // preservar la dependencia `calc.dias`).
   const R = mesActivo
-    ? resumenTablero(datosDelMes(jornadas, calc.dias, mesActivo, incluirBosquejo), metas, hoyK)
+    ? resumenTablero(datosDelMes(jornadas, calc.dias, mesActivo, incluirBosquejo, diasNulos), metas, hoyK)
     : null;
 
   if (!mesesDisp.length || !R || !mesActivo) {

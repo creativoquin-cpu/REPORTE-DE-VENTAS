@@ -52,15 +52,32 @@ export function resumenEquipo(
   jornadasDelMes: Record<string, JornadaPublicaDia>,
   metas: MetaHistorial[],
   diasManuales: Record<string, unknown>,
-  hoyClave: string
+  hoyClave: string,
+  diasNulos: Record<string, unknown> = {}
 ): ResumenEquipo {
-  const claves = Object.keys(jornadasDelMes).sort();
+  // Días nulos (descanso / sin ventas): se sacan del mes y sus propias pasan al
+  // día real anterior (no se reparten). Mismo criterio que aplicarDiasNulos del
+  // tablero, pero acá el visitante solo ve `propias`.
+  const dias = { ...jornadasDelMes };
+  let ultimoReal: string | null = null;
+  Object.keys(dias)
+    .sort()
+    .forEach((k) => {
+      if (diasNulos[k]) {
+        if (ultimoReal) dias[ultimoReal] = { ...dias[ultimoReal], propias: dias[ultimoReal].propias + dias[k].propias };
+        delete dias[k];
+      } else {
+        ultimoReal = k;
+      }
+    });
+
+  const claves = Object.keys(dias).sort();
 
   const eqDia: Record<string, number> = {};
   const eqRep: Record<string, number> = {};
   claves.forEach((k) => {
-    eqDia[k] = jornadasDelMes[k].propias;
-    eqRep[k] = jornadasDelMes[k].propias;
+    eqDia[k] = dias[k].propias;
+    eqRep[k] = dias[k].propias;
   });
 
   // Reparto de bloques de fin de semana/festivos (mismo criterio que el admin).

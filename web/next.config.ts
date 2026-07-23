@@ -7,6 +7,17 @@ const nextConfig: NextConfig = {
   // ve rota o en blanco en esos dispositivos. Solo afecta a `next dev`.
   allowedDevOrigins: ["192.168.1.58"],
 
+  // El panel dejó de tener pestañas (ahora es una sola página que baja, en
+  // /admin). Las rutas viejas por pestaña ya no existen: se reenvían a /admin
+  // para que los marcadores o el historial no den 404.
+  async redirects() {
+    return ["cargar", "tablero", "calendario", "comparativo", "vista-vendedor"].map((p) => ({
+      source: `/admin/${p}`,
+      destination: "/admin",
+      permanent: false,
+    }));
+  },
+
   // El service worker (Fase 10) nunca debe quedar cacheado por el navegador:
   // así, cuando cambie, el usuario recibe la versión nueva de inmediato.
   async headers() {

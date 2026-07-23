@@ -115,6 +115,14 @@ export interface DiaManual {
   actualizado: string;
 }
 
+/**
+ * Motivo con el que se marca un "día nulo / sin ventas" (día de descanso) en
+ * `dias_manuales`. Es DISTINTO de un no laborable normal: el día nulo se saca
+ * del cálculo y sus ventas pasan al día anterior (no se reparten). Cualquier
+ * otro `motivo` (p. ej. "Marcado a mano") es un no laborable con reparto.
+ */
+export const MOTIVO_SIN_VENTAS = "Sin ventas";
+
 /** Nunca lleva cifras — ver BUSINESS-RULES.md regla 9. */
 export interface RankingPublicoEntry {
   mes: string;
