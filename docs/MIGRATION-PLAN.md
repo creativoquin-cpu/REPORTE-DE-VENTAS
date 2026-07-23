@@ -290,9 +290,10 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       panel de Auth (es un toggle del dashboard, no SQL). Riesgo: bajo.
 - [x] **Reorganización de layout (post-Fase 11).** A pedido del usuario, el
       panel de administrador pasó de **5 pestañas con botones** a **una sola
-      página que baja en scroll**: las cinco secciones (Cargar, Tablero,
-      Calendario, Comparativo, Vista del vendedor) apiladas una debajo de la
-      otra, sin nav. `/admin` es ahora la página única (`app/admin/(panel)/
+      página que baja en scroll**: las secciones (Cargar, Tablero, Calendario,
+      Comparativo) apiladas una debajo de la otra, sin nav. La "Vista del
+      vendedor" se **quitó del panel** (es lo que ve el equipo y vive en la
+      página pública `/`; no es una herramienta del admin). `/admin` es ahora la página única (`app/admin/(panel)/
       page.tsx` → `<PanelCompleto>`); se borraron las 5 rutas por pestaña y el
       componente `AdminNav`. La cabecera quedó **fija** (sticky) con el correo y
       "cerrar sesión". Login y proxy redirigen a `/admin`. `<VistaEquipo>`
