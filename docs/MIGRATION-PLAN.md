@@ -268,9 +268,26 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       `quin-admin.html` era un shell estático sin datos). `next.config.ts`
       manda `Cache-Control: no-store` para `/sw.js`. `tsc`, `lint`, `build`
       limpios (aparece la ruta `/manifest.webmanifest`). Riesgo: bajo.
-- [ ] **Fase 11 — Auditoría de backend.** Evaluar y, si se aprueba,
-      aplicar los 5 puntos de arriba sobre un Supabase branch. Riesgo:
-      medio-alto según qué se apruebe.
+- [x] **Fase 11 — Auditoría de backend.** Hecho (solo lectura + un fix
+      chico). **Hallazgo principal: el backend está seguro y correcto.** La
+      frontera de columna en `jornadas` se verificó: `anon` solo lee
+      `fecha, propias, cerrada, actualizado` (nunca `ven`/`tie`/`dropi`/
+      `cerrada_el`/`fotos`); `meses`/`ajustes` no los lee anon;
+      `ranking_publico` solo `mes/puesto/nombre`; `privado.es_admin()` es
+      `SECURITY DEFINER STABLE` con `search_path` fijado. De los 5 puntos del
+      plan, **3 ya estaban** (1 migraciones versionadas — hay 4 en el proyecto;
+      2 claves en `.env`; 5 sync por mutación puntual). Los puntos **3
+      (normalizar `ven`/`tie`) y 4 (ranking en la base) se dejaron pendientes
+      a propósito**: cambian la forma de los datos que consume el motor y no
+      resuelven ningún problema actual — no vale desestabilizar el motor antes
+      de la reorg. Único cambio aplicado: optimización de la policy
+      `admin_se_ve` (`auth.uid()` → `(select auth.uid())`, advisor
+      `auth_rls_initplan`), idéntica en semántica, reflejada en
+      `supabase-esquema.sql`. Advisor de rendimiento quedó **vacío**. El branch
+      de Supabase no se usó (requiere plan Pro); el fix, por ser trivial y
+      reversible, se aplicó directo a producción con aprobación. Pendiente NO
+      aplicado (aviso de seguridad): activar "Leaked Password Protection" en el
+      panel de Auth (es un toggle del dashboard, no SQL). Riesgo: bajo.
 - [ ] **Fase 12 — Validación final y corte.** Correr la app nueva contra
       los Excel reales y comparar salida contra la app vieja para el mismo
       período. Solo entonces se mueve producción (dominio/alias de Vercel).

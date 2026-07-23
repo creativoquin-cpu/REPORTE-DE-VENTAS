@@ -175,8 +175,11 @@ create policy admin_todo on public.ajustes
 create policy admin_todo on public.meses
   for all to authenticated using (privado.es_admin()) with check (privado.es_admin());
 
+-- (select auth.uid()) en vez de auth.uid() para que el planner lo evalúe una
+-- sola vez por consulta, no por fila (Fase 11, advisor auth_rls_initplan).
+-- Semánticamente idéntico.
 create policy admin_se_ve on public.admins
-  for select to authenticated using (user_id = auth.uid());
+  for select to authenticated using (user_id = (select auth.uid()));
 
 -- ###################################################################
 -- DAR DE ALTA AL ADMINISTRADOR
