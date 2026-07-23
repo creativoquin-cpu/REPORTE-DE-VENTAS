@@ -5,6 +5,7 @@ import { bonita } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { ejecutarMarcarNulo, ejecutarQuitarDia } from "@/lib/data/escribir-dias";
 import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
+import { CalendarioMarcar } from "./CalendarioMarcar";
 
 /**
  * Panel "Días sin ventas / descanso" (día nulo). Marca días donde el equipo no
@@ -18,8 +19,8 @@ import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
 type Pendiente = { tipo: "marcar" | "quitar"; fecha: string };
 
 export function DiaNuloPanel() {
-  const { diasNulos, modoEscritura, aplicarMarcarNuloLocal, aplicarQuitarDiaLocal } = useCargar();
-  const [fecha, setFecha] = useState("");
+  const { diasNulos, diasManuales, modoEscritura, aplicarMarcarNuloLocal, aplicarQuitarDiaLocal } =
+    useCargar();
   const [pendiente, setPendiente] = useState<Pendiente | null>(null);
   const [escribiendo, setEscribiendo] = useState(false);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -27,17 +28,9 @@ export function DiaNuloPanel() {
 
   const marcados = Object.keys(diasNulos).sort();
 
-  function prepararMarcar() {
+  function elegir(f: string) {
     setMensaje(null);
-    if (!fecha) {
-      setMensaje({ ok: false, texto: "Elegí una fecha primero." });
-      return;
-    }
-    if (diasNulos[fecha]) {
-      setMensaje({ ok: false, texto: "Ese día ya está marcado como día sin ventas." });
-      return;
-    }
-    setPendiente({ tipo: "marcar", fecha });
+    setPendiente({ tipo: diasNulos[f] ? "quitar" : "marcar", fecha: f });
   }
   function prepararQuitar(f: string) {
     setMensaje(null);
@@ -58,7 +51,6 @@ export function DiaNuloPanel() {
     }
     if (pendiente.tipo === "marcar") {
       aplicarMarcarNuloLocal(pendiente.fecha);
-      setFecha("");
       setMensaje({ ok: true, texto: `Marqué ${bonita(pendiente.fecha)} como día sin ventas.` });
     } else {
       aplicarQuitarDiaLocal(pendiente.fecha);
@@ -71,27 +63,17 @@ export function DiaNuloPanel() {
     <section>
       <h2 className="mb-3 text-[22px] font-black tracking-tight text-d-txt">Días sin ventas (descanso)</h2>
       <div className="rounded-card border border-d-sup-3 bg-d-sup p-6 shadow-card">
-        <p className="mb-3 text-[13px] text-d-txt-2">
-          Días donde el equipo descansó y no hubo <b>ninguna</b> venta. El día se saca del cálculo:
-          <b> no cuenta ni baja el promedio</b>. No se reparte como un fin de semana; si ese día
-          quedaron ventas cargadas, pasan al <b>día anterior</b>.
-        </p>
-
-        <div className="flex flex-wrap items-end gap-3">
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="rounded-lg border border-d-sup-3 bg-d-sup-2 px-2.5 py-1.5 text-sm text-d-txt outline-none focus:outline-2 focus:outline-turquesa"
-          />
-          <button
-            onClick={prepararMarcar}
-            className="rounded-full bg-turquesa px-4 py-2 text-[13px] font-bold text-d-en-turquesa hover:brightness-110"
-          >
-            Marcar día sin ventas
-          </button>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-[640px] text-[13px] text-d-txt-2">
+            Días donde el equipo descansó y no hubo <b>ninguna</b> venta. El día se saca del cálculo:
+            <b> no cuenta ni baja el promedio</b>. No se reparte como un fin de semana; si ese día
+            quedaron ventas cargadas, pasan al <b>día anterior</b>. Tocá un día del calendario para
+            agregarlo o quitarlo.
+          </p>
           <ModoEscrituraToggle />
         </div>
+
+        <CalendarioMarcar marcados={diasNulos} otros={diasManuales} onElegir={elegir} color="rojo" />
 
         <div className="mt-4">
           {marcados.length ? (

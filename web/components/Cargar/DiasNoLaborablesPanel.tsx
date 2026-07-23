@@ -5,6 +5,7 @@ import { bonita } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { ejecutarMarcarDia, ejecutarQuitarDia } from "@/lib/data/escribir-dias";
 import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
+import { CalendarioMarcar } from "./CalendarioMarcar";
 
 /**
  * Panel "Días no laborables" (Fase 4d). Puerto de construirCalendario()
@@ -16,8 +17,8 @@ import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
 type Pendiente = { tipo: "marcar" | "quitar"; fecha: string };
 
 export function DiasNoLaborablesPanel() {
-  const { diasManuales, modoEscritura, aplicarMarcarDiaLocal, aplicarQuitarDiaLocal } = useCargar();
-  const [fecha, setFecha] = useState("");
+  const { diasManuales, diasNulos, modoEscritura, aplicarMarcarDiaLocal, aplicarQuitarDiaLocal } =
+    useCargar();
   const [pendiente, setPendiente] = useState<Pendiente | null>(null);
   const [escribiendo, setEscribiendo] = useState(false);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -25,17 +26,11 @@ export function DiasNoLaborablesPanel() {
 
   const marcados = Object.keys(diasManuales).sort();
 
-  function prepararMarcar() {
+  // Un clic en el calendario: si el día ya está marcado, prepara quitarlo; si no,
+  // prepara marcarlo.
+  function elegir(f: string) {
     setMensaje(null);
-    if (!fecha) {
-      setMensaje({ ok: false, texto: "Elegí una fecha primero." });
-      return;
-    }
-    if (diasManuales[fecha]) {
-      setMensaje({ ok: false, texto: "Ese día ya está marcado como no laborable." });
-      return;
-    }
-    setPendiente({ tipo: "marcar", fecha });
+    setPendiente({ tipo: diasManuales[f] ? "quitar" : "marcar", fecha: f });
   }
   function prepararQuitar(f: string) {
     setMensaje(null);
@@ -56,7 +51,6 @@ export function DiasNoLaborablesPanel() {
     }
     if (pendiente.tipo === "marcar") {
       aplicarMarcarDiaLocal(pendiente.fecha);
-      setFecha("");
       setMensaje({ ok: true, texto: `Marqué ${bonita(pendiente.fecha)} como no laborable.` });
     } else {
       aplicarQuitarDiaLocal(pendiente.fecha);
@@ -69,26 +63,15 @@ export function DiasNoLaborablesPanel() {
     <section>
       <h2 className="mb-3 text-[22px] font-black tracking-tight text-d-txt">Días no laborables</h2>
       <div className="rounded-card border border-d-sup-3 bg-d-sup p-6 shadow-card">
-        <p className="mb-3 text-[13px] text-d-txt-2">
-          Sábados, domingos y festivos de Colombia se detectan solos. Acá solo agregás los días extra
-          que decidas cerrar. Afecta el reparto también en la vista pública.
-        </p>
-
-        <div className="flex flex-wrap items-end gap-3">
-          <input
-            type="date"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="rounded-lg border border-d-sup-3 bg-d-sup-2 px-2.5 py-1.5 text-sm text-d-txt outline-none focus:outline-2 focus:outline-turquesa"
-          />
-          <button
-            onClick={prepararMarcar}
-            className="rounded-full bg-turquesa px-4 py-2 text-[13px] font-bold text-d-en-turquesa hover:brightness-110"
-          >
-            Marcar como no laborable
-          </button>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[13px] text-d-txt-2">
+            Sábados, domingos y festivos de Colombia se detectan solos. Tocá un día del calendario
+            para agregarlo o quitarlo. Afecta el reparto también en la vista pública.
+          </p>
           <ModoEscrituraToggle />
         </div>
+
+        <CalendarioMarcar marcados={diasManuales} otros={diasNulos} onElegir={elegir} color="turquesa" />
 
         <div className="mt-4">
           {marcados.length ? (
