@@ -127,8 +127,10 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
       )}
 
       <MetasPanel />
-      <DiasNoLaborablesPanel />
-      <DiaNuloPanel />
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <DiasNoLaborablesPanel />
+        <DiaNuloPanel />
+      </div>
       <JornadasPanel resultado={resultado} />
       <CierrePanel />
     </div>
