@@ -25,7 +25,8 @@
       "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\n  Write-Output \\('StatusCode: ' + \\\\$r.StatusCode\\)\n  Write-Output \\('FinalUri: ' + \\\\$r.BaseResponse.ResponseUri\\)\n  Write-Output \\('Content: ' + \\\\$r.Content\\)\n} catch {\n  Write-Output \\('ERROR: ' + \\\\$_.Exception.Message\\)\n}\n\")",
       "Bash(powershell -NoProfile -Command \"\ntry {\n  \\\\$body = '{\\\\\"pin\\\\\":\\\\\"0000\\\\\",\\\\\"system\\\\\":\\\\\"A\\\\\",\\\\\"newRows\\\\\":[],\\\\\"headers\\\\\":[],\\\\\"removedDelta\\\\\":0}'\n  \\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -Method Post -Body \\\\$body -ContentType 'text/plain;charset=utf-8' -MaximumRedirection 5 -UseBasicParsing\n  Write-Output \\('StatusCode: ' + \\\\$r.StatusCode\\)\n  Write-Output \\('Content: ' + \\\\$r.Content\\)\n} catch {\n  Write-Output \\('ERROR: ' + \\\\$_.Exception.Message\\)\n}\n\")",
       "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/Tati/AppData/Local/Temp/claude/D--PROYECTO-IA-REPORTE-DE-VENTAS/ee4337af-4903-4140-8fbf-c7eda47c1849/scratchpad/serve.ps1\")",
-      "Bash(powershell -NoProfile -Command \"\n\\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\nWrite-Output \\\\$r.Content\n\")"
+      "Bash(powershell -NoProfile -Command \"\n\\\\$r = Invoke-WebRequest -Uri 'https://script.google.com/macros/s/AKfycbzUWo_S1wHFdeJtUrjKAQx9aX_2TWFnADyOsJo5XPhbbVEBT4fiks_3qUoYMvQdscauiQ/exec' -MaximumRedirection 5 -UseBasicParsing\nWrite-Output \\\\$r.Content\n\")",
+      "mcp__claude_ai_Supabase__get_advisors"
     ]
   }
 }

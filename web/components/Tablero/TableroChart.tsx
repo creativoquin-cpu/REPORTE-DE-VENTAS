@@ -42,7 +42,8 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
           if (t) ctx.fillText(String(t), b.x, b.y - 6);
         });
         ctx.restore();
-        // Línea de meta: un tramo por día.
+        // Línea de meta (tope del equipo, viene de "Metas del equipo"): un tramo
+        // por día, con el valor rotulado cada vez que la meta cambia.
         const barras = c.getDatasetMeta(1).data;
         if (!barras.length) return;
         const medio =
@@ -51,8 +52,8 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
             : (c.chartArea.right - c.chartArea.left) / 2;
         ctx.save();
         ctx.strokeStyle = "#eaf4f3";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 4]);
         ctx.beginPath();
         barras.forEach((b, i) => {
           const y = c.scales.y.getPixelForValue(metaDia[i]);
@@ -61,6 +62,17 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
           ctx.lineTo(Math.min(b.x + medio, c.chartArea.right), y);
         });
         ctx.stroke();
+        ctx.setLineDash([]);
+        // Rótulo "Meta N" en el primer día y cada vez que cambia el valor.
+        ctx.font = "700 11px -apple-system,Segoe UI,Roboto,sans-serif";
+        ctx.fillStyle = "#eaf4f3";
+        ctx.textAlign = "left";
+        barras.forEach((b, i) => {
+          if (i && metaDia[i] === metaDia[i - 1]) return;
+          const y = c.scales.y.getPixelForValue(metaDia[i]);
+          if (y < c.chartArea.top || y > c.chartArea.bottom) return;
+          ctx.fillText(`Meta ${metaDia[i]}`, Math.max(b.x - medio + 2, c.chartArea.left + 2), y - 5);
+        });
         ctx.restore();
       },
     };
@@ -124,7 +136,9 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
           y: {
             stacked: true,
             beginAtZero: true,
-            suggestedMax: metaMax,
+            // Aire arriba para que la línea de meta nunca quede pegada al borde
+            // superior (si no, cuando la meta es el valor más alto, se recorta).
+            suggestedMax: Math.ceil(metaMax * 1.12),
             border: { display: false },
             grid: { color: "rgba(255,255,255,.05)" },
             ticks: { font: { size: 11 }, color: "#7d9396" },

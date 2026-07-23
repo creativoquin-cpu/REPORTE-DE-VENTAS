@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jornada Quin</title>
+<style>
+:root{
+  --tinta:#091315; --tinta-2:#123b3d; --tinta-3:#17383a;
+  --turquesa:#17c3c3; --turquesa-osc:#078f94; --turquesa-prof:#06777b;
+  --menta:#bdf4f1; --menta-2:#c7faf5; --menta-3:#d7faf5; --menta-4:#cdedea; --menta-5:#e7faf8;
+  --gris:#607174; --gris-2:#536568; --gris-3:#b6c4c5; --gris-4:#bfd0d1; --gris-5:#c7d3d4; --gris-6:#d4dfe0;
+  --linea:#e8f0ef; --linea-2:#f2f4f4; --fondo:#f4f8f7; --blanco:#ffffff;
+  --r:18px; --r-sm:12px; --r-lg:26px;
+  --sombra:0 1px 2px rgba(9,19,21,.04), 0 8px 24px rgba(9,19,21,.06);
+  --sombra-alta:0 2px 6px rgba(9,19,21,.06), 0 18px 48px rgba(9,19,21,.10);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,"Inter","Helvetica Neue",Arial,sans-serif;
+  background:var(--fondo); color:var(--tinta);
+  -webkit-font-smoothing:antialiased; font-size:16px; line-height:1.45;
+}
+.w400{font-weight:400}.w600{font-weight:600}.w800{font-weight:800}.w900{font-weight:900}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.oculto{display:none!important}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+.kicker{font-weight:900;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--turquesa-osc)}
+
+/* ---------- Mascota Quino ---------- */
+.quino{display:block}
+
+/* ---------- LOGIN ---------- */
+#login-section{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 24px;
+  background:
+    radial-gradient(1100px 620px at 12% -8%, var(--menta-2) 0%, rgba(199,250,245,0) 62%),
+    radial-gradient(900px 560px at 105% 108%, var(--menta-4) 0%, rgba(205,237,234,0) 60%),
+    var(--fondo);
+}
+.login-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center;max-width:1120px;width:100%}
+#login-mascot{width:132px;height:132px;margin-bottom:26px}
+#login-kicker{font-size:16px;font-weight:900;letter-spacing:.13em;color:var(--turquesa-osc);text-transform:uppercase}
+#login-title{font-size:58px;font-weight:900;color:var(--tinta);line-height:1.03;letter-spacing:-.028em;margin:14px 0 18px}
+#login-subtitle{font-size:18px;font-weight:400;color:var(--gris-2);max-width:430px;line-height:1.55}
+#login-card{
+  background:var(--blanco);border-radius:var(--r-lg);padding:38px;
+  box-shadow:var(--sombra-alta);border:1px solid rgba(9,19,21,.05);
+}
+#access-title{font-size:24px;font-weight:900;color:var(--tinta)}
+#access-note{font-size:14px;font-weight:400;color:var(--gris);margin:8px 0 26px}
+.campo{margin-bottom:20px}
+.campo>label{display:block;font-size:16px;font-weight:600;color:var(--tinta);margin-bottom:9px}
+#user-input{
+  width:100%;background:var(--blanco);border:1.5px solid var(--linea);border-radius:14px;
+  padding:14px 16px;font-size:16px;font-weight:400;color:var(--tinta);font-family:inherit;transition:border-color .18s, box-shadow .18s;
+}
+#user-input::placeholder{color:#9fb0b2}
+#user-input:focus{outline:none;border-color:var(--turquesa);box-shadow:0 0 0 4px rgba(23,195,195,.16)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rol{
+  border:1.5px solid var(--linea);border-radius:14px;padding:13px 12px;text-align:center;
+  font-size:16px;font-weight:600;color:var(--tinta);background:var(--blanco);transition:all .18s;
+}
+.rol:hover{border-color:var(--menta)}
+.rol[aria-pressed="true"]{background:var(--turquesa);border-color:var(--turquesa);font-weight:800}
+#enter-button{
+  width:100%;background:var(--turquesa);color:var(--tinta);border-radius:14px;padding:16px;
+  font-size:16px;font-weight:800;margin-top:6px;transition:transform .16s, box-shadow .16s, filter .16s;
+  box-shadow:0 6px 18px rgba(23,195,195,.32);
+}
+#enter-button:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 10px 26px rgba(23,195,195,.42)}
+#enter-button:active{transform:translateY(0)}
+#security-note{font-size:12px;font-weight:400;color:var(--gris);text-align:center;margin-top:18px;line-height:1.5}
+
+/* ---------- CABECERAS ---------- */
+.header{background:var(--blanco);border-bottom:1px solid var(--linea);position:sticky;top:0;z-index:60}
+.header-in{display:flex;align-items:center;gap:18px;padding:16px 0}
+.header-mascot{width:52px;height:52px;flex-shrink:0}
+.header-txt{flex:1;min-width:0}
+.eyebrow{font-size:16px;font-weight:900;letter-spacing:.13em;color:var(--turquesa-osc);text-transform:uppercase}
+.header-title{font-size:34px;font-weight:900;color:var(--tinta);letter-spacing:-.024em;line-height:1.1}
+.header-date{font-size:16px;font-weight:400;color:var(--gris)}
+.header-side{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.badge-rol{background:var(--tinta);color:var(--blanco);font-size:16px;font-weight:800;padding:9px 18px;border-radius:999px}
+.badge-rol.claro{background:var(--menta-3);color:var(--turquesa-prof)}
+#live-tag{background:var(--menta-3);color:var(--turquesa-prof);font-size:16px;font-weight:600;padding:9px 16px;border-radius:999px;white-space:nowrap}
+.btn-vista{background:var(--tinta);color:var(--blanco);font-size:16px;font-weight:600;padding:11px 20px;border-radius:999px;transition:filter .16s, transform .16s}
+.btn-vista:hover{filter:brightness(1.35);transform:translateY(-1px)}
+
+/* ---------- SECCIONES ---------- */
+.seccion{padding:44px 0}
+.sec-head{margin-bottom:26px}
+.sec-title{font-size:34px;font-weight:900;color:var(--tinta);letter-spacing:-.024em;margin-top:5px}
+.card{background:var(--blanco);border-radius:var(--r);padding:26px;box-shadow:var(--sombra);border:1px solid rgba(9,19,21,.04)}
+.card-title{font-size:25px;font-weight:900;color:var(--tinta);letter-spacing:-.018em}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-bottom:22px}
+.kpi{background:var(--blanco);border-radius:var(--r);padding:22px;box-shadow:var(--sombra);border:1px solid rgba(9,19,21,.04);display:flex;flex-direction:column;gap:3px;min-width:0}
+.kpi-label{font-size:16px;font-weight:600;color:var(--gris-2);line-height:1.3}
+.kpi-value{font-size:48px;font-weight:900;color:var(--tinta);letter-spacing:-.035em;line-height:1.02;font-variant-numeric:tabular-nums}
+.kpi-unit{font-size:16px;font-weight:400;color:var(--gris)}
+#kpi-total-card{background:var(--tinta)}
+#kpi-total-label{color:var(--blanco)} #kpi-total-value{color:var(--turquesa)} #kpi-total-unit{color:var(--gris-5)}
+#kpi-own-card{background:var(--turquesa)}
+#kpi-own-label{color:var(--tinta)} #kpi-own-unit{color:var(--tinta-2)}
+#kpi-percent-card{background:var(--menta-5)}
+#kpi-percent-label{color:var(--turquesa-prof)} #kpi-percent-value{font-size:44px} #kpi-percent-unit{color:var(--gris-2)}
+#kpi-month-value{font-size:44px}
+
+/* ---------- Metas (las dos tarjetas comparten la misma plantilla) ---------- */
+.fila-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;align-items:stretch}
+.meta-card{display:flex;flex-direction:column}
+.meta-kicker{margin-bottom:5px}
+.meta-title{font-size:28px;font-weight:900;color:var(--tinta);letter-spacing:-.02em;line-height:1.15}
+.meta-value{font-size:30px;font-weight:900;color:var(--tinta);margin:14px 0 12px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.barra{height:15px;background:var(--linea);border-radius:999px;overflow:hidden}
+.barra-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--turquesa) 0%,var(--turquesa-osc) 100%);width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+.meta-pill-fila{margin-top:14px}
+.meta-pill{display:inline-block;background:var(--menta-3);color:var(--turquesa-prof);font-size:16px;font-weight:800;padding:6px 16px;border-radius:999px;font-variant-numeric:tabular-nums}
+.meta-note{font-size:16px;font-weight:400;color:var(--gris);margin-top:12px}
+
+/* ---------- Top / rankings ---------- */
+.fila-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.top-label{font-size:16px;font-weight:900;letter-spacing:.11em;color:var(--turquesa-osc);text-transform:uppercase}
+.top-name{font-size:24px;font-weight:900;color:var(--tinta);margin:7px 0 3px}
+.top-value{font-size:16px;font-weight:400;color:var(--gris)}
+.rank-list{margin-top:18px;display:flex;flex-direction:column;gap:3px}
+.rank-row{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:13px;padding:11px 12px;border-radius:12px;transition:background .16s}
+.rank-row:hover{background:var(--fondo)}
+.rank-row.yo{background:var(--menta-5);box-shadow:inset 0 0 0 1.5px var(--menta)}
+.rank-pos{width:29px;height:29px;border-radius:50%;background:var(--linea-2);color:var(--gris-2);font-size:14px;font-weight:800;display:grid;place-items:center}
+.rank-row:nth-child(1) .rank-pos{background:var(--turquesa);color:var(--tinta)}
+.rank-row:nth-child(2) .rank-pos{background:var(--menta);color:var(--turquesa-prof)}
+.rank-row:nth-child(3) .rank-pos{background:var(--menta-3);color:var(--turquesa-prof)}
+.rank-name{font-size:16px;font-weight:600;color:var(--tinta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-bar{height:7px;background:var(--linea);border-radius:999px;overflow:hidden;margin-top:5px}
+.rank-bar>i{display:block;height:100%;background:var(--turquesa);border-radius:999px;width:0;transition:width .9s cubic-bezier(.22,1,.36,1)}
+.rank-val{font-size:16px;font-weight:800;color:var(--tinta);font-variant-numeric:tabular-nums}
+
+/* ---------- Gráficos ---------- */
+.fila-2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.chart{margin-top:20px;display:flex;align-items:stretch;gap:8px;height:224px}
+.chart-col{flex:1;display:flex;flex-direction:column;min-width:0}
+.chart-val{
+  height:21px;font-size:13px;font-weight:800;color:var(--tinta);text-align:center;
+  font-variant-numeric:tabular-nums;line-height:1.5;white-space:nowrap;letter-spacing:-.01em;
+}
+.chart-area{flex:1;display:flex;align-items:flex-end;justify-content:center;min-height:0}
+.chart-pila{width:100%;max-width:44px;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.chart-bar{
+  width:100%;max-width:44px;border-radius:9px 9px 4px 4px;background:var(--turquesa);
+  height:0;transition:height 1s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;
+}
+.chart-bar.alt{background:var(--tinta)}
+.chart-seg{font-size:11px;font-weight:800;text-align:center;line-height:1;padding-top:5px;opacity:0;transition:opacity .5s .7s}
+.chart-bar.mostrar .chart-seg{opacity:1}
+.chart-lbl{height:19px;font-size:12px;font-weight:600;color:var(--gris);text-align:center;white-space:nowrap;line-height:1.6}
+.leyenda{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap}
+.leyenda span{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:var(--gris-2)}
+.punto{width:11px;height:11px;border-radius:3px}
+
+/* ---------- VS ---------- */
+#vs-card{margin-bottom:22px}
+.vs-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+#vs-title{font-size:28px;font-weight:900;letter-spacing:-.02em;margin-top:5px}
+#vs-note{font-size:16px;font-weight:400;color:var(--gris)}
+.vs-grid{margin-top:22px;display:grid;grid-template-columns:repeat(2,1fr);gap:11px 26px}
+.vs-row{display:grid;grid-template-columns:26px 1fr 58px;align-items:center;gap:12px}
+.vs-num{font-size:14px;font-weight:800;color:var(--gris-4);font-variant-numeric:tabular-nums}
+.vs-track{height:26px;background:var(--linea-2);border-radius:8px;overflow:hidden;position:relative}
+.vs-fill{height:100%;background:linear-gradient(90deg,var(--menta) 0%,var(--turquesa) 100%);border-radius:8px;width:0;transition:width 1s cubic-bezier(.22,1,.36,1);display:flex;align-items:center}
+.vs-name{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:700;color:var(--tinta)}
+.vs-val{font-size:16px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ---------- Calendario ---------- */
+#analysis-card{margin-bottom:22px;border-radius:28px;padding:32px}
+.cal-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:26px}
+#analysis-title{font-family:var(--serif);font-size:33px;font-weight:700;letter-spacing:-.014em;margin-top:6px;line-height:1.15}
+#analysis-help{font-size:15px;font-weight:400;color:var(--gris);margin-top:9px;max-width:620px}
+#clear-selection-button{
+  display:flex;align-items:center;gap:9px;background:var(--linea);color:var(--tinta);
+  font-size:16px;font-weight:600;padding:12px 22px;border-radius:999px;transition:background .16s;flex-shrink:0;
+}
+#clear-selection-button:hover{background:var(--gris-6)}
+#clear-selection-button svg{width:19px;height:19px;flex-shrink:0}
+
+.cal-layout{display:grid;grid-template-columns:1.5fr 1fr;gap:26px;align-items:start}
+
+.cal-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px}
+.cal-nav button{
+  width:46px;height:46px;border-radius:14px;background:var(--blanco);border:1.5px solid var(--linea);
+  color:var(--tinta);display:grid;place-items:center;transition:border-color .16s, background .16s;flex-shrink:0;
+}
+.cal-nav button:hover{border-color:var(--menta);background:var(--menta-5)}
+.cal-nav button svg{width:17px;height:17px}
+.cal-mes-wrap{text-align:center;flex:1}
+.cal-mes{font-family:var(--serif);font-size:24px;font-weight:700;text-transform:capitalize;letter-spacing:-.01em}
+.cal-mes-sub{font-size:14px;font-weight:400;color:var(--gris);margin-top:2px}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+.cal-dow{font-size:13px;font-weight:600;color:var(--gris);text-align:center;padding-bottom:6px}
+.cal-dia{
+  border-radius:13px;background:var(--blanco);border:1.5px solid var(--linea);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:9px 11px 11px;min-height:78px;transition:all .14s;position:relative;text-align:left;
+}
+.cal-dia.activo{cursor:pointer;user-select:none}
+.cal-dia.activo:hover{border-color:var(--turquesa);background:var(--menta-5)}
+.cal-dia.vacio{background:transparent;border-color:transparent;pointer-events:none}
+.cal-num{font-size:12px;font-weight:700;color:var(--tinta);font-variant-numeric:tabular-nums;line-height:1}
+.cal-mini{font-size:20px;font-weight:700;color:var(--tinta);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.01em}
+.cal-dia.rango{background:var(--menta-5);border-color:var(--menta)}
+.cal-dia.sel{background:var(--turquesa);border-color:var(--turquesa);box-shadow:0 4px 14px rgba(23,195,195,.34)}
+.cal-dia.sel .cal-num,.cal-dia.sel .cal-mini{color:var(--tinta)}
+
+#selection-panel{background:var(--menta-5);border-radius:22px;padding:26px}
+#selection-label{font-size:15px;font-weight:700;letter-spacing:.09em;color:var(--turquesa-prof);text-transform:uppercase}
+#selection-title{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--tinta);margin-top:7px;letter-spacing:-.012em}
+#selection-help{font-size:15px;font-weight:400;color:var(--gris);margin-top:6px}
+.sel-grid{display:flex;flex-direction:column;gap:13px;margin-top:22px}
+.sel-item{background:var(--blanco);border-radius:15px;padding:17px 19px}
+.sel-fila{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sel-lbl{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--tinta)}
+.sel-val{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--tinta);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sel-sub{font-size:14px;font-weight:400;color:var(--gris)}
+.sel-sub2{font-size:14px;font-weight:400;color:var(--gris);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- Comparativo / mes ---------- */
+#comparison-title,#month-summary-title{font-size:30px;font-weight:900;letter-spacing:-.022em;margin-top:5px}
+.mes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:20px}
+.mes-item{background:var(--fondo);border-radius:14px;padding:18px}
+.mes-lbl{font-size:16px;font-weight:400;color:var(--gris)}
+.mes-val{font-size:22px;font-weight:900;color:var(--tinta);margin-top:5px;font-variant-numeric:tabular-nums}
+
+/* ---------- Export ---------- */
+#export-card{background:var(--tinta);margin-bottom:22px;border:none}
+#export-kicker{font-size:16px;font-weight:900;letter-spacing:.13em;color:var(--turquesa);text-transform:uppercase}
+#export-title{font-size:30px;font-weight:900;color:var(--blanco);letter-spacing:-.022em;margin:5px 0 8px}
+#export-help{font-size:16px;font-weight:400;color:var(--gris-3)}
+.export-btns{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+.btn-desc{border-radius:14px;padding:15px 26px;font-size:16px;font-weight:800;color:var(--tinta);transition:transform .16s, filter .16s}
+.btn-desc:hover{transform:translateY(-2px);filter:brightness(1.06)}
+#download-total-button{background:var(--turquesa)}
+#download-own-button{background:var(--blanco)}
+
+/* ---------- Historias ---------- */
+#stories-section{background:var(--menta-4);padding:56px 0}
+#stories-title{font-size:42px;font-weight:900;color:var(--tinta);letter-spacing:-.028em;margin-top:5px}
+#stories-kicker{color:var(--turquesa-prof)}
+#stories-note{font-size:16px;font-weight:400;color:var(--gris-2);margin-top:9px}
+.stories-grid{display:flex;gap:34px;margin-top:34px;flex-wrap:wrap}
+.story-wrap{display:flex;flex-direction:column;gap:13px}
+.story{width:296px;aspect-ratio:9/16;border-radius:26px;padding:28px;display:flex;flex-direction:column;box-shadow:var(--sombra-alta);overflow:hidden}
+.story.total{background:linear-gradient(165deg,var(--menta-2) 0%,var(--turquesa) 100%)}
+.story.own{background:linear-gradient(165deg,var(--tinta-2) 0%,var(--tinta) 100%)}
+.story-brand{font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.story-mascot{width:60px;height:60px;margin:20px 0 14px}
+.story-title{font-size:47px;font-weight:900;letter-spacing:-.032em;line-height:1}
+.story-value{font-size:70px;font-weight:900;letter-spacing:-.042em;line-height:1;margin-top:14px;font-variant-numeric:tabular-nums}
+.story-unit{font-size:14px;font-weight:700;margin-top:5px}
+.story-date{font-size:12px;font-weight:700;margin-top:auto}
+.story-chart{border-radius:16px;padding:14px;margin-top:16px}
+.story-chart.claro{background:var(--blanco)}
+.story-chart.oscuro{background:var(--tinta-3)}
+.story-chart-label{font-size:11px;font-weight:800;margin-bottom:10px}
+.mini-chart{display:flex;flex-direction:column;height:92px}
+.mini-val-row{display:flex;gap:5px;height:13px;flex-shrink:0;margin-bottom:6px}
+.mini-val{flex:1;min-width:0;font-size:10px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;line-height:1.3;letter-spacing:-.03em}
+.mini-plot{flex:1;position:relative;min-height:0}
+.mini-bars{display:flex;gap:5px;align-items:flex-end;height:100%}
+.mini-bar{flex:1;min-width:0;border-radius:4px 4px 2px 2px;height:0;transition:height .9s cubic-bezier(.22,1,.36,1)}
+/* Línea de meta: sin etiqueta, la cabecera del panel ya dice "meta 200" */
+.mini-meta{position:absolute;left:-4px;right:-4px;height:0;border-top:1.5px dashed;pointer-events:none;z-index:2}
+.story-caption{font-size:16px;font-weight:600;color:var(--tinta);text-align:center}
+
+/* ---------- VENDEDOR ---------- */
+#my-sales-card{background:var(--tinta);border:none;padding:34px}
+#my-sales-label{font-size:16px;font-weight:900;letter-spacing:.13em;color:var(--turquesa);text-transform:uppercase}
+#my-sales-title{font-size:28px;font-weight:900;color:var(--blanco);letter-spacing:-.02em;margin-top:5px}
+#my-sales-value{font-size:68px;font-weight:900;color:var(--turquesa);letter-spacing:-.042em;line-height:1;margin-top:14px;font-variant-numeric:tabular-nums}
+#my-sales-unit{font-size:18px;font-weight:400;color:var(--gris-6)}
+.vendor-grid{display:grid;grid-template-columns:1fr 1.25fr;gap:16px;margin-bottom:22px}
+#vendor-ranking-title{font-size:25px;font-weight:900;letter-spacing:-.018em}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translate(-50%,130%);
+  background:var(--tinta);color:var(--blanco);padding:15px 28px;border-radius:999px;
+  font-size:15px;font-weight:600;z-index:900;transition:transform .34s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 12px 34px rgba(9,19,21,.28);
+}
+#toast.ver{transform:translate(-50%,0)}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1100px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .fila-4{grid-template-columns:repeat(2,1fr)}
+  .cal-layout{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .login-grid{grid-template-columns:1fr;gap:38px}
+  #login-title{font-size:44px}
+  .fila-2,.fila-2b,.vendor-grid{grid-template-columns:1fr}
+  .vs-grid{grid-template-columns:1fr}
+  .header-in{flex-wrap:wrap}
+  .header-title,.sec-title{font-size:28px}
+  #stories-title{font-size:32px}
+}
+@media(max-width:620px){
+  .wrap{padding:0 16px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .fila-4,.mes-grid{grid-template-columns:1fr 1fr}
+  #analysis-card{padding:22px}
+  .cal-grid{gap:5px}
+  .cal-dia{min-height:62px;padding:7px 8px 8px;border-radius:10px}
+  .cal-mini{font-size:16px}
+  .kpi-value{font-size:38px}
+  #login-title{font-size:36px}
+  .story{width:100%;max-width:320px}
+}
+
+/* ================================================================
+   TEMA OSCURO — PANEL ADMINISTRADOR (fijo, sin interruptor)
+   Alcance exclusivo: #admin-section
+   ================================================================ */
+#admin-section{
+  --d-bg:#070f11;        /* fondo de página            */
+  --d-sup:#0e1c1e;       /* superficie de tarjeta      */
+  --d-sup-2:#14282b;     /* superficie anidada         */
+  --d-sup-3:#0a1719;     /* superficie hundida         */
+  --d-borde:rgba(255,255,255,.075);
+  --d-borde-2:rgba(255,255,255,.13);
+  --d-txt:#eaf4f3;       /* texto principal            */
+  --d-txt-2:#8fa5a7;     /* texto secundario           */
+  --d-txt-3:#7d9396;     /* texto terciario            */
+  --d-dropi:#5b8f94;     /* barras Dropi               */
+  --d-sombra:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.36);
+  background:var(--d-bg);
+  color:var(--d-txt);
+  min-height:100vh;
+}
+
+/* ---- Cabecera ---- */
+#admin-section .header{background:var(--d-sup);border-bottom:1px solid var(--d-borde)}
+#admin-section .header-title{color:var(--d-txt)}
+#admin-section .header-date{color:var(--d-txt-2)}
+#admin-section .eyebrow,
+#admin-section .kicker{color:var(--turquesa)}
+#admin-section #admin-role{background:var(--turquesa);color:#06171a}
+#admin-section #live-tag{background:rgba(23,195,195,.15);color:var(--turquesa)}
+#admin-section .btn-vista{background:var(--d-sup-2);color:var(--d-txt);border:1px solid var(--d-borde-2)}
+#admin-section .btn-vista:hover{background:var(--turquesa);color:#06171a;filter:none}
+
+/* ---- Superficies genéricas ---- */
+#admin-section .sec-title{color:var(--d-txt)}
+#admin-section .card{background:var(--d-sup);border:1px solid var(--d-borde);box-shadow:var(--d-sombra)}
+#admin-section .card-title{color:var(--d-txt)}
+
+/* ---- KPIs ---- */
+#admin-section .kpi{background:var(--d-sup);border:1px solid var(--d-borde);box-shadow:var(--d-sombra)}
+#admin-section .kpi-label{color:var(--d-txt-2)}
+#admin-section .kpi-value{color:var(--d-txt)}
+#admin-section .kpi-unit{color:var(--d-txt-3)}
+#admin-section #kpi-total-card{background:linear-gradient(150deg,#17383a 0%,#0d2224 100%);border:1.5px solid rgba(23,195,195,.34)}
+#admin-section #kpi-total-label{color:var(--d-txt)}
+#admin-section #kpi-total-value{color:var(--turquesa)}
+#admin-section #kpi-total-unit{color:var(--d-txt-2)}
+#admin-section #kpi-own-card{background:var(--turquesa);border-color:var(--turquesa)}
+#admin-section #kpi-own-label,#admin-section #kpi-own-value{color:#06171a}
+#admin-section #kpi-own-unit{color:#0d3134}
+#admin-section #kpi-percent-card{background:var(--d-sup-2);border-color:rgba(23,195,195,.2)}
+#admin-section #kpi-percent-label{color:var(--turquesa)}
+#admin-section #kpi-percent-unit{color:var(--d-txt-2)}
+
+/* ---- Metas y barras ---- */
+#admin-section .meta-title,#admin-section .meta-value,
+#admin-section #vs-title{color:var(--d-txt)}
+#admin-section .meta-note,#admin-section #vs-note{color:var(--d-txt-2)}
+#admin-section .barra{background:var(--d-sup-3)}
+#admin-section .meta-pill{background:rgba(23,195,195,.15);color:var(--turquesa)}
+
+/* ---- Tarjetas TOP ---- */
+#admin-section .top-label{color:var(--turquesa)}
+#admin-section .top-name{color:var(--d-txt)}
+#admin-section .top-value{color:var(--d-txt-2)}
+
+/* ---- Rankings ---- */
+#admin-section .rank-row:hover{background:var(--d-sup-2)}
+#admin-section .rank-row.yo{background:rgba(23,195,195,.11);box-shadow:inset 0 0 0 1.5px rgba(23,195,195,.35)}
+#admin-section .rank-pos{background:var(--d-sup-2);color:var(--d-txt-2)}
+#admin-section .rank-row:nth-child(1) .rank-pos{background:var(--turquesa);color:#06171a}
+#admin-section .rank-row:nth-child(2) .rank-pos{background:rgba(23,195,195,.4);color:#06171a}
+#admin-section .rank-row:nth-child(3) .rank-pos{background:rgba(23,195,195,.22);color:var(--turquesa)}
+#admin-section .rank-name{color:var(--d-txt)}
+#admin-section .rank-val{color:var(--d-txt)}
+#admin-section .rank-bar{background:var(--d-sup-3)}
+
+/* ---- VS Vendedores ---- */
+#admin-section .vs-num{color:var(--d-txt-3)}
+#admin-section .vs-track{background:var(--d-sup-3)}
+#admin-section .vs-fill{background:linear-gradient(90deg,rgba(23,195,195,.45) 0%,var(--turquesa) 100%)}
+#admin-section .vs-name{color:var(--d-txt)}
+#admin-section .vs-val{color:var(--d-txt)}
+
+/* ---- Gráficos ---- */
+#admin-section .chart-bar.alt{background:var(--d-dropi)}
+#admin-section .chart-val{color:var(--d-txt)}
+#admin-section .chart-lbl{color:var(--d-txt-3)}
+#admin-section .leyenda span{color:var(--d-txt-2)}
+#admin-section .leyenda .punto[style*="--tinta"]{background:var(--d-dropi)!important}
+
+/* ---- Calendario ---- */
+#admin-section #analysis-title{color:var(--d-txt)}
+#admin-section #analysis-help{color:var(--d-txt-2)}
+#admin-section #clear-selection-button{background:var(--d-sup-2);color:var(--d-txt);border:1px solid var(--d-borde-2)}
+#admin-section #clear-selection-button:hover{background:var(--d-sup-3)}
+#admin-section .cal-nav button{background:var(--d-sup-2);border:1.5px solid var(--d-borde);color:var(--d-txt)}
+#admin-section .cal-nav button:hover{border-color:var(--turquesa);background:rgba(23,195,195,.12)}
+#admin-section .cal-mes{color:var(--d-txt)}
+#admin-section .cal-mes-sub{color:var(--d-txt-3)}
+#admin-section .cal-dow{color:var(--d-txt-3)}
+#admin-section .cal-dia{background:var(--d-sup-2);border:1.5px solid var(--d-borde)}
+#admin-section .cal-dia.activo:hover{border-color:var(--turquesa);background:rgba(23,195,195,.12)}
+#admin-section .cal-dia.vacio{background:transparent;border-color:transparent}
+#admin-section .cal-num{color:var(--d-txt-2)}
+#admin-section .cal-mini{color:var(--d-txt)}
+#admin-section .cal-dia.rango{background:rgba(23,195,195,.16);border-color:rgba(23,195,195,.3)}
+#admin-section .cal-dia.sel{background:var(--turquesa);border-color:var(--turquesa);box-shadow:0 4px 16px rgba(23,195,195,.4)}
+#admin-section .cal-dia.sel .cal-num{color:#0d3134}
+#admin-section .cal-dia.sel .cal-mini{color:#06171a}
+#admin-section #selection-panel{background:var(--d-sup-2);border:1px solid rgba(23,195,195,.16)}
+#admin-section #selection-label{color:var(--turquesa)}
+#admin-section #selection-title{color:var(--d-txt)}
+#admin-section #selection-help{color:var(--d-txt-2)}
+#admin-section .sel-item{background:var(--d-sup-3)}
+#admin-section .sel-lbl,#admin-section .sel-val{color:var(--d-txt)}
+#admin-section .sel-sub,#admin-section .sel-sub2{color:var(--d-txt-3)}
+
+/* ---- Comparativo y resumen del mes ---- */
+#admin-section #comparison-title,#admin-section #month-summary-title{color:var(--d-txt)}
+#admin-section .mes-item{background:var(--d-sup-2)}
+#admin-section .mes-lbl{color:var(--d-txt-2)}
+#admin-section .mes-val{color:var(--d-txt)}
+
+/* ---- Exportación ---- */
+#admin-section #export-card{background:linear-gradient(150deg,#17383a 0%,#0d2224 100%);border:1.5px solid rgba(23,195,195,.28)}
+#admin-section #export-help{color:var(--d-txt-2)}
+#admin-section #download-own-button{background:var(--d-sup-2);color:var(--d-txt);border:1px solid var(--d-borde-2)}
+#admin-section #download-own-text{color:var(--d-txt)}
+
+/* ---- Historias (las tarjetas conservan su diseño: son la imagen exportada) ---- */
+#admin-section #stories-section{background:var(--d-sup)}
+#admin-section #stories-title{color:var(--d-txt)}
+#admin-section #stories-note{color:var(--d-txt-2)}
+#admin-section .story-caption{color:var(--d-txt-2)}
+#admin-section .story{box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 54px rgba(0,0,0,.45)}
+</style>
+</head>
+<body>
+
+<!-- ============ MASCOTA (símbolo reutilizable) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="quino" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="93" rx="27" ry="4.5" fill="#091315" opacity=".07"/>
+    <rect x="46.5" y="9" width="7" height="12" rx="3.5" fill="#c7d3d4"/>
+    <circle cx="50" cy="8" r="6" fill="#17c3c3"/>
+    <rect x="18" y="20" width="64" height="52" rx="21" fill="#ffffff" stroke="#d4dfe0" stroke-width="2"/>
+    <rect x="24.5" y="28" width="51" height="33" rx="15" fill="#123b3d"/>
+    <circle cx="39" cy="44" r="6.2" fill="#17c3c3"/>
+    <circle cx="61" cy="44" r="6.2" fill="#17c3c3"/>
+    <circle cx="40.8" cy="42" r="2.1" fill="#ffffff" opacity=".92"/>
+    <circle cx="62.8" cy="42" r="2.1" fill="#ffffff" opacity=".92"/>
+    <path d="M43 54 Q50 59.5 57 54" stroke="#17c3c3" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <rect x="6" y="36" width="9" height="19" rx="4.5" fill="#17c3c3"/>
+    <rect x="85" y="36" width="9" height="19" rx="4.5" fill="#17c3c3"/>
+    <rect x="27" y="74" width="46" height="15" rx="7.5" fill="#ffffff" stroke="#d4dfe0" stroke-width="2"/>
+    <circle cx="50" cy="81.5" r="4" fill="#17c3c3"/>
+  </symbol>
+</svg>
+
+<!-- ================= LOGIN ================= -->
+<section id="login-section">
+  <div class="login-grid">
+    <div>
+      <svg id="login-mascot" class="quino" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+      <div id="login-kicker">CONTROL DIARIO DE VENTAS</div>
+      <h1 id="login-title">Jornada Quin</h1>
+      <p id="login-subtitle">Todas las ventas de la agencia, claras y reunidas en un solo lugar.</p>
+    </div>
+    <div id="login-card">
+      <h2 id="access-title">Entrar al mockup</h2>
+      <p id="access-note">Selecciona la experiencia que quieres presentar.</p>
+
+      <div class="campo">
+        <label id="user-label" for="user-input">Usuario de demostración</label>
+        <input id="user-input" type="text" placeholder="Ej. Laura Gómez" autocomplete="off">
+      </div>
+
+      <div class="campo">
+        <label id="role-label">Rol</label>
+        <div class="roles">
+          <button class="rol" data-rol="admin" aria-pressed="true">Administrador</button>
+          <button class="rol" data-rol="vendedor" aria-pressed="false">Vendedor</button>
+        </div>
+      </div>
+
+      <button id="enter-button"><span id="enter-button-text">Abrir jornada</span></button>
+      <p id="security-note">Vista de presentación: no solicita ni almacena contraseñas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ADMINISTRADOR ================= -->
+<div id="admin-section" class="oculto">
+  <header id="admin-header" class="header">
+    <div class="wrap header-in">
+      <svg class="quino header-mascot" id="admin-mascot" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+      <div class="header-txt">
+        <div id="admin-eyebrow" class="eyebrow">PANEL ADMINISTRADOR</div>
+        <div id="admin-title" class="header-title">Agencia Quin</div>
+        <div id="admin-date" class="header-date">Sábado, 18 de julio de 2026</div>
+      </div>
+      <div class="header-side">
+        <span id="live-tag">● Al día</span>
+        <span id="admin-role" class="badge-rol">Administrador</span>
+        <button id="view-vendor-button" class="btn-vista"><span id="view-vendor-text">Ver pantalla vendedor</span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="seccion">
+    <div class="wrap">
+      <div class="sec-head">
+        <div id="overview-kicker" class="kicker">JORNADA ACTUAL</div>
+        <h2 id="overview-title" class="sec-title">Resumen del día</h2>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi" id="kpi-total-card">
+          <div class="kpi-label" id="kpi-total-label">Total del día · Effi + Dropi</div>
+          <div class="kpi-value" id="kpi-total-value">204</div>
+          <div class="kpi-unit" id="kpi-total-unit">prendas</div>
+        </div>
+        <div class="kpi" id="kpi-own-card">
+          <div class="kpi-label" id="kpi-own-label">Ventas propias · Effi</div>
+          <div class="kpi-value" id="kpi-own-value">164</div>
+          <div class="kpi-unit" id="kpi-own-unit">prendas</div>
+        </div>
+        <div class="kpi" id="kpi-dropi-card">
+          <div class="kpi-label" id="kpi-dropi-label">Ventas Dropi</div>
+          <div class="kpi-value" id="kpi-dropi-value">40</div>
+          <div class="kpi-unit" id="kpi-dropi-unit">prendas</div>
+        </div>
+        <div class="kpi" id="kpi-percent-card">
+          <div class="kpi-label" id="kpi-percent-label">% Propias</div>
+          <div class="kpi-value" id="kpi-percent-value">80,4%</div>
+          <div class="kpi-unit" id="kpi-percent-unit">del total de hoy</div>
+        </div>
+        <div class="kpi" id="kpi-month-card">
+          <div class="kpi-label" id="kpi-month-label">Acumulado del mes</div>
+          <div class="kpi-value" id="kpi-month-value">3.468</div>
+          <div class="kpi-unit" id="kpi-month-unit">prendas</div>
+        </div>
+        <div class="kpi" id="kpi-average-card">
+          <div class="kpi-label" id="kpi-average-label">Promedio por día</div>
+          <div class="kpi-value" id="kpi-average-value">193</div>
+          <div class="kpi-unit" id="kpi-average-unit">prendas</div>
+        </div>
+      </div>
+
+      <div class="fila-2">
+        <div class="card meta-card" id="goal-card">
+          <div id="goal-kicker" class="kicker meta-kicker">META DEL DÍA</div>
+          <div id="goal-label" class="meta-title">Meta del día: 200 prendas</div>
+          <div id="goal-value" class="meta-value">204 de 200 prendas</div>
+          <div class="barra"><div class="barra-fill" id="goal-progress-fill" data-w="102"></div></div>
+          <div class="meta-pill-fila"><span id="goal-percent" class="meta-pill">102%</span></div>
+          <p id="goal-progress-text" class="meta-note">Meta grupal superada.</p>
+        </div>
+        <div class="card meta-card" id="team-goal-card">
+          <div id="team-goal-label" class="kicker meta-kicker">ESTADO DEL EQUIPO</div>
+          <div id="team-goal-title" class="meta-title">Meta grupal de propias</div>
+          <div id="team-goal-value" class="meta-value">164 de 160 prendas</div>
+          <div class="barra"><div class="barra-fill" id="team-goal-fill" data-w="102.5"></div></div>
+          <div class="meta-pill-fila"><span id="team-goal-status" class="meta-pill">Cumplida</span></div>
+          <p id="team-goal-note" class="meta-note">Esta es una meta del equipo, no una meta individual.</p>
+        </div>
+      </div>
+
+      <div class="fila-4">
+        <div class="card" id="top-seller-card">
+          <div id="top-seller-label" class="top-label">TOP 1 VENDEDOR</div>
+          <div id="top-seller-name" class="top-name">Laura Gómez</div>
+          <div id="top-seller-value" class="top-value">38 prendas hoy</div>
+        </div>
+        <div class="card" id="top-store-card">
+          <div id="top-store-label" class="top-label">TOP 1 TIENDA</div>
+          <div id="top-store-name" class="top-name">Centro</div>
+          <div id="top-store-value" class="top-value">72 prendas hoy</div>
+        </div>
+        <div class="card">
+          <div class="top-label">REPORTES</div>
+          <div id="reports-value" class="top-name">18 reportes</div>
+          <div id="reports-label" class="top-value">Reportes registrados</div>
+        </div>
+        <div class="card">
+          <div class="top-label">COBERTURA</div>
+          <div id="days-value" class="top-name">18 días</div>
+          <div id="days-label" class="top-value">Días cubiertos</div>
+        </div>
+      </div>
+
+      <div class="fila-2b">
+        <div class="card" id="real-chart-card">
+          <div id="real-chart-kicker" class="kicker">SIN REPARTIR</div>
+          <div id="real-chart-title" class="card-title">Ventas reales</div>
+          <div class="chart" id="chart-real"></div>
+          <div class="leyenda">
+            <span><i class="punto" style="background:var(--turquesa)"></i>Propias · Effi</span>
+            <span><i class="punto" style="background:var(--tinta)"></i>Dropi</span>
+          </div>
+        </div>
+        <div class="card" id="seller-chart-card">
+          <div id="seller-chart-kicker" class="kicker">REPARTO DE FIN DE SEMANA</div>
+          <div id="seller-chart-title" class="card-title">Como lo ven los vendedores</div>
+          <div class="chart" id="chart-seller"></div>
+          <div class="leyenda">
+            <span><i class="punto" style="background:var(--turquesa)"></i>Total repartido</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fila-2b">
+        <div class="card" id="seller-ranking-card">
+          <div id="seller-ranking-title" class="card-title">Ranking por vendedor</div>
+          <div class="rank-list" id="rank-vendedores"></div>
+        </div>
+        <div class="card" id="store-ranking-card">
+          <div id="store-ranking-title" class="card-title">Ranking por tienda</div>
+          <div class="rank-list" id="rank-tiendas"></div>
+        </div>
+      </div>
+
+      <div class="card" id="vs-card">
+        <div class="vs-head">
+          <div>
+            <div id="vs-kicker" class="kicker">TOP 10</div>
+            <div id="vs-title">VS Vendedores</div>
+          </div>
+          <div id="vs-note">Visualización en pantalla · sin descarga</div>
+        </div>
+        <div class="vs-grid" id="vs-grid"></div>
+      </div>
+
+      <div class="card" id="analysis-card">
+        <div class="cal-top">
+          <div>
+            <div id="analysis-kicker" class="kicker">ANÁLISIS TIPO EXCEL</div>
+            <div id="analysis-title">Explora la jornada por fechas</div>
+            <p id="analysis-help">Toca días sueltos o arrastra un rango. Puedes fijar el inicio, cambiar de mes y elegir el final.</p>
+          </div>
+          <button id="clear-selection-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 14.5 10.5 8l5.5 5.5L11.5 18H7z"/><path d="M10.5 8 15 3.5 21 9.5 16.5 14"/><path d="M7 21h13"/>
+            </svg>
+            <span id="clear-selection-text">Limpiar</span>
+          </button>
+        </div>
+
+        <div class="cal-layout">
+          <div>
+            <div class="cal-nav">
+              <button id="cal-prev" aria-label="Mes anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+              </button>
+              <div class="cal-mes-wrap">
+                <div class="cal-mes" id="cal-mes">Julio 2026</div>
+                <div class="cal-mes-sub">Toca o arrastra para seleccionar</div>
+              </div>
+              <button id="cal-next" aria-label="Mes siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+              </button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+          </div>
+
+          <div id="selection-panel">
+            <div id="selection-label">RESULTADO AUTOMÁTICO</div>
+            <div id="selection-title">Sin días seleccionados</div>
+            <div id="selection-help">Toca un día para comenzar.</div>
+            <div class="sel-grid">
+              <div class="sel-item">
+                <div class="sel-fila"><span class="sel-lbl">Total</span><span class="sel-val" id="sel-total-value">0 prendas</span></div>
+                <div class="sel-fila"><span class="sel-sub">Promedio</span><span class="sel-sub2" id="sel-total-avg">0 · 0 días</span></div>
+              </div>
+              <div class="sel-item">
+                <div class="sel-fila"><span class="sel-lbl">Propias</span><span class="sel-val" id="sel-own-value">0 prendas</span></div>
+                <div class="sel-fila"><span class="sel-sub">Promedio</span><span class="sel-sub2" id="sel-own-avg">0 · 0 días</span></div>
+              </div>
+              <div class="sel-item">
+                <div class="sel-fila"><span class="sel-lbl">Dropi</span><span class="sel-val" id="sel-dropi-value">0 prendas</span></div>
+                <div class="sel-fila"><span class="sel-sub">Promedio</span><span class="sel-sub2" id="sel-dropi-avg">0 · 0 días</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fila-2b">
+        <div class="card" id="comparison-card">
+          <div id="comparison-kicker" class="kicker">COMPARATIVO</div>
+          <div id="comparison-title">Evolución mes a mes</div>
+          <div class="chart" id="chart-meses"></div>
+        </div>
+        <div class="card" id="month-summary-card">
+          <div id="month-summary-kicker" class="kicker">JULIO 2026</div>
+          <div id="month-summary-title">Resumen del Mes</div>
+          <div class="mes-grid">
+            <div class="mes-item">
+              <div class="mes-lbl" id="month-total-label">Total prendas</div>
+              <div class="mes-val" id="month-total-value">3.468 prendas</div>
+            </div>
+            <div class="mes-item">
+              <div class="mes-lbl" id="month-avg-label">Promedio por día</div>
+              <div class="mes-val" id="month-avg-value">193 prendas</div>
+            </div>
+            <div class="mes-item">
+              <div class="mes-lbl">Días cubiertos</div>
+              <div class="mes-val">18 días</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="export-card">
+        <div id="export-kicker">CONTENIDO PARA COMPARTIR</div>
+        <div id="export-title">Descargar imagen para WhatsApp</div>
+        <p id="export-help">Exportación disponible únicamente para el administrador.</p>
+        <div class="export-btns">
+          <button id="download-total-button" class="btn-desc"><span id="download-total-text">Total · Effi + Dropi</span></button>
+          <button id="download-own-button" class="btn-desc"><span id="download-own-text">Propias · Effi</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stories-section">
+    <div class="wrap">
+      <div id="stories-kicker" class="kicker">FORMATOS VERTICALES</div>
+      <h2 id="stories-title">Tarjetas para WhatsApp</h2>
+      <p id="stories-note">Dos versiones coherentes con la jornada: total y ventas propias.</p>
+
+      <div class="stories-grid">
+        <div class="story-wrap">
+          <div class="story total" id="story-total-card">
+            <div class="story-brand" id="story-total-brand" style="color:var(--tinta)">AGENCIA QUIN · TOTAL</div>
+            <svg class="quino story-mascot" id="story-total-mascot" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+            <div class="story-title" id="story-total-title" style="color:var(--tinta)">Meta 200</div>
+            <div class="story-value" id="story-total-value" style="color:var(--tinta)">204</div>
+            <div class="story-unit" id="story-total-unit" style="color:var(--tinta-2)">prendas del día</div>
+            <div class="story-chart claro" id="story-total-chart">
+              <div class="story-chart-label" id="story-total-chart-label" style="color:var(--tinta)">Últimos 7 días · meta 200</div>
+              <div class="mini-chart" data-serie="total"></div>
+            </div>
+            <div class="story-date" id="story-total-date" style="color:var(--tinta-2)">Jornada · 18 jul 2026</div>
+          </div>
+          <div class="story-caption" id="story-total-caption">Versión Total · Effi + Dropi</div>
+        </div>
+
+        <div class="story-wrap">
+          <div class="story own" id="story-own-card">
+            <div class="story-brand" id="story-own-brand" style="color:var(--turquesa)">AGENCIA QUIN · PROPIAS</div>
+            <svg class="quino story-mascot" id="story-own-mascot" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+            <div class="story-title" id="story-own-title" style="color:var(--blanco)">Meta 160</div>
+            <div class="story-value" id="story-own-value" style="color:var(--turquesa)">164</div>
+            <div class="story-unit" id="story-own-unit" style="color:var(--gris-6)">prendas propias · Effi</div>
+            <div class="story-chart oscuro" id="story-own-chart">
+              <div class="story-chart-label" id="story-own-chart-label" style="color:var(--blanco)">Últimos 7 días · meta 160</div>
+              <div class="mini-chart" data-serie="own"></div>
+            </div>
+            <div class="story-date" id="story-own-date" style="color:var(--gris-4)">Jornada · 18 jul 2026</div>
+          </div>
+          <div class="story-caption" id="story-own-caption">Versión Propias · Effi</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= VENDEDOR ================= -->
+<div id="vendor-section" class="oculto">
+  <header id="vendor-header" class="header">
+    <div class="wrap header-in">
+      <svg class="quino header-mascot" id="vendor-mascot" role="img" aria-label="Quino, robot blanco amigable con detalles turquesa"><use href="#quino"/></svg>
+      <div class="header-txt">
+        <div id="vendor-eyebrow" class="eyebrow">VISTA VENDEDOR</div>
+        <div id="vendor-title" class="header-title">Hola, Valentina</div>
+        <div id="vendor-date" class="header-date">Sábado, 18 de julio de 2026</div>
+      </div>
+      <div class="header-side">
+        <span id="vendor-role" class="badge-rol claro">Vendedor</span>
+        <button id="view-admin-button" class="btn-vista"><span id="view-admin-text">Ver administrador</span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="seccion">
+    <div class="wrap">
+      <div class="vendor-grid">
+        <div class="card" id="my-sales-card">
+          <div id="my-sales-label">MI JORNADA</div>
+          <div id="my-sales-title">Tus ventas de hoy</div>
+          <div id="my-sales-value">31</div>
+          <div id="my-sales-unit">prendas vendidas</div>
+        </div>
+        <div class="card" id="vendor-ranking-card">
+          <div id="vendor-ranking-title">Posiciones del día</div>
+          <div class="rank-list" id="rank-vendedor-vista"></div>
+        </div>
+      </div>
+
+      <div class="card meta-card" id="vendor-goal-card">
+        <div class="kicker meta-kicker">ESTADO DEL EQUIPO</div>
+        <div id="team-goal-title-v" class="meta-title">Meta grupal de propias</div>
+        <div class="meta-value">164 de 160 prendas</div>
+        <div class="barra"><div class="barra-fill" data-w="102.5"></div></div>
+        <div class="meta-pill-fila"><span id="team-goal-status-v" class="meta-pill">Cumplida</span></div>
+        <p class="meta-note">Esta es una meta del equipo, no una meta individual.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= DATOS ================= */
+// Julio 2026 · 18 días registrados. Total 3.468 · promedio 193
+// Mejor: 218 (vie 10-jul) · Peor: 158 (lun 20-jul → registrado como día 20)
+var HOY = 18;            // sábado 18 de julio de 2026
+var META_TOTAL   = 200;  // meta diaria · Effi + Dropi
+var META_PROPIAS = 160;  // meta diaria · solo propias
+var TOTALES = [196,209,153,166,179,192,205,218,162,175,188,201,214,158,171,184,197,210,154,167,180,193,206,150,163,176,189,202,215,159,172];
+var DIAS = TOTALES.map(function(t,i){
+  return { d:i+1, total:t, propias:Math.round(t*0.803) };
+});
+function ultimos7(){
+  return DIAS.filter(function(x){ return x.d<=HOY; }).slice(-7);
+}
+
+var VENDEDORES = [
+  {n:"Laura Gómez", v:38}, {n:"Valentina Ríos", v:31}, {n:"Camila Torres", v:29},
+  {n:"Andrés Peña", v:27}, {n:"Mariana Cruz", v:24}, {n:"Sofía Delgado", v:21},
+  {n:"Julián Ospina", v:19}, {n:"Daniela Mesa", v:17}, {n:"Felipe Arias", v:15},
+  {n:"Natalia Vega", v:13}
+];
+var TIENDAS = [
+  {n:"Centro", v:72}, {n:"Norte", v:54}, {n:"Sur", v:41}, {n:"Occidente", v:23}, {n:"Online", v:14}
+];
+var MESES_COMP = [
+  {m:"Feb", v:2890}, {m:"Mar", v:3120}, {m:"Abr", v:3040},
+  {m:"May", v:3305}, {m:"Jun", v:3410}, {m:"Jul", v:3468}
+];
+
+var NOM_MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var NOM_MES_C = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+var NOM_DIA_C = ["dom","lun","mar","mié","jue","vie","sáb"];
+var ANIO = 2026, MES_BASE = 6; // julio
+
+/* ================= UTILIDADES ================= */
+function $(id){ return document.getElementById(id); }
+function num(n){ return Math.round(n).toLocaleString("es-CO"); }
+function pct(n){ return (Math.round(n*10)/10).toString().replace(".",",") + "%"; }
+function porDia(d){ for(var i=0;i<DIAS.length;i++){ if(DIAS[i].d===d) return DIAS[i]; } return null; }
+
+var toastT;
+function toast(msg){
+  var t=$("toast"); t.textContent=msg; t.classList.add("ver");
+  clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove("ver"); },2600);
+}
+
+/* Anima todas las barras con data-w o width en línea */
+function animar(){
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      var bs=document.querySelectorAll(".barra-fill[data-w]");
+      for(var i=0;i<bs.length;i++){
+        bs[i].style.width = Math.min(100, parseFloat(bs[i].getAttribute("data-w"))) + "%";
+      }
+      var pend=document.querySelectorAll("[data-h]");
+      for(var j=0;j<pend.length;j++){ pend[j].style.height = pend[j].getAttribute("data-h"); }
+      var pw=document.querySelectorAll("[data-fw]");
+      for(var k=0;k<pw.length;k++){ pw[k].style.width = pw[k].getAttribute("data-fw"); }
+    },90);
+  });
+}
+
+/* ================= GRÁFICOS DE BARRAS ================= */
+// Barras apiladas: total encima y, si el segmento da altura, su cifra dentro
+function graficoDobleReal(){
+  var cont = $("chart-real");
+  var ult = ultimos7();
+  var max = 0; ult.forEach(function(x){ if(x.total>max) max=x.total; });
+  var html="";
+  ult.forEach(function(x){
+    var dropi = x.total - x.propias;
+    var hp = Math.round(x.propias/max*100);
+    var hd = Math.round(dropi/max*100);
+    html += '<div class="chart-col">'
+          + '<div class="chart-val">'+x.total+'</div>'
+          + '<div class="chart-area"><div class="chart-pila">'
+          + '<div class="chart-bar alt'+(hd>=11?" mostrar":"")+'" style="border-radius:9px 9px 0 0" data-h="'+hd+'%">'
+          +   '<div class="chart-seg" style="color:#ffffff">'+dropi+'</div></div>'
+          + '<div class="chart-bar mostrar" style="border-radius:0 0 4px 4px" data-h="'+hp+'%">'
+          +   '<div class="chart-seg" style="color:#06171a">'+x.propias+'</div></div>'
+          + '</div></div>'
+          + '<div class="chart-lbl">'+x.d+'</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+function graficoSeller(){
+  var cont = $("chart-seller");
+  var ult = ultimos7();
+  var max = 0; ult.forEach(function(x){ if(x.total>max) max=x.total; });
+  var html="";
+  ult.forEach(function(x){
+    var h = Math.round(x.total/max*100);
+    html += '<div class="chart-col">'
+          + '<div class="chart-val">'+x.total+'</div>'
+          + '<div class="chart-area"><div class="chart-bar" data-h="'+h+'%"></div></div>'
+          + '<div class="chart-lbl">'+x.d+'</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+function graficoMeses(){
+  var cont = $("chart-meses");
+  var max = 0; MESES_COMP.forEach(function(x){ if(x.v>max) max=x.v; });
+  var html="";
+  MESES_COMP.forEach(function(x,i){
+    var h = Math.round(x.v/max*100);
+    var ultimo = i===MESES_COMP.length-1;
+    html += '<div class="chart-col">'
+          + '<div class="chart-val">'+num(x.v)+'</div>'
+          + '<div class="chart-area"><div class="chart-bar'+(ultimo?"":" alt")+'" data-h="'+h+'%"></div></div>'
+          + '<div class="chart-lbl">'+x.m+'</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+function miniGraficos(){
+  var conts = document.querySelectorAll(".mini-chart");
+  for(var i=0;i<conts.length;i++){
+    var serie = conts[i].getAttribute("data-serie");
+    var esOwn = serie==="own";
+    var meta  = esOwn ? META_PROPIAS : META_TOTAL;
+    var ult = ultimos7();
+
+    var max=0;
+    ult.forEach(function(x){ var v= esOwn? x.propias : x.total; if(v>max) max=v; });
+    var escala = Math.max(max, meta);           // la meta siempre entra en el gráfico
+
+    var colTxt = esOwn ? "#ffffff" : "#091315";
+    var color  = esOwn ? "var(--turquesa)" : "var(--turquesa-osc)";
+
+    var vals="", barras="";
+    ult.forEach(function(x,idx){
+      var v = esOwn? x.propias : x.total;
+      var h = Math.round(v/escala*100);
+      var op = idx===6 ? "1" : ".55";
+      vals   += '<div class="mini-val" style="color:'+colTxt+';opacity:'+(idx===6?"1":".7")+'">'+v+'</div>';
+      barras += '<div class="mini-bar" style="background:'+color+';opacity:'+op+'" data-h="'+h+'%"></div>';
+    });
+
+    // línea de la meta diaria (sin etiqueta: la cabecera ya indica la meta)
+    var hMeta = Math.round(meta/escala*100);
+    var colMeta = esOwn ? "rgba(255,255,255,.55)" : "rgba(9,19,21,.42)";
+    var linea = '<div class="mini-meta" style="bottom:'+hMeta+'%;border-color:'+colMeta+'"></div>';
+
+    conts[i].innerHTML = '<div class="mini-val-row">'+vals+'</div>'
+                       + '<div class="mini-plot">'+linea+'<div class="mini-bars">'+barras+'</div></div>';
+  }
+}
+
+/* ================= RANKINGS ================= */
+function pintarRanking(contId, datos, marcar){
+  var cont = $(contId);
+  var max = datos[0].v;
+  var html = "";
+  datos.forEach(function(x,i){
+    var esYo = marcar && x.n.indexOf(marcar)===0;
+    html += '<div class="rank-row'+(esYo?" yo":"")+'">'
+         +  '<div class="rank-pos">'+(i+1)+'</div>'
+         +  '<div><div class="rank-name">'+x.n+'</div>'
+         +  '<div class="rank-bar"><i data-fw="'+Math.round(x.v/max*100)+'%"></i></div></div>'
+         +  '<div class="rank-val">'+x.v+'</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+function pintarVS(){
+  var cont = $("vs-grid");
+  var max = VENDEDORES[0].v;
+  var html="";
+  VENDEDORES.forEach(function(x,i){
+    html += '<div class="vs-row"><div class="vs-num">'+(i+1)+'</div>'
+         +  '<div class="vs-track"><div class="vs-fill" data-fw="'+Math.round(x.v/max*100)+'%"></div>'
+         +  '<div class="vs-name">'+x.n+'</div></div>'
+         +  '<div class="vs-val">'+x.v+'</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+/* ================= CALENDARIO ================= */
+var mesActual = MES_BASE;
+var anioActual = ANIO;
+var selInicio = null, selFin = null; // números de día (solo julio 2026)
+
+var arrastrando = false;
+
+// Semana que empieza en lunes: 0=Lun … 6=Dom
+function colLunes(fecha){ return (fecha.getDay() + 6) % 7; }
+
+function pintarCalendario(){
+  var nom = NOM_MES[mesActual];
+  $("cal-mes").textContent = nom.charAt(0).toUpperCase() + nom.slice(1) + " " + anioActual;
+
+  var primero = colLunes(new Date(anioActual, mesActual, 1));
+  var total   = new Date(anioActual, mesActual+1, 0).getDate();
+  var dows = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+  var html = "";
+  dows.forEach(function(d){ html += '<div class="cal-dow">'+d+'</div>'; });
+  for(var i=0;i<primero;i++){ html += '<div class="cal-dia vacio"></div>'; }
+
+  var esMesDato = (anioActual===ANIO && mesActual===MES_BASE);
+  for(var d=1; d<=total; d++){
+    var dato = esMesDato ? porDia(d) : null;
+    var cls = "cal-dia";
+    if(dato) cls += " activo";
+    if(dato && enRango(d)) cls += (d===selInicio || d===selFin) ? " sel" : " rango";
+    html += '<div class="'+cls+'" data-d="'+d+'">'
+          + '<div class="cal-num">'+d+'</div>'
+          + '<div class="cal-mini">'+(dato? dato.total : "")+'</div></div>';
+  }
+  $("cal-grid").innerHTML = html;
+
+  var celdas = $("cal-grid").querySelectorAll(".cal-dia.activo");
+  for(var k=0;k<celdas.length;k++){
+    celdas[k].addEventListener("pointerdown", function(e){
+      e.preventDefault();
+      arrastrando = true;
+      selInicio = parseInt(this.getAttribute("data-d"),10);
+      selFin = selInicio;
+      repintarSeleccion();
+    });
+    celdas[k].addEventListener("pointerenter", function(){
+      if(!arrastrando) return;
+      selFin = parseInt(this.getAttribute("data-d"),10);
+      repintarSeleccion();
+    });
+  }
+}
+
+// Repinta solo las clases de selección (sin reconstruir el DOM, para que el arrastre sea fluido)
+function repintarSeleccion(){
+  var celdas = $("cal-grid").querySelectorAll(".cal-dia.activo");
+  for(var i=0;i<celdas.length;i++){
+    var d = parseInt(celdas[i].getAttribute("data-d"),10);
+    celdas[i].classList.remove("sel","rango");
+    if(enRango(d)) celdas[i].classList.add((d===selInicio || d===selFin) ? "sel" : "rango");
+  }
+  actualizarSeleccion();
+}
+
+function enRango(d){
+  if(selInicio===null) return false;
+  if(selFin===null) return d===selInicio;
+  var a = Math.min(selInicio,selFin), b = Math.max(selInicio,selFin);
+  return d>=a && d<=b;
+}
+
+function diasSeleccionados(){
+  if(selInicio===null) return [];
+  var a = selFin===null ? selInicio : Math.min(selInicio,selFin);
+  var b = selFin===null ? selInicio : Math.max(selInicio,selFin);
+  return DIAS.filter(function(x){ return x.d>=a && x.d<=b; });
+}
+
+function etiquetaDia(d){
+  var fecha = new Date(ANIO, MES_BASE, d);
+  return NOM_DIA_C[fecha.getDay()] + " " + d + "-" + NOM_MES_C[MES_BASE];
+}
+
+function fila(idVal, idAvg, suma, n){
+  $(idVal).textContent = num(suma) + " prendas";
+  $(idAvg).textContent = (n ? num(suma/n) : "0") + " · " + n + (n===1 ? " día" : " días");
+}
+
+function actualizarSeleccion(){
+  var sel = diasSeleccionados();
+
+  if(!sel.length){
+    $("selection-title").textContent = "Sin días seleccionados";
+    $("selection-help").textContent  = "Toca un día para comenzar.";
+    fila("sel-total-value","sel-total-avg",0,0);
+    fila("sel-own-value","sel-own-avg",0,0);
+    fila("sel-dropi-value","sel-dropi-avg",0,0);
+    return;
+  }
+
+  var totalP=0, propiasP=0;
+  sel.forEach(function(x){ totalP += x.total; propiasP += x.propias; });
+
+  $("selection-title").textContent = sel.length + (sel.length===1 ? " día seleccionado" : " días seleccionados");
+  $("selection-help").textContent  = sel.length===1
+      ? etiquetaDia(sel[0].d)
+      : etiquetaDia(sel[0].d) + " – " + etiquetaDia(sel[sel.length-1].d);
+
+  fila("sel-total-value","sel-total-avg", totalP, sel.length);
+  fila("sel-own-value","sel-own-avg", propiasP, sel.length);
+  fila("sel-dropi-value","sel-dropi-avg", totalP-propiasP, sel.length);
+}
+
+/* ================= DESCARGA DE IMAGEN (canvas nativo) ================= */
+function redondeado(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function generarHistoria(tipo){
+  var W=1080, H=1920;
+  var c=document.createElement("canvas"); c.width=W; c.height=H;
+  var ctx=c.getContext("2d");
+  var esOwn = tipo==="own";
+
+  var g=ctx.createLinearGradient(0,0,W*0.35,H);
+  if(esOwn){ g.addColorStop(0,"#123b3d"); g.addColorStop(1,"#091315"); }
+  else     { g.addColorStop(0,"#c7faf5"); g.addColorStop(1,"#17c3c3"); }
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  var tintaTxt = esOwn ? "#ffffff" : "#091315";
+  var acento   = esOwn ? "#17c3c3" : "#091315";
+  var suave    = esOwn ? "#d4dfe0" : "#123b3d";
+  var F='"Segoe UI",-apple-system,Helvetica,Arial,sans-serif';
+
+  ctx.textBaseline="alphabetic";
+  ctx.fillStyle = esOwn ? "#17c3c3" : "#091315";
+  ctx.font = "800 34px "+F;
+  ctx.fillText(esOwn ? "AGENCIA QUIN · PROPIAS" : "AGENCIA QUIN · TOTAL", 96, 170);
+
+  // cuerpo del robot (simplificado)
+  ctx.fillStyle = esOwn ? "#ffffff" : "#ffffff";
+  redondeado(ctx, 96, 236, 150, 122, 46); ctx.fill();
+  ctx.fillStyle = "#123b3d";
+  redondeado(ctx, 112, 254, 118, 78, 32); ctx.fill();
+  ctx.fillStyle = "#17c3c3";
+  ctx.beginPath(); ctx.arc(148, 292, 15, 0, 6.2832); ctx.fill();
+  ctx.beginPath(); ctx.arc(196, 292, 15, 0, 6.2832); ctx.fill();
+
+  ctx.fillStyle = tintaTxt;
+  ctx.font = "900 104px "+F;
+  ctx.fillText(esOwn ? "Meta 160" : "Meta 200", 96, 520);
+
+  ctx.fillStyle = acento;
+  ctx.font = "900 260px "+F;
+  ctx.fillText(esOwn ? "164" : "204", 92, 790);
+
+  ctx.fillStyle = suave;
+  ctx.font = "700 40px "+F;
+  ctx.fillText(esOwn ? "prendas propias · Effi" : "prendas del día", 96, 858);
+
+  // panel del gráfico
+  var px=96, py=1020, pw=W-192, ph=520;
+  ctx.fillStyle = esOwn ? "#17383a" : "#ffffff";
+  redondeado(ctx,px,py,pw,ph,44); ctx.fill();
+
+  ctx.fillStyle = esOwn ? "#ffffff" : "#091315";
+  ctx.font = "800 34px "+F;
+  ctx.fillText(esOwn ? "Últimos 7 días · meta 160" : "Últimos 7 días · meta 200", px+52, py+82);
+
+  var ult = ultimos7();
+  var meta = esOwn ? META_PROPIAS : META_TOTAL;
+  var max=0; ult.forEach(function(x){ var v=esOwn?x.propias:x.total; if(v>max)max=v; });
+  var escala = Math.max(max, meta);
+  var bw=76, gap=(pw-104-bw*7)/6, bx=px+52, base=py+ph-96, alto=236;
+  var anchoBarras = bw*7 + gap*6;
+
+  // línea de la meta diaria, sin etiqueta: la cabecera del panel ya la indica
+  var yMeta = base - Math.round(meta/escala*alto);
+  ctx.save();
+  ctx.setLineDash([14,11]);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = esOwn ? "rgba(255,255,255,.5)" : "rgba(9,19,21,.4)";
+  ctx.beginPath();
+  ctx.moveTo(bx-10, yMeta); ctx.lineTo(bx+anchoBarras+10, yMeta);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.textAlign="center";
+  ult.forEach(function(x,i){
+    var v = esOwn ? x.propias : x.total;
+    var h = Math.round(v/escala*alto);
+    var cx = bx+i*(bw+gap)+bw/2;
+
+    ctx.globalAlpha = i===6 ? 1 : 0.5;
+    ctx.fillStyle = esOwn ? "#17c3c3" : "#078f94";
+    redondeado(ctx, bx+i*(bw+gap), base-h, bw, h, 14); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // cifra encima de la barra
+    ctx.fillStyle = esOwn ? "#ffffff" : "#091315";
+    ctx.font = (i===6 ? "800" : "700") + " 28px "+F;
+    ctx.globalAlpha = i===6 ? 1 : 0.72;
+    ctx.fillText(String(v), cx, base-h-16);
+    ctx.globalAlpha = 1;
+
+    // día debajo
+    ctx.fillStyle = esOwn ? "#bfd0d1" : "#607174";
+    ctx.font = "700 26px "+F;
+    ctx.fillText(String(x.d), cx, base+46);
+  });
+  ctx.textAlign="left";
+
+  ctx.fillStyle = esOwn ? "#bfd0d1" : "#123b3d";
+  ctx.font = "700 36px "+F;
+  ctx.fillText("Jornada · 18 jul 2026", 96, 1700);
+
+  return c;
+}
+
+function descargar(tipo){
+  try{
+    var c = generarHistoria(tipo);
+    var a = document.createElement("a");
+    a.download = "jornada-quin-" + (tipo==="own" ? "propias" : "total") + "-18jul2026.png";
+    a.href = c.toDataURL("image/png");
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast("Imagen descargada · lista para WhatsApp");
+  }catch(e){
+    toast("No se pudo generar la imagen");
+  }
+}
+
+/* ================= NAVEGACIÓN ================= */
+var rolElegido = "admin";
+
+function mostrar(cual){
+  $("login-section").classList.add("oculto");
+  $("admin-section").classList.toggle("oculto", cual!=="admin");
+  $("vendor-section").classList.toggle("oculto", cual!=="vendedor");
+  window.scrollTo(0,0);
+  animar();
+}
+
+/* ================= ARRANQUE ================= */
+function iniciar(){
+  // roles
+  var roles = document.querySelectorAll(".rol");
+  for(var i=0;i<roles.length;i++){
+    roles[i].addEventListener("click", function(){
+      for(var j=0;j<roles.length;j++){ roles[j].setAttribute("aria-pressed","false"); }
+      this.setAttribute("aria-pressed","true");
+      rolElegido = this.getAttribute("data-rol");
+    });
+  }
+
+  $("enter-button").addEventListener("click", function(){
+    var nombre = $("user-input").value.trim();
+    if(rolElegido==="vendedor"){
+      var n = nombre || "Valentina";
+      $("vendor-title").textContent = "Hola, " + n.split(" ")[0];
+      pintarRanking("rank-vendedor-vista", VENDEDORES, n.split(" ")[0]);
+    }
+    mostrar(rolElegido);
+  });
+
+  $("user-input").addEventListener("keydown", function(e){
+    if(e.key==="Enter") $("enter-button").click();
+  });
+
+  $("view-vendor-button").addEventListener("click", function(){ mostrar("vendedor"); });
+  $("view-admin-button").addEventListener("click", function(){ mostrar("admin"); });
+
+  $("cal-prev").addEventListener("click", function(){
+    mesActual--; if(mesActual<0){ mesActual=11; anioActual--; } pintarCalendario();
+  });
+  $("cal-next").addEventListener("click", function(){
+    mesActual++; if(mesActual>11){ mesActual=0; anioActual++; } pintarCalendario();
+  });
+  $("clear-selection-button").addEventListener("click", function(){
+    selInicio=null; selFin=null; pintarCalendario(); actualizarSeleccion();
+  });
+
+  // fin del arrastre en cualquier parte del documento
+  document.addEventListener("pointerup", function(){ arrastrando = false; });
+  document.addEventListener("pointercancel", function(){ arrastrando = false; });
+
+  $("download-total-button").addEventListener("click", function(){ descargar("total"); });
+  $("download-own-button").addEventListener("click", function(){ descargar("own"); });
+
+  graficoDobleReal();
+  graficoSeller();
+  graficoMeses();
+  miniGraficos();
+  pintarRanking("rank-vendedores", VENDEDORES, null);
+  pintarRanking("rank-tiendas", TIENDAS, null);
+  pintarRanking("rank-vendedor-vista", VENDEDORES, "Valentina");
+  pintarVS();
+  pintarCalendario();
+  actualizarSeleccion();
+}
+
+if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded", iniciar); }
+else { iniciar(); }
+})();
+</script>
+</body>
+</html>
