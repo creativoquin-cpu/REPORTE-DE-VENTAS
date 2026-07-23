@@ -18,10 +18,23 @@ interface TableroChartProps {
   propias: number[];
   dropi: number[];
   cerradas: boolean[];
+  /** Meta TOTAL por día (Effi + Dropi) — la línea de tope de todo el apilado. */
   metaDia: number[];
+  /** Meta de PROPIAS por día (solo Effi) — el tope de la parte propias (abajo). */
+  metaPropiasDia: number[];
 }
 
-export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: TableroChartProps) {
+const META_TOTAL_COLOR = "#eaf4f3"; // blanco
+const META_PROPIAS_COLOR = "#e0a030"; // dorado
+
+export function TableroChart({
+  claves,
+  propias,
+  dropi,
+  cerradas,
+  metaDia,
+  metaPropiasDia,
+}: TableroChartProps) {
   const config = useMemo<ChartConfiguration>(() => {
     const etiquetas = claves.map((k) => k.split("-")[2]);
     const metaMax = metaDia.length ? Math.max(...metaDia) : 200;
@@ -42,38 +55,44 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
           if (t) ctx.fillText(String(t), b.x, b.y - 6);
         });
         ctx.restore();
-        // Línea de meta (tope del equipo, viene de "Metas del equipo"): un tramo
-        // por día, con el valor rotulado cada vez que la meta cambia.
+
+        // Líneas de meta (topes del equipo, vienen de "Metas del equipo"): un
+        // tramo por día, con el valor rotulado cada vez que la meta cambia.
         const barras = c.getDatasetMeta(1).data;
         if (!barras.length) return;
         const medio =
           barras.length > 1
             ? Math.abs(barras[1].x - barras[0].x) / 2
             : (c.chartArea.right - c.chartArea.left) / 2;
-        ctx.save();
-        ctx.strokeStyle = "#eaf4f3";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        barras.forEach((b, i) => {
-          const y = c.scales.y.getPixelForValue(metaDia[i]);
-          if (y < c.chartArea.top || y > c.chartArea.bottom) return;
-          ctx.moveTo(Math.max(b.x - medio, c.chartArea.left), y);
-          ctx.lineTo(Math.min(b.x + medio, c.chartArea.right), y);
-        });
-        ctx.stroke();
-        ctx.setLineDash([]);
-        // Rótulo "Meta N" en el primer día y cada vez que cambia el valor.
-        ctx.font = "700 11px -apple-system,Segoe UI,Roboto,sans-serif";
-        ctx.fillStyle = "#eaf4f3";
-        ctx.textAlign = "left";
-        barras.forEach((b, i) => {
-          if (i && metaDia[i] === metaDia[i - 1]) return;
-          const y = c.scales.y.getPixelForValue(metaDia[i]);
-          if (y < c.chartArea.top || y > c.chartArea.bottom) return;
-          ctx.fillText(`Meta ${metaDia[i]}`, Math.max(b.x - medio + 2, c.chartArea.left + 2), y - 5);
-        });
-        ctx.restore();
+
+        function lineaMeta(serie: number[], color: string, etiqueta: string) {
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          barras.forEach((b, i) => {
+            const y = c.scales.y.getPixelForValue(serie[i]);
+            if (y < c.chartArea.top || y > c.chartArea.bottom) return;
+            ctx.moveTo(Math.max(b.x - medio, c.chartArea.left), y);
+            ctx.lineTo(Math.min(b.x + medio, c.chartArea.right), y);
+          });
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font = "700 11px -apple-system,Segoe UI,Roboto,sans-serif";
+          ctx.fillStyle = color;
+          ctx.textAlign = "left";
+          barras.forEach((b, i) => {
+            if (i && serie[i] === serie[i - 1]) return;
+            const y = c.scales.y.getPixelForValue(serie[i]);
+            if (y < c.chartArea.top || y > c.chartArea.bottom) return;
+            ctx.fillText(`${etiqueta} ${serie[i]}`, Math.max(b.x - medio + 2, c.chartArea.left + 2), y - 5);
+          });
+          ctx.restore();
+        }
+
+        lineaMeta(metaPropiasDia, META_PROPIAS_COLOR, "Meta propias");
+        lineaMeta(metaDia, META_TOTAL_COLOR, "Meta total");
       },
     };
 
@@ -147,7 +166,7 @@ export function TableroChart({ claves, propias, dropi, cerradas, metaDia }: Tabl
       },
       plugins: [extras],
     };
-  }, [claves, propias, dropi, cerradas, metaDia]);
+  }, [claves, propias, dropi, cerradas, metaDia, metaPropiasDia]);
 
   return (
     <div className="relative h-[320px] w-full">

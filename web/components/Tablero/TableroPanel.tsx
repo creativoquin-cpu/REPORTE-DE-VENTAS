@@ -119,7 +119,15 @@ function Ranking({ titulo, entradas, faltan, total }: { titulo: string; entradas
   );
 }
 
-function Leyenda({ hayBosquejo, etMeta }: { hayBosquejo: boolean; etMeta: string }) {
+function Leyenda({
+  hayBosquejo,
+  etMetaT,
+  etMetaP,
+}: {
+  hayBosquejo: boolean;
+  etMetaT: string;
+  etMetaP: string;
+}) {
   return (
     <div className="mb-3 flex flex-wrap gap-4 text-[13px] text-d-txt-2">
       {hayBosquejo && (
@@ -138,7 +146,11 @@ function Leyenda({ hayBosquejo, etMeta }: { hayBosquejo: boolean; etMeta: string
       </span>
       <span className="flex items-center gap-1.5">
         <i className="inline-block h-0.5 w-[18px] bg-d-txt" />
-        Meta {etMeta}
+        Meta total {etMetaT}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <i className="inline-block h-0.5 w-[18px] bg-[#e0a030]" />
+        Meta propias {etMetaP}
       </span>
     </div>
   );
@@ -310,8 +322,15 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
         <h2 className="mb-1 text-[22px] font-black tracking-tight text-d-txt">Ventas reales — día por día</h2>
         <p className="mb-3 text-sm text-d-txt-2">Lo que de verdad cayó cada día, sin repartir.</p>
         <div className={card}>
-          <Leyenda hayBosquejo={R.abiertas > 0} etMeta={etMetaT} />
-          <TableroChart claves={R.claves} propias={R.realP} dropi={R.realD} cerradas={R.cerradas} metaDia={R.metaT} />
+          <Leyenda hayBosquejo={R.abiertas > 0} etMetaT={etMetaT} etMetaP={etMetaP} />
+          <TableroChart
+            claves={R.claves}
+            propias={R.realP}
+            dropi={R.realD}
+            cerradas={R.cerradas}
+            metaDia={R.metaT}
+            metaPropiasDia={R.metaP}
+          />
         </div>
       </section>
 
@@ -321,8 +340,15 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
         </h2>
         <p className="mb-3 text-sm text-d-txt-2">Los bloques repartidos entre sus días, con el sobrante al último.</p>
         <div className={card}>
-          <Leyenda hayBosquejo={R.abiertas > 0} etMeta={etMetaT} />
-          <TableroChart claves={R.claves} propias={R.repP} dropi={R.repD} cerradas={R.cerradas} metaDia={R.metaT} />
+          <Leyenda hayBosquejo={R.abiertas > 0} etMetaT={etMetaT} etMetaP={etMetaP} />
+          <TableroChart
+            claves={R.claves}
+            propias={R.repP}
+            dropi={R.repD}
+            cerradas={R.cerradas}
+            metaDia={R.metaT}
+            metaPropiasDia={R.metaP}
+          />
         </div>
       </section>
 
