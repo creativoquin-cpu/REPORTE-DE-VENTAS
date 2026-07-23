@@ -50,7 +50,7 @@ export async function proxy(request: NextRequest) {
 
   if (esLogin && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/cargar";
+    url.pathname = "/admin";
     return NextResponse.redirect(url);
   }
 

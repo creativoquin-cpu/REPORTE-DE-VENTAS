@@ -288,6 +288,18 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       reversible, se aplicó directo a producción con aprobación. Pendiente NO
       aplicado (aviso de seguridad): activar "Leaked Password Protection" en el
       panel de Auth (es un toggle del dashboard, no SQL). Riesgo: bajo.
+- [x] **Reorganización de layout (post-Fase 11).** A pedido del usuario, el
+      panel de administrador pasó de **5 pestañas con botones** a **una sola
+      página que baja en scroll**: las cinco secciones (Cargar, Tablero,
+      Calendario, Comparativo, Vista del vendedor) apiladas una debajo de la
+      otra, sin nav. `/admin` es ahora la página única (`app/admin/(panel)/
+      page.tsx` → `<PanelCompleto>`); se borraron las 5 rutas por pestaña y el
+      componente `AdminNav`. La cabecera quedó **fija** (sticky) con el correo y
+      "cerrar sesión". Login y proxy redirigen a `/admin`. `<VistaEquipo>`
+      (Server Component) se pasa como slot desde el server. El hook
+      `useHidratarNube` deduplica por referencia para que las 5 secciones
+      hidraten la nube **una sola vez**. Puro layout: el motor no se tocó (182
+      tests siguen verdes). `tsc`, `lint`, `build` limpios.
 - [ ] **Fase 12 — Validación final y corte.** Correr la app nueva contra
       los Excel reales y comparar salida contra la app vieja para el mismo
       período. Solo entonces se mueve producción (dominio/alias de Vercel).

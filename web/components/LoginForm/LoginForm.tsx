@@ -43,7 +43,7 @@ export function LoginForm() {
 
     // El proxy también redirige, pero hacerlo acá evita esperar el
     // próximo request para que se sienta instantáneo.
-    router.push("/admin/cargar");
+    router.push("/admin");
     router.refresh();
   }
 

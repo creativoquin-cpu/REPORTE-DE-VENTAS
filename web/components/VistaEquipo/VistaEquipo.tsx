@@ -11,10 +11,10 @@ import { bonita, MESES_L } from "@/lib/motor/fechas";
  * pinta KPIs, gráfica, meta y ranking. Puerto de pintarVendedorPublico()
  * (index.html:302-387).
  *
- * Componente único reutilizado en "/" (vista pública) y en
- * /admin/vista-vendedor — reemplaza el <iframe src="index.html"> de
- * quin-admin.html:403-406. Nunca muestra cifras por persona
- * (docs/BUSINESS-RULES.md regla 9).
+ * Componente único reutilizado en "/" (vista pública) y en la sección "Vista
+ * del vendedor" del panel (última sección de components/PanelCompleto) —
+ * reemplaza el <iframe src="index.html"> de quin-admin.html:403-406. Nunca
+ * muestra cifras por persona (docs/BUSINESS-RULES.md regla 9).
  */
 
 const avisoBox =

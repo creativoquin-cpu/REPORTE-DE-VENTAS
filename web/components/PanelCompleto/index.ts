@@ -1,0 +1,1 @@
+export { PanelCompleto } from "./PanelCompleto";
