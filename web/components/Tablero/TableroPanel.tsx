@@ -5,6 +5,8 @@ import {
   calcular,
   datosDelMes,
   resumenTablero,
+  datosImagen,
+  mesImagen,
   bonita,
   claveFecha,
   MESES_L,
@@ -15,6 +17,7 @@ import { useCargar } from "@/lib/store/cargar";
 import { useHidratarNube } from "@/lib/store/useHidratarNube";
 import type { EstadoAdminInicial } from "@/lib/data/admin";
 import { TableroChart } from "./TableroChart";
+import { BotonImagenes } from "./BotonImagenes";
 
 /**
  * Pestaña 2 · Tablero del mes (Fase 5). Selector de mes + toggle de bosquejo,
@@ -171,6 +174,14 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
     const f = new Date();
     return claveFecha(f.getFullYear(), f.getMonth() + 1, f.getDate());
   })();
+  const hoyMes = hoyK.slice(0, 7);
+
+  // La imagen de WhatsApp NO depende del selector del tablero: sale del mes del
+  // Excel cargado (o del mes en curso). Ver mesImagen()/imgDatos().
+  const mesImg = mesImagen(calc.dias, hoyMes);
+  const datosImg = datosImagen(jornadas, calc.dias, metas, mesImg);
+  const [ay, am] = mesImg.split("-");
+  const etMesImg = `${MESES_L[+am - 1]} ${ay}`;
 
   // Meses disponibles: los de jornadas y, si se incluye el bosquejo, los del Excel.
   const meses_ = new Set<string>();
@@ -237,7 +248,14 @@ export function TableroPanel({ estadoInicial }: { estadoInicial: EstadoAdminInic
             />
             Incluir días sin cerrar (bosquejo)
           </label>
+          <span className="flex-1" />
+          <BotonImagenes datos={datosImg} />
         </div>
+        <p className="mt-2 text-[12px] text-d-txt-2">
+          {datosImg
+            ? `La imagen sale del ${bonita(datosImg.dia)} · ${etMesImg} (2 archivos: consolidado y propias).`
+            : `Sin datos de ${etMesImg} todavía para armar la imagen.`}
+        </p>
       </div>
 
       {eMes && eMes.datos.estado === "cerrado" && (

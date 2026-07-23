@@ -242,10 +242,20 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       lógica — se eliminó el `<iframe src="index.html">` del paso 10.5. Los
       únicos "iframe" que quedan en el repo son dos comentarios que explican
       qué era antes. `tsc`, `lint`, `build` limpios. Riesgo: bajo.
-- [ ] **Fase 9 — Exportar imágenes de WhatsApp.** Canvas 1080×1920,
-      mismos textos/reglas (nunca VS, nunca nombres). Tests portados desde
-      `pruebas/test-imagen.js`. Riesgo: medio (mucho detalle pixel/texto a
-      validar).
+- [x] **Fase 9 — Exportar imágenes de WhatsApp.** Hecho: motor puro
+      `lib/motor/imagen.ts` (`mesImagen`, `datosImagen` — informe del último día
+      con barras repartidas, metas por día, totales) y el dibujo
+      `lib/imagen/dibujar.ts` (`dibujarImagen` sobre una interfaz `Lienzo2D`
+      testeable, canvas 1080×1920, cifra grande + 3 cuadros + mes día por día
+      con línea de meta escalonada y rotulada, modos "total" y "propias"). El
+      botón `<BotonImagenes>` en el Tablero baja los DOS PNG (consolidado +
+      propias) con la pausa de 700 ms del original; el mes de la imagen sale del
+      Excel cargado (o el mes en curso), **no** del selector del tablero.
+      Cumple la **regla 9**: nunca VS, ranking ni nombres — hay un test que lo
+      verifica en ambos modos. La mascota queda opcional (en la app vieja
+      `QUINO_SVG` nunca se asignaba, así que salía sin ella). **29 tests**
+      nuevos portados desde `pruebas/test-imagen.js` → **182 verdes**. `tsc`,
+      `lint`, `build` limpios. Riesgo: medio.
 - [ ] **Fase 10 — PWA.** Manifest único (ya no hacen falta 2 — es una sola
       app ahora), service worker, instalabilidad. Riesgo: bajo.
 - [ ] **Fase 11 — Auditoría de backend.** Evaluar y, si se aprueba,

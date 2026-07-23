@@ -12,3 +12,4 @@ export * from "./nube";
 export * from "./tablero";
 export * from "./calendario";
 export * from "./comparativo";
+export * from "./imagen";
