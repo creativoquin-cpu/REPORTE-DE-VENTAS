@@ -256,8 +256,18 @@ de prueba — el esquema en `supabase-esquema.sql` es la red de seguridad.
       `QUINO_SVG` nunca se asignaba, así que salía sin ella). **29 tests**
       nuevos portados desde `pruebas/test-imagen.js` → **182 verdes**. `tsc`,
       `lint`, `build` limpios. Riesgo: medio.
-- [ ] **Fase 10 — PWA.** Manifest único (ya no hacen falta 2 — es una sola
-      app ahora), service worker, instalabilidad. Riesgo: bajo.
+- [x] **Fase 10 — PWA.** Hecho: un **manifest único** `app/manifest.ts`
+      (Next enlaza el `<link rel="manifest">` solo; reemplaza los dos
+      `manifest.json` + `manifest-admin.json`, porque ahora es una sola app),
+      `viewport.themeColor` + `appleWebApp` + iconos en `app/layout.tsx`,
+      iconos en `public/` (192, 512, apple-touch, favicon-32), y el service
+      worker `public/sw.js` (network-first, offline para el mismo origen)
+      registrado por `<RegistrarSW>`. **Diferencia de seguridad vs. la app
+      vieja:** el SW **nunca cachea `/admin/*`**, porque ahora esas páginas se
+      renderizan en el servidor con datos privados (en la app vieja
+      `quin-admin.html` era un shell estático sin datos). `next.config.ts`
+      manda `Cache-Control: no-store` para `/sw.js`. `tsc`, `lint`, `build`
+      limpios (aparece la ruta `/manifest.webmanifest`). Riesgo: bajo.
 - [ ] **Fase 11 — Auditoría de backend.** Evaluar y, si se aprueba,
       aplicar los 5 puntos de arriba sobre un Supabase branch. Riesgo:
       medio-alto según qué se apruebe.
