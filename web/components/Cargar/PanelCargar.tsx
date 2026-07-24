@@ -5,7 +5,7 @@ import { calcular, diagnosticar } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { useHidratarNube } from "@/lib/store/useHidratarNube";
 import type { EstadoAdminInicial } from "@/lib/data/admin";
-import { CargadorExcel } from "./CargadorExcel";
+import { CargadorTodo } from "./CargadorTodo";
 import { Filtros } from "./Filtros";
 import { ResumenCarga } from "./ResumenCarga";
 import { TablaPorDia } from "./TablaPorDia";
@@ -86,20 +86,14 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
         </div>
       )}
 
-      <div className="flex flex-wrap gap-6 rounded-card border border-d-sup-3 bg-d-sup p-6 shadow-card">
-        <CargadorExcel
-          titulo="Excel de Dropi"
-          pista="(ordenes_productos…)"
-          estado={estadoDropi}
-          onEstado={ponerEstadoDropi}
-          onFilas={cargarDropi}
-        />
-        <CargadorExcel
-          titulo="Excel de Effi"
-          pista="(Reporte de conceptos…)"
-          estado={estadoEffi}
-          onEstado={ponerEstadoEffi}
-          onFilas={cargarEffi}
+      <div className="flex flex-wrap items-start justify-between gap-6 rounded-card border border-d-sup-3 bg-d-sup p-6 shadow-card">
+        <CargadorTodo
+          estadoDropi={estadoDropi}
+          estadoEffi={estadoEffi}
+          onEstadoDropi={ponerEstadoDropi}
+          onEstadoEffi={ponerEstadoEffi}
+          onFilasDropi={cargarDropi}
+          onFilasEffi={cargarEffi}
         />
         {hayDatos && <ResumenCarga resultado={resultado} />}
       </div>

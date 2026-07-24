@@ -8,8 +8,11 @@ import type { DatosImagen } from "@/lib/motor";
  * Un solo botón baja DOS imágenes (Fase 9): la consolidada (propias + Dropi) y
  * la de ventas propias. Puerto de descargarImagen() (quin-admin.html:2423-2443).
  * Se bajan una tras otra con una pausa corta, porque algunos navegadores
- * ignoran la segunda descarga si sale en el mismo instante. La mascota no se
- * dibuja (en la app vieja `QUINO_SVG` nunca se asignaba, así que salía sin ella).
+ * ignoran la segunda descarga si sale en el mismo instante.
+ *
+ * La mascota Quino (emoción "presentando") se dibuja en la imagen; se precarga
+ * desde /public antes de generar (mismo origen, así toDataURL no se contamina).
+ * Si no carga, la imagen sale igual sin ella.
  *
  * `datos` puede ser null si el mes no tiene días con datos: en ese caso el botón
  * queda deshabilitado, sin `alert()` (a diferencia del original).
@@ -19,12 +22,24 @@ const INFORMES: Array<{ modo: ModoImagen; sufijo: string }> = [
   { modo: "propias", sufijo: "propias" },
 ];
 
+const MASCOTA_SRC = "/quino/presentando.png";
+
+function cargarMascota(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
 export function BotonImagenes({ datos }: { datos: DatosImagen | null }) {
   const [bajando, setBajando] = useState(false);
 
-  function descargar() {
+  async function descargar() {
     if (!datos || bajando) return;
     setBajando(true);
+    const mascota = await cargarMascota(MASCOTA_SRC);
     INFORMES.forEach((inf, i) => {
       setTimeout(() => {
         const cv = document.createElement("canvas");
@@ -34,7 +49,7 @@ export function BotonImagenes({ datos }: { datos: DatosImagen | null }) {
         if (ctx) {
           // El contexto real tipa fillStyle más ancho (gradientes/patrones); el
           // dibujo solo usa colores string, así que Lienzo2D lo cubre.
-          dibujarImagen(ctx as unknown as Lienzo2D, datos, null, inf.modo);
+          dibujarImagen(ctx as unknown as Lienzo2D, datos, mascota, inf.modo);
           const a = document.createElement("a");
           a.href = cv.toDataURL("image/png");
           a.download = `quin-${inf.sufijo}-${datos.dia}.png`;

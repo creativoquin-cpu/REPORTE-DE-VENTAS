@@ -28,7 +28,7 @@ export function TeamChart({ claves, porDia, metaPorDia }: TeamChartProps) {
           {
             label: "Propias del equipo",
             data: porDia,
-            backgroundColor: "#17c3c3",
+            backgroundColor: "#00a89d",
             borderRadius: 6,
           },
         ],

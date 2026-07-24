@@ -253,7 +253,7 @@ export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdmin
         <div className={card}>
           <div className="mb-3 flex flex-wrap gap-4 text-[13px] text-d-txt-2">
             <span className="flex items-center gap-1.5">
-              <i className="inline-block h-3 w-3 rounded-sm bg-[#17c3c3]" />
+              <i className="inline-block h-3 w-3 rounded-sm bg-[#00a89d]" />
               Propias
             </span>
             <span className="flex items-center gap-1.5">

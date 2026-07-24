@@ -5,9 +5,9 @@ import type { JornadaTablero, CifraTablero } from "@/lib/motor";
 import type { MetaHistorial } from "@/lib/motor";
 
 /**
- * Puerto de pruebas/test-imagen.js. jsdom no trae canvas, así que se dibuja
- * sobre un lienzo falso que ANOTA cada operación; así se puede comprobar cada
- * número, cada texto y cada barra sin un canvas real.
+ * Puerto de pruebas/test-imagen.js, actualizado al rediseño "story". jsdom no
+ * trae canvas, así que se dibuja sobre un lienzo falso que ANOTA cada operación;
+ * así se comprueba cada número, cada texto y cada barra sin un canvas real.
  */
 type Op =
   | { op: "rect"; x: number; y: number; w: number; h: number; color: string; redondo?: boolean }
@@ -58,8 +58,6 @@ function lienzoFalso(): { ctx: Lienzo2D; ops: Op[] } {
       py = y1;
       pts.push([x1, y1], [x2, y2]);
     },
-    // Un rectángulo redondeado se dibuja con beginPath + arcTo y luego fill:
-    // se reconstruye a partir de los puntos del trazo.
     fill() {
       if (!pts.length) return;
       const xs = pts.map((p) => p[0]);
@@ -85,11 +83,14 @@ function lienzoFalso(): { ctx: Lienzo2D; ops: Op[] } {
 function textos(ops: Op[]): string[] {
   return ops.filter((o): o is Extract<Op, { op: "text" }> => o.op === "text").map((o) => o.t);
 }
-// Barras = rectángulos dentro del área de la gráfica (evita confundirlas con
-// las franjas de los cuadros o la píldora de la meta).
-function barras(ops: Op[], color: string) {
+// Barras del mini-gráfico: rectángulos redondeados, angostos, dentro del área
+// de la caja (y ≥ 980). Excluye la caja (ancha) y las franjas del gradiente.
+function barras(ops: Op[], colores: string[]) {
   return ops
-    .filter((o): o is Extract<Op, { op: "rect" }> => o.op === "rect" && o.color === color && o.y >= 1000 && o.y + o.h <= 1495 && o.w < 100 && o.h > 1)
+    .filter(
+      (o): o is Extract<Op, { op: "rect" }> =>
+        o.op === "rect" && o.redondo === true && colores.includes(o.color) && o.y >= 980 && o.w < 100 && o.h > 1
+    )
     .sort((a, b) => a.x - b.x);
 }
 
@@ -113,127 +114,72 @@ function pintar(jornadas: Record<string, JornadaTablero>, metas: MetaHistorial[]
   return { d, ops, T: textos(ops) };
 }
 
-describe("dibujarImagen · lo que queda escrito (consolidado)", () => {
-  const { T } = pintar(JUL, SIN_METAS, "total");
+describe("dibujarImagen · tarjeta TOTAL", () => {
+  const { T, ops } = pintar(JUL, SIN_METAS, "total");
 
-  it("marca, título y fecha del día", () => {
-    expect(T).toContain("QUIN");
-    expect(T).toContain("Ventas del día");
-    expect(T.some((t) => /19-jul/.test(t))).toBe(true);
+  it("marca, meta, cifra grande del día, unidad y fecha", () => {
+    expect(T).toContain("AGENCIA QUIN · TOTAL");
+    expect(T).toContain("Meta 200");
+    expect(T).toContain("48"); // total repartido del último día (60+20)/2 + (11+4)/2
+    expect(T).toContain("prendas del día");
+    expect(T.some((t) => /19 jul 2026/.test(t))).toBe(true);
   });
-  it("la cifra grande es el total del día (48) y su meta y faltante", () => {
-    expect(T).toContain("48");
-    expect(T).toContain("Meta 200 prendas");
-    expect(T).toContain("Faltaron 152 para la meta");
+  it("el mini-gráfico muestra la cabecera de últimos 7 días con la meta", () => {
+    expect(T).toContain("Últimos 7 días · meta 200");
   });
-  it("los tres cuadros: propias, Dropi y promedio", () => {
-    expect(T).toContain("Propias (Effi)");
-    expect(T).toContain("40");
-    expect(T).toContain("Dropi");
-    expect(T).toContain("8");
-    expect(T).toContain("Promedio del mes");
-    expect(T).toContain("129");
-    expect(T).toContain("por día");
+  it("una barra por día (5), la del día resaltada en teal sólido", () => {
+    const solidas = barras(ops, ["#007a72"]);
+    const apagadas = barras(ops, ["rgba(0,122,114,0.5)"]);
+    expect(solidas.length).toBe(1); // solo el último día va sólido
+    expect(apagadas.length).toBe(4);
+    // la sólida (hoy) está a la derecha de todas las apagadas
+    expect(solidas[0].x).toBeGreaterThan(apagadas[apagadas.length - 1].x);
   });
-  it("el mes día por día con su total y las fechas", () => {
-    expect(T.some((t) => t.includes("El mes día por día · julio 2026"))).toBe(true);
-    expect(T).toContain("645 prendas en 5 días");
-    expect(["200", "150", "47", "48"].every((v) => T.includes(v))).toBe(true);
-    expect(["13", "14", "15", "18", "19"].every((v) => T.includes(v))).toBe(true);
+  it("hay una línea de meta punteada", () => {
+    const lineas = ops.filter((o): o is Extract<Op, { op: "line" }> => o.op === "line" && !!o.dash);
+    expect(lineas.length).toBeGreaterThanOrEqual(1);
   });
-  it("leyenda, aviso de reparto y sello de actualización", () => {
-    expect(T).toContain("Meta del día");
-    expect(T.some((t) => t.includes("repartidos entre sus días"))).toBe(true);
-    expect(T.some((t) => t.startsWith("Actualizado"))).toBe(true);
-  });
-  it("REGLA 9: nunca VS, ranking ni nombres de personas", () => {
+  it("REGLA 9: nunca VS, ranking ni nombres de personas/tiendas", () => {
     expect(T.some((t) => /\bvs\b|ranking|\bAna\b|Tienda/i.test(t))).toBe(false);
   });
 });
 
-describe("dibujarImagen · el día que cumple la meta", () => {
-  it("dice 'Meta cumplida' y no 'Faltaron'", () => {
-    const soloLunes = { "2026-07-13": jor(150, 60) }; // 210 ≥ meta 200
-    const { T } = pintar(soloLunes, SIN_METAS, "total");
-    expect(T).toContain("Meta cumplida");
-    expect(T.some((t) => t.startsWith("Faltaron"))).toBe(false);
+describe("dibujarImagen · tarjeta PROPIAS", () => {
+  const { T, ops } = pintar(JUL, SIN_METAS, "propias");
+
+  it("marca de propias, su meta, cifra y unidad", () => {
+    expect(T).toContain("AGENCIA QUIN · PROPIAS");
+    expect(T).toContain("Meta 160");
+    expect(T).toContain("40"); // propias repartidas del último día
+    expect(T).toContain("prendas propias · Effi");
+    expect(T).toContain("Últimos 7 días · meta 160");
+  });
+  it("las barras van en teal de la marca (no el oscuro del total)", () => {
+    const bs = barras(ops, ["#00a89d", "rgba(0,168,157,0.5)"]);
+    expect(bs.length).toBe(5);
+    expect(barras(ops, ["#007a72"]).length).toBe(0);
+  });
+  it("REGLA 9: nunca nombres de personas ni tiendas", () => {
+    expect(T.some((t) => /\bAna\b|\bVS\b|TiendaX/.test(t))).toBe(false);
   });
 });
 
-describe("dibujarImagen · el desglose cuadra con las barras", () => {
-  const { ops } = pintar(JUL, SIN_METAS, "total");
-  it("una barra azul y una verde por día, el reportado el último", () => {
-    const azules = barras(ops, "#2a78d6");
-    const verdes = barras(ops, "#1baf7a");
-    expect(azules.length).toBe(5);
-    expect(verdes.length).toBe(5);
-    expect(Math.round(azules[4].x)).toBeGreaterThan(Math.round(azules[3].x));
-  });
-});
-
-describe("dibujarImagen · meta escalonada", () => {
-  const metas: MetaHistorial[] = [{ id: 1, desde: "2026-07-15", total: 100, propias: 80 }];
-  const { ops } = pintar(JUL, metas, "total");
-  const lineas = ops.filter((o): o is Extract<Op, { op: "line" }> => o.op === "line" && o.color === "#d03b3b");
-
-  it("un tramo de meta por día", () => {
-    expect(lineas.length).toBe(5);
-  });
-  it("los tramos cambian de altura al cambiar la meta; los dos primeros iguales", () => {
-    expect(Math.round(lineas[0].y1)).not.toBe(Math.round(lineas[2].y1));
-    expect(Math.round(lineas[0].y1)).toBe(Math.round(lineas[1].y1));
-  });
-});
-
-describe("dibujarImagen · nada se sale del lienzo (31 días)", () => {
+describe("dibujarImagen · el mini-gráfico se limita a 7 días y no se sale", () => {
   const largo: Record<string, JornadaTablero> = {};
   for (let i = 1; i <= 31; i++) largo[`2026-07-${String(i).padStart(2, "0")}`] = jor(100 + i, 20);
   const { ops } = pintar(largo, SIN_METAS, "total");
 
+  it("como mucho 7 barras aunque el mes tenga 31 días", () => {
+    const bs = barras(ops, ["#007a72", "rgba(0,122,114,0.5)"]);
+    expect(bs.length).toBe(7);
+  });
   it("ningún elemento se sale de 1080×1920", () => {
     const fuera = ops.filter((o) => {
-      if (o.op === "rect") return o.x < 0 || o.y < 0 || o.x + o.w > IMG_W || o.y + o.h > IMG_H;
+      if (o.op === "rect") return o.x < -0.5 || o.y < -0.5 || o.x + o.w > IMG_W + 0.5 || o.y + o.h > IMG_H + 0.5;
       if (o.op === "text") return o.x < 0 || o.y < 0 || o.y > IMG_H;
       if (o.op === "line") return o.y1 < 0 || o.y1 > IMG_H || o.x2 > IMG_W;
       return false;
     });
     expect(fuera).toEqual([]);
-  });
-  it("siguen saliendo las 31 cantidades y las 31 fechas, sin traslape", () => {
-    const nums = ops.filter((o) => o.op === "text" && o.align === "center");
-    expect(nums.length).toBe(62);
-    const B = barras(ops, "#2a78d6");
-    expect(B.length).toBe(31);
-    expect(B.every((b, i) => i === 0 || b.x >= B[i - 1].x + B[i - 1].w)).toBe(true);
-  });
-});
-
-describe("dibujarImagen · imagen de ventas propias", () => {
-  const { T, ops } = pintar(JUL, SIN_METAS, "propias");
-
-  it("título, meta de propias y faltante", () => {
-    expect(T).toContain("Ventas propias");
-    expect(T.some((t) => t.includes("solo Effi"))).toBe(true);
-    expect(T).toContain("40"); // cifra grande = propias del día
-    expect(T).toContain("Meta 160 prendas");
-    expect(T).toContain("Faltaron 120 para la meta");
-  });
-  it("cuadros de total, promedio y días en meta del mes", () => {
-    expect(T).toContain("Total del mes");
-    expect(T).toContain("490");
-    expect(T).toContain("98");
-    expect(T).toContain("Días en meta");
-    expect(T).toContain("0 de 5");
-  });
-  it("el pie aclara que no incluye Dropi y la gráfica es de propias", () => {
-    expect(T.some((t) => t.includes("No incluye Dropi"))).toBe(true);
-    expect(T.some((t) => t === "490 prendas en 5 días")).toBe(true);
-  });
-  it("solo barras azules, ninguna verde de Dropi", () => {
-    expect(barras(ops, "#2a78d6").length).toBe(5);
-    expect(barras(ops, "#1baf7a").length).toBe(0);
-  });
-  it("REGLA 9: nunca nombres de personas", () => {
-    expect(T.some((t) => /\bAna\b|\bVS\b|TiendaX/.test(t))).toBe(false);
   });
 });

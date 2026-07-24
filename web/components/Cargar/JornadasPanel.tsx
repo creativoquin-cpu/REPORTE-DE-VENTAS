@@ -255,6 +255,61 @@ function VistaPrevia({
   );
 }
 
+/** El de mayor cantidad en un mapa nombre→cantidad, o null si está vacío. */
+function top(mapa: Record<string, number>): { nombre: string; n: number } | null {
+  let mejor: { nombre: string; n: number } | null = null;
+  for (const [nombre, n] of Object.entries(mapa)) {
+    if (!mejor || n > mejor.n) mejor = { nombre, n };
+  }
+  return mejor;
+}
+
+/**
+ * Resumen de ventas del mes que se muestra al lado del calendario: total de
+ * prendas, mejor vendedor de Effi (propias) y mejor tienda de Dropi. Reemplaza
+ * la ilustración de Quino que iba ahí. Los "mejores" salen del detalle por día
+ * del Excel cargado (dias[k].ven / .tie); si ese mes no tiene Excel cargado,
+ * quedan en "sin datos" (el total sí sale del oficial de la nube).
+ */
+function ResumenVentas({
+  total,
+  mejorVend,
+  mejorTienda,
+}: {
+  total: number;
+  mejorVend: { nombre: string; n: number } | null;
+  mejorTienda: { nombre: string; n: number } | null;
+}) {
+  return (
+    <aside className="w-full max-w-[300px] shrink-0 self-center rounded-card border border-d-sup-3 bg-turquesa/[0.06] p-5">
+      <p className="eyebrow">Resumen de ventas</p>
+      <p className="mt-3 text-[13px] text-d-txt-2">Total de ventas</p>
+      <p className="text-[40px] font-black leading-none text-d-txt">
+        {total}
+        <span className="ml-1.5 text-base font-semibold text-d-txt-2">prendas</span>
+      </p>
+      <div className="mt-4 grid gap-2.5">
+        <div className="rounded-card-sm border border-d-sup-3 bg-d-sup p-3">
+          <p className="eyebrow text-[0.62rem]">Mejor vendedor · Effi</p>
+          <p className="mt-1 truncate font-black text-d-txt">{mejorVend ? mejorVend.nombre : "—"}</p>
+          <p className="text-[13px] text-d-txt-2">
+            {mejorVend ? `${mejorVend.n} propias` : "sin datos del Excel"}
+          </p>
+        </div>
+        <div className="rounded-card-sm border border-d-sup-3 bg-d-sup p-3">
+          <p className="eyebrow text-[0.62rem]">Mejor tienda · Dropi</p>
+          <p className="mt-1 truncate font-black text-d-txt">
+            {mejorTienda ? mejorTienda.nombre : "—"}
+          </p>
+          <p className="text-[13px] text-d-txt-2">
+            {mejorTienda ? `${mejorTienda.n} Dropi` : "sin datos del Excel"}
+          </p>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
 export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
   const { jornadas, modoEscritura, aplicarCierreLocal, aplicarReaperturaLocal } = useCargar();
   const [abierta, setAbierta] = useState<string | null>(null);
@@ -407,6 +462,8 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
           let suma = 0;
           let pend = 0;
           let rev = 0;
+          const venMes: Record<string, number> = {};
+          const tieMes: Record<string, number> = {};
           for (let d = 1; d <= ultimo; d++) {
             const k = claveFecha(ano, mes1, d);
             const j = jornadas[k];
@@ -416,7 +473,15 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
             suma += j ? j.propias + j.dropi : c.propias + c.dropi;
             if (!j) pend++;
             if (j && j.fotos.length) rev++;
+            // El "mejor vendedor / tienda" sale del detalle por día del Excel
+            // cargado (los oficiales de la nube no guardan ese desglose).
+            if (c) {
+              for (const [v, nn] of Object.entries(c.ven)) venMes[v] = (venMes[v] || 0) + nn;
+              for (const [t, nn] of Object.entries(c.tie)) tieMes[t] = (tieMes[t] || 0) + nn;
+            }
           }
+          const mejorVend = top(venMes);
+          const mejorTienda = top(tieMes);
           return (
             <details key={m} open={idx === 0} className="border-t border-d-sup-3 py-2">
               <summary className="cursor-pointer text-sm text-d-txt">
@@ -448,15 +513,20 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
                 </p>
               )}
 
-              <CalendarioMes
-                mes={m}
-                jornadas={jornadas}
-                dias={dias}
-                abierta={abierta}
-                seleccion={seleccion}
-                onTocarCerrada={toggleDetalle}
-                onToggleSel={toggleSel}
-              />
+              <div className="flex flex-wrap items-center gap-8">
+                <div className="w-full max-w-[560px]">
+                  <CalendarioMes
+                    mes={m}
+                    jornadas={jornadas}
+                    dias={dias}
+                    abierta={abierta}
+                    seleccion={seleccion}
+                    onTocarCerrada={toggleDetalle}
+                    onToggleSel={toggleSel}
+                  />
+                </div>
+                <ResumenVentas total={suma} mejorVend={mejorVend} mejorTienda={mejorTienda} />
+              </div>
               {abierta && abierta.slice(0, 7) === m && jornadas[abierta] && (
                 <DetalleJornada j={jornadas[abierta]} onReabrir={prepararReapertura} />
               )}

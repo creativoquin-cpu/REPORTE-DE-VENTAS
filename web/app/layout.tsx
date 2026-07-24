@@ -3,10 +3,13 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { RegistrarSW } from "@/components/RegistrarSW";
 
+// Toda la escala de la marca: Light 300 (captions), Regular 400 (cuerpo),
+// Medium 500 (destacados), SemiBold 600 (subtítulos), Bold 700 (títulos),
+// ExtraBold 800 / Black 900 (impacto). Ver manual de marca, pág 7.
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 // El <link rel="manifest"> lo agrega Next solo desde app/manifest.ts.
@@ -21,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#17C3C3",
+  themeColor: "#00A89D",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

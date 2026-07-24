@@ -69,7 +69,9 @@ function MetaCard({ titulo, sub, valor, meta }: { titulo: string; sub: string; v
   );
 }
 
-const MEDALLA = ["bg-turquesa text-d-en-turquesa", "bg-turquesa/40 text-d-en-turquesa", "bg-turquesa/20 text-turquesa"];
+// 1º: teal sólido + texto blanco. 2º/3º: teal claro de fondo, así que el texto
+// va en teal oscuro (el blanco se perdería sobre el fondo pálido).
+const MEDALLA = ["bg-turquesa text-d-en-turquesa", "bg-turquesa/40 text-turquesa-prof", "bg-turquesa/20 text-turquesa"];
 
 function Ranking({ titulo, entradas, faltan, total }: { titulo: string; entradas: EntradaRanking[]; faltan: number; total: number }) {
   const max = entradas.length ? Math.max(...entradas.map((x) => x.n)) : 0;
@@ -149,7 +151,7 @@ function Leyenda({
         Meta total {etMetaT}
       </span>
       <span className="flex items-center gap-1.5">
-        <i className="inline-block h-0.5 w-[18px] bg-[#e0a030]" />
+        <i className="inline-block h-0.5 w-[18px] bg-[#c98a17]" />
         Meta propias {etMetaP}
       </span>
     </div>

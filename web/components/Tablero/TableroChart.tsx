@@ -24,8 +24,8 @@ interface TableroChartProps {
   metaPropiasDia: number[];
 }
 
-const META_TOTAL_COLOR = "#eaf4f3"; // blanco
-const META_PROPIAS_COLOR = "#e0a030"; // dorado
+const META_TOTAL_COLOR = "#091315"; // tinta (sobre tarjeta blanca)
+const META_PROPIAS_COLOR = "#c98a17"; // dorado oscuro (legible en claro)
 
 export function TableroChart({
   claves,
@@ -48,7 +48,7 @@ export function TableroChart({
         // Totales sobre cada barra.
         ctx.save();
         ctx.font = "800 13px -apple-system,Segoe UI,Roboto,sans-serif";
-        ctx.fillStyle = "#eaf4f3";
+        ctx.fillStyle = "#091315";
         ctx.textAlign = "center";
         c.getDatasetMeta(1).data.forEach((b, i) => {
           const t = propias[i] + dropi[i];
@@ -104,7 +104,7 @@ export function TableroChart({
           {
             label: "Propias",
             data: propias,
-            backgroundColor: col("#17c3c3", "#123b3d"),
+            backgroundColor: col("#00a89d", "#123b3d"),
             stack: "a",
             borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
           },
@@ -159,7 +159,7 @@ export function TableroChart({
             // superior (si no, cuando la meta es el valor más alto, se recorta).
             suggestedMax: Math.ceil(metaMax * 1.12),
             border: { display: false },
-            grid: { color: "rgba(255,255,255,.05)" },
+            grid: { color: "rgba(9,19,21,.06)" },
             ticks: { font: { size: 11 }, color: "#7d9396" },
           },
         },

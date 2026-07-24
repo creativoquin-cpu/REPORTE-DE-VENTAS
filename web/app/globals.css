@@ -12,9 +12,13 @@
   --color-tinta: #091315;
   --color-tinta-2: #123b3d;
   --color-tinta-3: #17383a;
-  --color-turquesa: #17c3c3;
-  --color-turquesa-osc: #078f94;
-  --color-turquesa-prof: #06777b;
+  /* Teal corporativo oficial (manual de marca, pág 6): principal + secundarios.
+     Antes el acento era #17c3c3, un tono más brillante y corrido del oficial. */
+  --color-turquesa: #00a89d;
+  --color-turquesa-osc: #007a72;
+  --color-turquesa-prof: #006b66;
+  --color-teal-claro: #4ecdc4;
+  --color-teal-osc: #007a72;
   --color-menta: #bdf4f1;
   --color-menta-2: #c7faf5;
   --color-menta-3: #d7faf5;
@@ -30,23 +34,27 @@
   --color-linea-2: #f2f4f4;
   --color-fondo: #f4f8f7;
 
-  /* Tema oscuro del panel admin — activado con [data-quin-theme="admin"] */
-  --color-d-bg: #070f11;
-  --color-d-sup: #0e1c1e;
-  --color-d-sup-2: #14282b;
-  --color-d-sup-3: #0a1719;
-  --color-d-txt: #eaf4f3;
-  --color-d-txt-2: #8fa5a7;
-  --color-d-txt-3: #7d9396;
-  --color-d-dropi: #5b8f94;
-  --color-d-en-turquesa: #06171a;
+  /* Tema CLARO del panel admin — "soft-card" del mockup Jornada Quin
+     (activado con [data-quin-theme="admin"]). Antes era oscuro; se pasó a
+     claro para igualar la estética aprobada. Los mismos nombres d-* siguen
+     usándose en los componentes, solo cambia su valor a la paleta clara. */
+  --color-d-bg: #f4f8f7; /* paper — fondo de la pantalla */
+  --color-d-sup: #ffffff; /* superficie de las tarjetas */
+  --color-d-sup-2: #ffffff; /* inputs */
+  --color-d-sup-3: #dce8e6; /* líneas y bordes */
+  --color-d-txt: #091315; /* tinta — texto principal */
+  --color-d-txt-2: #607174; /* apagado — texto secundario */
+  --color-d-txt-3: #536568; /* apagado 2 */
+  --color-d-dropi: #5b8f94; /* barra Dropi (se mantiene) */
+  --color-d-en-turquesa: #ffffff; /* texto blanco sobre botón teal (mejor legibilidad) */
 
-  --radius-card: 18px;
-  --radius-card-sm: 12px;
+  --radius-card: 22px;
+  --radius-card-sm: 14px;
   --radius-card-lg: 26px;
 
-  --shadow-card: 0 1px 2px rgba(9, 19, 21, 0.04), 0 8px 24px rgba(9, 19, 21, 0.06);
-  --shadow-card-alta: 0 2px 6px rgba(9, 19, 21, 0.06), 0 18px 48px rgba(9, 19, 21, 0.1);
+  /* Sombra suave del mockup: card flotando sobre el paper. */
+  --shadow-card: 0 12px 32px rgba(9, 19, 21, 0.07);
+  --shadow-card-alta: 0 20px 48px rgba(9, 19, 21, 0.1);
 }
 
 body {
@@ -70,6 +78,43 @@ body:has([data-quin-theme="admin"]) {
 [data-quin-theme="admin"] {
   background: var(--color-d-bg);
   color: var(--color-d-txt);
-  font-family: "Segoe UI Variable Display", var(--font-montserrat), -apple-system, "Segoe UI",
-    Roboto, sans-serif;
+  /* Montserrat también en el panel: es la tipografía de marca (manual, pág 7).
+     Antes se pisaba con "Segoe UI Variable Display", que rompía la identidad. */
+  font-family: var(--font-montserrat), -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/*
+  Primitivas de la estética "Jornada Quin" (mockup de Canva), reutilizables
+  con className directo:
+  - .eyebrow: rótulo en mayúscula sobre cada bloque (teal profundo).
+  - .soft-card: tarjeta blanca redondeada con sombra suave (ya cubierta por
+    rounded-card + shadow-card + bg-white en la mayoría de sitios; se deja el
+    atajo por si hace falta).
+  - .decor-grid: grilla teal muy tenue de fondo, con degradado que la desvanece.
+*/
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-turquesa-prof);
+}
+
+.soft-card {
+  border: 1px solid rgba(9, 19, 21, 0.08);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  background: #ffffff;
+}
+
+.decor-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  pointer-events: none;
+  background-image: linear-gradient(var(--color-turquesa) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-turquesa) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black, transparent 70%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 70%);
 }

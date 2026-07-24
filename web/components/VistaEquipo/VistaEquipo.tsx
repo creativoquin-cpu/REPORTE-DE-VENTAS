@@ -2,6 +2,7 @@ import { KpiCard } from "./KpiCard";
 import { GoalProgressBar } from "./GoalProgressBar";
 import { RankingList } from "./RankingList";
 import { TeamChart } from "./TeamChart";
+import { LogoQuin, Quino } from "@/components/Marca";
 import { cargarVistaEquipo } from "@/lib/data/equipo";
 import { bonita, MESES_L } from "@/lib/motor/fechas";
 
@@ -28,9 +29,14 @@ export async function VistaEquipo() {
   const subtitulo = `Mes en curso: ${MESES_L[+m - 1]} ${anio}. Cifras del equipo.`;
   const n = resumen.claves.length;
   const plural = (x: number) => (x === 1 ? "" : "s");
+  const metaCumplida = resumen.metaPeriodo > 0 && resumen.total >= resumen.metaPeriodo;
 
   return (
     <div className="mx-auto max-w-[1240px] px-6 py-8 pb-11">
+      <header className="mb-5 flex items-center justify-between gap-3 border-b border-linea pb-4">
+        <LogoQuin tono="claro" alto={46} priority />
+        <Quino emocion="presentando" alto={82} className="hidden sm:block" priority />
+      </header>
       <p className="mb-4 text-sm text-gris">{subtitulo}</p>
 
       {error && (
@@ -40,7 +46,8 @@ export async function VistaEquipo() {
       )}
 
       {!error && n === 0 && (
-        <div className={avisoBox}>
+        <div className={`${avisoBox} flex items-center gap-4`}>
+          <Quino emocion="pensando" alto={72} className="shrink-0" />
           <b>Todavía no hay ventas cargadas este mes.</b>
         </div>
       )}
@@ -105,10 +112,17 @@ export async function VistaEquipo() {
           </div>
 
           <div className={`mb-4 ${cardBox}`}>
-            <p className="mb-1 text-xs font-extrabold tracking-[0.12em] text-turquesa-prof">
-              META DEL EQUIPO
-            </p>
-            <h2 className={h2Box}>Meta de propias del mes</h2>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="mb-1 text-xs font-extrabold tracking-[0.12em] text-turquesa-prof">
+                  META DEL EQUIPO
+                </p>
+                <h2 className={h2Box}>Meta de propias del mes</h2>
+              </div>
+              {metaCumplida && (
+                <Quino emocion="celebrando" alto={92} className="hidden shrink-0 sm:block" />
+              )}
+            </div>
             <GoalProgressBar actual={resumen.total} meta={resumen.metaPeriodo} />
           </div>
 

@@ -21,7 +21,7 @@ export function ComparativoChart({ resumenes, etiquetas }: { resumenes: ResumenC
         const ctx = c.ctx;
         ctx.save();
         ctx.font = "800 12px -apple-system,Segoe UI,Roboto,sans-serif";
-        ctx.fillStyle = "#eaf4f3";
+        ctx.fillStyle = "#091315";
         ctx.textAlign = "center";
         c.getDatasetMeta(1).data.forEach((b, i) => {
           if (totales[i]) ctx.fillText(String(totales[i]), b.x, b.y - 6);
@@ -35,7 +35,7 @@ export function ComparativoChart({ resumenes, etiquetas }: { resumenes: ResumenC
       data: {
         labels: etiquetas,
         datasets: [
-          { type: "bar", label: "Propias", data: resumenes.map((r) => r.p), backgroundColor: "#17c3c3", stack: "a", yAxisID: "y" },
+          { type: "bar", label: "Propias", data: resumenes.map((r) => r.p), backgroundColor: "#00a89d", stack: "a", yAxisID: "y" },
           {
             type: "bar",
             label: "Dropi",
@@ -85,7 +85,7 @@ export function ComparativoChart({ resumenes, etiquetas }: { resumenes: ResumenC
             stacked: true,
             beginAtZero: true,
             border: { display: false },
-            grid: { color: "rgba(255,255,255,.08)" },
+            grid: { color: "rgba(9,19,21,.06)" },
             ticks: { font: { size: 11 }, color: "#7d9396" },
           },
           y2: {

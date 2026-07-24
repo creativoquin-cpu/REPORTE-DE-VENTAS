@@ -1,18 +1,18 @@
 /**
- * Dibujo de la imagen de WhatsApp (Fase 9). Puerto fiel de imgDibujar()
- * (quin-admin.html:2226-2408): una imagen vertical 1080×1920 con el informe del
- * DÍA — la cifra grande, tres cuadros, y el mes día por día con la línea de meta
- * escalonada y rotulada.
+ * Dibujo de la imagen de WhatsApp (rediseño "story", inspirado en las tarjetas
+ * de "Jornada Quin Actual.html"): una tarjeta vertical 1080×1920 con gradiente,
+ * la marca, Quino, la meta del día, la cifra grande, un mini-gráfico de los
+ * últimos 7 días con su línea de meta, y la fecha. Dos versiones coherentes:
+ *  - "total": gradiente menta→teal claro, texto tinta, mini-gráfico claro.
+ *  - "propias": gradiente oscuro, texto teal/blanco, mini-gráfico oscuro.
  *
  * REGLA DE NEGOCIO (BUSINESS-RULES.md regla 9): la imagen NUNCA lleva VS, ni
  * rankings, ni nombres de personas. Solo cifras agregadas.
  *
- * Recibe el contexto 2D como parámetro (no crea el canvas), así que es
- * testeable con un lienzo falso que anota lo que se dibuja. La mascota es
- * opcional: en la app vieja `QUINO_SVG` nunca se asignaba, así que la imagen
- * salía sin ella; acá también es opcional (null por defecto).
+ * Recibe el contexto 2D como parámetro (no crea el canvas), así que es testeable
+ * con un lienzo falso que anota lo que se dibuja. La mascota es opcional.
  */
-import { bonita, hoyTexto, MESES_L } from "@/lib/motor";
+import { MESES_L } from "@/lib/motor";
 import type { DatosImagen } from "@/lib/motor";
 
 export const IMG_W = 1080;
@@ -60,8 +60,34 @@ function imgRedondo(c: Lienzo2D, x: number, y: number, w: number, h: number, r: 
 
 const F = "-apple-system,Segoe UI,Roboto,sans-serif";
 
+function hexArr(h: string): [number, number, number] {
+  const n = h.replace("#", "");
+  return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+}
+function mezcla(a: string, b: string, t: number): string {
+  const pa = hexArr(a);
+  const pb = hexArr(b);
+  const m = (i: number) => Math.round(pa[i] + (pb[i] - pa[i]) * t);
+  return `rgb(${m(0)},${m(1)},${m(2)})`;
+}
+function rgba(hex: string, alpha: number): string {
+  const p = hexArr(hex);
+  return `rgba(${p[0]},${p[1]},${p[2]},${alpha})`;
+}
+/** Gradiente vertical aproximado con franjas (Lienzo2D no expone gradientes). */
+function gradienteVertical(c: Lienzo2D, arriba: string, abajo: string): void {
+  const pasos = 160;
+  for (let i = 0; i < pasos; i++) {
+    c.fillStyle = mezcla(arriba, abajo, i / (pasos - 1));
+    const y0 = Math.round((IMG_H * i) / pasos);
+    const y1 = Math.round((IMG_H * (i + 1)) / pasos);
+    // +1 para tapar la costura entre franjas, sin pasarse del borde inferior.
+    c.fillRect(0, y0, IMG_W, Math.min(y1 - y0 + 1, IMG_H - y0));
+  }
+}
+
 /**
- * Dibuja el informe en `c`. `modo` = "total" (propias + Dropi) o "propias"
+ * Dibuja la tarjeta en `c`. `modo` = "total" (propias + Dropi) o "propias"
  * (solo Effi). `mascota` opcional; si es null no se dibuja.
  */
 export function dibujarImagen(
@@ -70,238 +96,142 @@ export function dibujarImagen(
   mascota: CanvasImageSource | null,
   modo: ModoImagen = "total"
 ): void {
-  const CIAN = "#14c4c4";
-  const AZUL = "#2a78d6";
-  const VERDE = "#1baf7a";
-  const ROJO = "#d03b3b";
-  const TINTA = "#111318";
-  const GRIS = "#6b7280";
+  // Paleta (tokens del manual de marca).
+  const INK = "#091315";
+  const INK2 = "#123b3d";
+  const TINTA3 = "#17383a";
+  const TEAL = "#00a89d";
+  const TEAL_OSC = "#007a72";
+  const MENTA2 = "#c7faf5";
+  const G4 = "#bfd0d1";
+  const G6 = "#d4dfe0";
+  const WHITE = "#ffffff";
 
   const soloP = modo === "propias";
 
   // Valores que cambian según el informe.
   const vDia = soloP ? d.diaP : d.diaTotal;
-  const vMeta = soloP ? d.metaDiaP : d.metaDia;
-  const vTotal = soloP ? d.totalP : d.total;
-  const vSerie = soloP ? d.repP : d.rep;
-  const vMetas = soloP ? d.metasP : d.metas;
+  const meta = soloP ? d.metaDiaP : d.metaDia;
+  const serie = soloP ? d.repP : d.rep;
 
-  c.fillStyle = "#ffffff";
-  c.fillRect(0, 0, IMG_W, IMG_H);
-  c.fillStyle = CIAN;
-  c.fillRect(0, 0, IMG_W, 14);
+  // Colores por versión.
+  const bgArriba = soloP ? INK2 : MENTA2;
+  const bgAbajo = soloP ? INK : TEAL;
+  const brandCol = soloP ? TEAL : INK;
+  const titleCol = soloP ? WHITE : INK;
+  const valueCol = soloP ? TEAL : INK;
+  const unitCol = soloP ? G6 : INK2;
+  const dateCol = soloP ? G4 : INK2;
+  const boxCol = soloP ? TINTA3 : WHITE;
+  const labelCol = soloP ? WHITE : INK;
+  const barCol = soloP ? TEAL : TEAL_OSC;
+  const barDim = rgba(barCol, 0.5);
+  const valCol = soloP ? WHITE : INK;
+  const valDim = rgba(soloP ? WHITE : INK, 0.65);
+  const metaLineCol = soloP ? "rgba(255,255,255,.55)" : "rgba(9,19,21,.42)";
 
-  const M = 70;
+  const cx = IMG_W / 2;
+
+  // ---- fondo con gradiente
+  gradienteVertical(c, bgArriba, bgAbajo);
+
   c.textBaseline = "alphabetic";
-  c.textAlign = "left";
+  c.textAlign = "center";
 
-  // ---- encabezado: el DÍA que se está reportando
-  c.fillStyle = CIAN;
-  c.font = `700 34px ${F}`;
-  c.fillText("QUIN", M, 120);
-  c.fillStyle = TINTA;
-  c.font = `800 72px ${F}`;
-  c.fillText(soloP ? "Ventas propias" : "Ventas del día", M, 210);
-  c.fillStyle = GRIS;
-  c.font = `400 42px ${F}`;
-  c.fillText(bonita(d.dia) + (soloP ? " · solo Effi" : " · propias + Dropi"), M, 268);
+  // ---- marca
+  c.fillStyle = brandCol;
+  c.font = `800 32px ${F}`;
+  c.fillText(`AGENCIA QUIN · ${soloP ? "PROPIAS" : "TOTAL"}`, cx, 150);
 
-  const txtMeta = "Meta " + vMeta + " prendas";
-  c.font = `700 36px ${F}`;
-  const wp = c.measureText(txtMeta).width + 56;
-  const cumple = vDia >= vMeta;
-  c.fillStyle = cumple ? "#e8f7f0" : "#fdecec";
-  imgRedondo(c, M, 300, wp, 66, 33);
-  c.fill();
-  c.fillStyle = cumple ? VERDE : ROJO;
-  c.fillText(txtMeta, M + 28, 345);
-
-  // ---- cifra grande del día
-  c.fillStyle = TINTA;
-  c.font = `800 200px ${F}`;
-  c.fillText(String(vDia), M, 560);
-  const wn = c.measureText(String(vDia)).width;
-  c.fillStyle = GRIS;
-  c.font = `400 44px ${F}`;
-  c.fillText("prendas", M + wn + 24, 560);
-  c.fillStyle = cumple ? VERDE : ROJO;
-  c.font = `700 38px ${F}`;
-  c.fillText(cumple ? "Meta cumplida" : "Faltaron " + (vMeta - vDia) + " para la meta", M, 616);
-
-  // ---- tres cuadros
-  const cuadros: Array<[string, string, string]> = soloP
-    ? [
-        ["Total del mes", String(d.totalP), AZUL],
-        ["Promedio del mes", String(d.promP), TINTA],
-        ["Días en meta", d.enMetaP + " de " + d.n, VERDE],
-      ]
-    : [
-        ["Propias (Effi)", String(d.diaP), AZUL],
-        ["Dropi", String(d.diaD), VERDE],
-        ["Promedio del mes", String(d.prom), TINTA],
-      ];
-  const cw = (IMG_W - M * 2 - 40) / 3;
-  const cy = 660;
-  const ch = 170;
-  cuadros.forEach((t, i) => {
-    const x = M + i * (cw + 20);
-    c.fillStyle = "#f6f7f9";
-    imgRedondo(c, x, cy, cw, ch, 22);
-    c.fill();
-    c.fillStyle = t[2];
-    imgRedondo(c, x, cy, 10, ch, 5);
-    c.fill();
-    c.fillStyle = GRIS;
-    c.font = `600 28px ${F}`;
-    c.fillText(t[0], x + 32, cy + 52);
-    c.fillStyle = TINTA;
-    c.font = `800 68px ${F}`;
-    c.fillText(t[1], x + 32, cy + 130);
-    if (t[0] === "Promedio del mes") {
-      c.fillStyle = GRIS;
-      c.font = `400 24px ${F}`;
-      c.fillText("por día", x + 32, cy + 158);
+  // ---- mascota (nuestra Quino), centrada arriba
+  if (mascota) {
+    const iw = (mascota as { width?: number }).width || 512;
+    const ih = (mascota as { height?: number }).height || 512;
+    const maxH = 330;
+    const maxW = 360;
+    let mh = maxH;
+    let mw = Math.round(mh * (iw / ih));
+    if (mw > maxW) {
+      mw = maxW;
+      mh = Math.round(mw * (ih / iw));
     }
-  });
+    try {
+      c.drawImage(mascota, Math.round(cx - mw / 2), 200, mw, mh);
+    } catch {
+      // Si la mascota no se puede dibujar, la tarjeta sale igual sin ella.
+    }
+  }
 
-  // ---- el mes día por día
-  c.fillStyle = TINTA;
+  // ---- meta + cifra grande del día
+  c.fillStyle = titleCol;
+  c.font = `900 104px ${F}`;
+  c.fillText(`Meta ${meta}`, cx, 640);
+
+  c.fillStyle = valueCol;
+  c.font = `900 200px ${F}`;
+  c.fillText(String(vDia), cx, 830);
+
+  c.fillStyle = unitCol;
   c.font = `700 40px ${F}`;
-  const p = d.m.split("-");
-  c.fillText("El mes día por día · " + MESES_L[+p[1] - 1] + " " + p[0], M, 910);
-  c.fillStyle = GRIS;
-  c.font = `400 28px ${F}`;
-  c.fillText(vTotal + " prendas en " + d.n + " día" + (d.n === 1 ? "" : "s"), M, 952);
+  c.fillText(soloP ? "prendas propias · Effi" : "prendas del día", cx, 892);
 
-  const gx = M;
-  const gw = IMG_W - M * 2;
-  const gTop = 1010;
-  const gBase = 1490;
-  let maxV = 0;
-  d.claves.forEach((k) => (maxV = Math.max(maxV, vSerie[k])));
-  vMetas.forEach((v) => (maxV = Math.max(maxV, v)));
-  maxV = maxV || 1;
-  const esc = (gBase - gTop) / (maxV * 1.06);
+  // ---- mini-gráfico de los últimos 7 días
+  const P = 84;
+  const bx = P;
+  const by = 980;
+  const bw = IMG_W - 2 * P;
+  const bh = 720;
+  c.fillStyle = boxCol;
+  imgRedondo(c, bx, by, bw, bh, 34);
+  c.fill();
 
-  const n = d.claves.length;
-  const paso = gw / n;
-  const ancho = Math.min(paso * 0.68, 64);
-  const fNum = n > 22 ? 19 : n > 14 ? 23 : 27;
-  const fDia = n > 22 ? 19 : 23;
+  c.fillStyle = labelCol;
+  c.font = `800 30px ${F}`;
+  c.textAlign = "left";
+  c.fillText(`Últimos 7 días · meta ${meta}`, bx + 44, by + 66);
 
-  d.claves.forEach((k, i) => {
-    const xc = gx + paso * i + paso / 2;
-    const v = vSerie[k];
-    const h = Math.round(v * esc);
-    const hoy = k === d.dia;
-    if (soloP) {
-      // Una sola barra azul: las propias.
-      c.fillStyle = AZUL;
-      imgRedondo(c, xc - ancho / 2, gBase - h, ancho, Math.max(h, 2), 8);
-      c.fill();
-    } else {
-      // Barra partida: abajo las propias, encima Dropi.
-      const hp = Math.round(d.repP[k] * esc);
-      const hd = Math.max(h - hp, 0);
-      c.fillStyle = VERDE;
-      imgRedondo(c, xc - ancho / 2, gBase - h, ancho, Math.max(hd, 2), 8);
-      c.fill();
-      c.fillStyle = AZUL;
-      c.fillRect(xc - ancho / 2, gBase - hp, ancho, Math.max(hp, 2));
-    }
-    c.fillStyle = hoy ? TINTA : GRIS;
-    c.textAlign = "center";
-    c.font = (hoy ? "800 " : "700 ") + fNum + "px " + F;
-    if (v) c.fillText(String(v), xc, gBase - h - 14);
-    c.fillStyle = hoy ? TINTA : GRIS;
-    c.font = (hoy ? "700 " : "400 ") + fDia + "px " + F;
-    c.fillText(k.split("-")[2], xc, gBase + 38);
-    c.textAlign = "left";
-  });
+  const ult = d.claves.slice(-7);
+  const vals = ult.map((k) => serie[k] ?? 0);
+  const escala = Math.max(...vals, meta, 1);
 
-  c.strokeStyle = "#e1e0d9";
-  c.lineWidth = 2;
-  c.beginPath();
-  c.moveTo(gx, gBase);
-  c.lineTo(gx + gw, gBase);
-  c.stroke();
+  const plotL = bx + 44;
+  const plotR = bx + bw - 44;
+  const plotBot = by + bh - 72;
+  const plotTop = by + 150;
+  const PH = plotBot - plotTop;
+  const slot = ult.length ? (plotR - plotL) / ult.length : plotR - plotL;
+  const barW = Math.min(slot * 0.5, 74);
 
-  // Línea de meta: un tramo por día (la meta puede cambiar a mitad de mes).
-  c.strokeStyle = ROJO;
-  c.lineWidth = 4;
+  // línea de la meta diaria (la cabecera ya dice el valor)
+  const my = plotBot - (meta / escala) * PH;
+  c.strokeStyle = metaLineCol;
+  c.lineWidth = 3;
   c.setLineDash([14, 10]);
   c.beginPath();
-  d.claves.forEach((k, i) => {
-    const y = gBase - vMetas[i] * esc;
-    if (y < gTop - 40) return;
-    c.moveTo(gx + paso * i, y);
-    c.lineTo(gx + paso * (i + 1), y);
-  });
+  c.moveTo(plotL, my);
+  c.lineTo(plotR, my);
   c.stroke();
   c.setLineDash([]);
 
-  // El valor de la meta, rotulado sobre la línea cada vez que cambia.
-  c.fillStyle = ROJO;
-  c.font = `700 26px ${F}`;
-  d.claves.forEach((k, i) => {
-    if (i && vMetas[i] === vMetas[i - 1]) return;
-    const y = gBase - vMetas[i] * esc;
-    if (y < gTop - 20) return;
-    const et = "Meta " + vMetas[i];
-    const w = c.measureText(et).width + 18;
-    const x = Math.min(gx + paso * i + 6, gx + gw - w);
-    c.fillStyle = "#ffffff";
-    c.fillRect(x - 6, y - 32, w, 30);
-    c.fillStyle = ROJO;
-    c.fillText(et, x, y - 10);
+  ult.forEach((k, i) => {
+    const v = vals[i];
+    const h = Math.max((v / escala) * PH, 3);
+    const xc = plotL + slot * i + slot / 2;
+    const hoy = i === ult.length - 1;
+    c.fillStyle = hoy ? barCol : barDim;
+    imgRedondo(c, xc - barW / 2, plotBot - h, barW, h, 10);
+    c.fill();
+    c.fillStyle = hoy ? valCol : valDim;
+    c.font = `800 ${hoy ? 30 : 26}px ${F}`;
+    c.textAlign = "center";
+    c.fillText(String(v), xc, plotBot - h - 14);
   });
 
-  // Leyenda.
-  const ly = 1580;
-  function cuadro(x: number, color: string, txt: string): number {
-    c.fillStyle = color;
-    imgRedondo(c, x, ly - 22, 26, 26, 7);
-    c.fill();
-    c.fillStyle = GRIS;
-    c.font = `400 26px ${F}`;
-    c.fillText(txt, x + 38, ly);
-    return x + 38 + c.measureText(txt).width + 34;
-  }
-  let lx = cuadro(M, AZUL, "Propias (Effi)");
-  if (!soloP) lx = cuadro(lx, VERDE, "Dropi");
-  c.fillStyle = ROJO;
-  c.fillRect(lx, ly - 14, 34, 5);
-  c.fillStyle = GRIS;
-  c.font = `400 26px ${F}`;
-  c.fillText("Meta del día", lx + 46, ly);
-
-  // ---- pie
-  c.fillStyle = GRIS;
-  c.font = `400 28px ${F}`;
-  c.fillText(
-    soloP
-      ? "Solo ventas propias (Effi). No incluye Dropi."
-      : "Fines de semana y festivos repartidos entre sus días.",
-    M,
-    1670
-  );
-  c.fillText("Actualizado " + hoyTexto(), M, 1714);
-  if (d.sinCerrar)
-    c.fillText(
-      "Incluye " + d.sinCerrar + " día" + (d.sinCerrar === 1 ? "" : "s") + " sin cerrar: puede cambiar.",
-      M,
-      1758
-    );
-
-  if (mascota) {
-    const mh = 300;
-    const mw = Math.round((mh * 622.76) / 1106.32);
-    try {
-      c.drawImage(mascota, IMG_W - M - mw, IMG_H - 120 - mh, mw, mh);
-    } catch {
-      // Si la mascota no se puede dibujar, la imagen sale igual sin ella.
-    }
-  }
-  c.fillStyle = CIAN;
-  c.fillRect(0, IMG_H - 14, IMG_W, 14);
+  // ---- fecha
+  const pd = d.dia.split("-");
+  const mes3 = MESES_L[+pd[1] - 1].slice(0, 3);
+  c.fillStyle = dateCol;
+  c.font = `700 34px ${F}`;
+  c.textAlign = "center";
+  c.fillText(`Jornada · ${+pd[2]} ${mes3} ${pd[0]}`, cx, 1800);
 }
