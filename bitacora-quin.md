@@ -1,12 +1,12 @@
 # Bitácora Quin — registro de la construcción
 
-> Resumen compacto de lo hecho, lo decidido y lo que falta. Última actualización: 28-jul-2026 (migración a Next.js terminada hasta la Fase 11 + reorganización de layout + rediseño estético del panel de vendedores + regla 9 actualizada + navegación admin↔equipo + corte de jornada editable, regla 1). El detalle fase por fase de la migración vive en `docs/MIGRATION-PLAN.md`; las reglas de negocio vigentes en `docs/BUSINESS-RULES.md`. Esta bitácora se retoma acá tras quedar congelada en el paso 10.5 tres semanas atrás — ver la sección **"Migración a Next.js y trabajo posterior"** más abajo para todo lo que pasó desde entonces.
+> Resumen compacto de lo hecho, lo decidido y lo que falta. Última actualización: 28-jul-2026 (migración a Next.js terminada hasta la Fase 11 + reorganización de layout + rediseño estético del panel de vendedores + regla 9 actualizada + navegación admin↔equipo + corte de jornada editable con minutos, regla 1 + **`web/` todavía sin desplegar, pendiente que el dueño importe el proyecto en Vercel**). El detalle fase por fase de la migración vive en `docs/MIGRATION-PLAN.md`; las reglas de negocio vigentes en `docs/BUSINESS-RULES.md`. Esta bitácora se retoma acá tras quedar congelada en el paso 10.5 tres semanas atrás — ver la sección **"Migración a Next.js y trabajo posterior"** más abajo para todo lo que pasó desde entonces.
 
 ---
 
 ## Estado actual (25-jul-2026)
 
-**La app vive en `web/`, un proyecto Next.js 16 (App Router + TypeScript) desplegado en Vercel**, no un archivo único. `quin-admin.html` e `index.html` quedaron atrás como prototipo (Fase 13 del plan de migración los archivará formalmente cuando se confirme el corte). Dos rutas:
+**La app vive en `web/`, un proyecto Next.js 16 (App Router + TypeScript)**, no un archivo único. **Corrección 28-jul-2026:** a pesar de lo que decía esta línea antes, `web/` **todavía no está desplegado en ningún lado** — la única URL de Vercel que existe (`reportedeventasagenciaquin.vercel.app`) sigue sirviendo el prototipo viejo (`index.html`/`quin-admin.html`), no esta app. Ver sesión 28-jul-2026 más abajo. `quin-admin.html` e `index.html` quedaron atrás como prototipo (Fase 13 del plan de migración los archivará formalmente cuando se confirme el corte). Dos rutas:
 
 - **`/admin`** — panel del administrador, una sola página que baja en scroll (ya no son pestañas con botones): Cargar y validar, Tablero del mes, Calendario, Comparativo.
 - **`/`** — vista pública del equipo (`<VistaEquipo>`), sin login, la misma que ve el vendedor. Ya no vive como pestaña dentro del admin (se sacó de ahí — ver más abajo).
@@ -202,6 +202,12 @@ Implementación:
 5. **UI**: panel nuevo `web/components/Cargar/CorteJornadaPanel.tsx` en "Cargar y validar", mismo patrón que el resto de las escrituras (vista previa/dry-run + toggle "En vivo" antes de tocar producción).
 6. **Tests**: casos nuevos en `jornada.test.ts` (corte por defecto explícito, corte a medianoche, corte corrido a las 10am/9am) y en `calcular.test.ts` (una venta sintética de Effi y una de Dropi a las 9:30am cae en su propio día con el corte por defecto, pero pasa al día anterior con un corte de 10am/9am). Suite completa: **190/190 verdes**, `tsc --noEmit` sin errores.
 7. **Documentación** (`docs/BUSINESS-RULES.md` regla 1): reescrita para explicar que el corte es editable y por qué el cambio no toca días ya cerrados.
+
+**Ajuste del mismo día:** el dueño avisó que los cortes reales no siempre caen en hora cerrada ("hay veces los cortes quedan 8:45 o 6:20, etc"). El panel `CorteJornadaPanel.tsx` usaba `<input type="number">` (0–23, solo horas enteras) aunque el motor (`jornadaDe`/`fechaEffi`) ya aceptaba cualquier número decimal — la limitación era solo de la UI. Se cambió a `<input type="time">` (selector HH:MM nativo): `horaValida()` parsea "HH:MM" a hora decimal (6:20 → 6.333…) y `horaATexto()` hace el camino inverso para mostrar. `corteSemana`/`corteSabado` en `ajustes.datos` siguen siendo el mismo número decimal de siempre, sin cambios de esquema. Verificado en el navegador: cargar 6:20 muestra correctamente "08:00am → 06:20am" en la vista previa. Commit `84499bd`.
+
+**Intento de publicar `web/` en Vercel para que el equipo probara:** se pidió subir la app a Vercel para una fase de prueba con varias personas. Investigando, se descubrió que **`reportedeventasagenciaquin.vercel.app` no es la app nueva** — es el sitio estático viejo (confirmado navegando: el botón "Administrador" del sitio en vivo lleva a `/quin-admin.html`, no a `/admin` de Next.js). El plan de migración (`docs/MIGRATION-PLAN.md` Fase 12) ya preveía esto: mover el dominio de producción a la app nueva es "punto de no retorno" y requiere aprobación explícita, cosa que nunca se hizo.
+
+Se evaluó desplegar `web/` directo con la herramienta de Vercel (subiendo el código como archivos sueltos, sin Git) pero se descartó: hubiera requerido retranscribir a mano, en fragmentos, los ~317KB de código fuente dentro de la conversación — con riesgo real de errores de transcripción que rompieran el build, y sin ganar nada frente a la alternativa. **Decisión: el dueño va a conectar `web/` como proyecto nuevo en el dashboard de Vercel** (Add New Project → Import repo → Root Directory: `web` → env vars `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` → Deploy), quedando en una URL nueva y separada del sitio viejo, con auto-deploy en cada push a `main` igual que el sitio viejo. Pendiente: el dueño todavía no hizo el import ni pasó la URL resultante.
 
 ---
 
