@@ -190,3 +190,41 @@ describe("6. El desglose cuadra con el total (nada se pierde)", () => {
     expect(st).toBe(v.dropi);
   });
 });
+
+describe("7. corteJornada es editable (BUSINESS-RULES.md regla 1)", () => {
+  const filasEffi: FilaExcel[] = [
+    { Vendedor: "Ana", Cantidad: 5, "Fecha creación": "2026-07-14 09:30:00" },
+  ];
+  const filasDropi: FilaExcel[] = [
+    {
+      CANTIDAD: 3,
+      ESTATUS: "Entregado",
+      NOVEDAD: "none",
+      FECHA: "2026-07-14",
+      HORA: "09:30",
+      TIENDA: "Tienda X",
+    },
+  ];
+  const entradaBase = {
+    filasEffi,
+    filasDropi,
+    listaEstatus: [],
+    listaVend: [],
+    descartarNovedad: true,
+    diasManuales: {},
+  };
+
+  it("sin corteJornada usa el valor por defecto (8am): 9:30am ya es su propio día", () => {
+    const r = calcular(entradaBase);
+    expect(r.dias["2026-07-14"].propias).toBe(5);
+    expect(r.dias["2026-07-14"].dropi).toBe(3);
+  });
+
+  it("con un corte propio (10am) la misma venta de 9:30am pertenece al día anterior", () => {
+    const r = calcular({ ...entradaBase, corteJornada: { semana: 10, sabado: 9 } });
+    expect(r.dias["2026-07-13"].propias).toBe(5);
+    expect(r.dias["2026-07-13"].dropi).toBe(3);
+    expect(r.dias["2026-07-14"]?.propias ?? 0).toBe(0);
+    expect(r.dias["2026-07-14"]?.dropi ?? 0).toBe(0);
+  });
+});

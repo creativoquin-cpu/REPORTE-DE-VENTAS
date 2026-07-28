@@ -8,7 +8,14 @@
  * cuadren fila por fila; no re-decide reglas de negocio.
  */
 import { aNumero } from "./fechas";
-import { fechaDropi, horaDropi, jornadaDe, fechaEffi, type CeldaExcel } from "./jornada";
+import {
+  fechaDropi,
+  horaDropi,
+  jornadaDe,
+  fechaEffi,
+  CORTE_JORNADA_POR_DEFECTO,
+  type CeldaExcel,
+} from "./jornada";
 import { permitido } from "./filtros";
 import type { EntradaCalculo } from "./calcular";
 
@@ -45,7 +52,14 @@ export interface Diagnostico {
 
 /** Recorre las filas crudas y explica el destino de cada una. */
 export function diagnosticar(entrada: EntradaCalculo): Diagnostico {
-  const { filasDropi, filasEffi, listaEstatus, listaVend, descartarNovedad } = entrada;
+  const {
+    filasDropi,
+    filasEffi,
+    listaEstatus,
+    listaVend,
+    descartarNovedad,
+    corteJornada = CORTE_JORNADA_POR_DEFECTO,
+  } = entrada;
 
   // ---- DROPI ----
   const detalleDropi: FilaDiagDropi[] = [];
@@ -64,7 +78,7 @@ export function diagnosticar(entrada: EntradaCalculo): Diagnostico {
     const f = fechaDropi(r["FECHA"]);
     const h = horaDropi(r["HORA"]);
     let jor: string | null = null;
-    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h);
+    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h, corteJornada);
     else if (!motivo) {
       motivo = "sin fecha u hora legible";
       sinFechaDropi++;
@@ -84,7 +98,10 @@ export function diagnosticar(entrada: EntradaCalculo): Diagnostico {
     let motivo: string | null = null;
     if (!permitido(listaVend, vend, "(sin vendedor)"))
       motivo = "vendedor desmarcado: " + (vend || "(sin vendedor)");
-    const k = fechaEffi(r["Fecha creación"] != null ? r["Fecha creación"] : r["Fecha creacion"]);
+    const k = fechaEffi(
+      r["Fecha creación"] != null ? r["Fecha creación"] : r["Fecha creacion"],
+      corteJornada
+    );
     if (!motivo && !k) motivo = "sin fecha legible";
     if (motivo) descartadasEffi += cant;
     else contadasEffi += cant;

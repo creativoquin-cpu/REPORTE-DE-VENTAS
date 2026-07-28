@@ -9,7 +9,7 @@
 
 - La jornada de un día corre de **8:00am a 8:00am del día siguiente**, salvo
   los **sábados, que cortan a las 7:00am** (la madrugada del sábado hasta
-  las 6:59am pertenece al viernes).
+  las 6:59am pertenece al viernes). Estos son los valores **por defecto**.
 - Aplica tanto a **Dropi** (fecha+hora combinadas) como a **Effi**. Effi
   aplica el corte solo cuando la celda trae hora; si no trae hora, se toma
   el día tal cual.
@@ -17,11 +17,25 @@
     se pensó que Effi no necesitaba el corte; se corrigió al encontrar 9
     unidades registradas entre 2am y 6:09am de un sábado que en realidad
     pertenecían a la jornada del viernes.
+- **Editable desde 28-jul-2026**: la jornada de la agencia cambió, así que
+  las dos horas de corte (entre semana y sábado) dejaron de estar fijas en
+  el código. El admin las edita en el panel "Cargar y validar" → panel
+  "Corte de jornada"; se guardan en `ajustes.datos.corteSemana` /
+  `corteSabado` (0–23), con 8/7 como valores de arranque si nunca se guardó
+  nada. Pasa por la misma vista previa (dry-run) que el resto de las
+  escrituras.
+  - **El cambio solo aplica hacia adelante**: como el corte solo se usa al
+    calcular a qué día operativo pertenece una venta cruda del Excel (regla
+    7), un día ya **cerrado** no se recalcula — solo se ve afectado un día
+    sin cerrar (bosquejo) al que se le vuelva a subir el Excel, o una venta
+    nueva de ahí en adelante.
 - Fuente: `bitacora-quin.md` (decisión 1), `quin-admin.html:482-508`,
-  `index.html` (lógica idéntica, comentario "idéntico a quin-admin.html").
-- Casos límite verificados en `pruebas/test-motor-real.js`: sábado 06:59 →
-  viernes; sábado 07:01 → sábado; domingo 07:59 → sábado; martes 08:01 →
-  martes; martes 07:59 → lunes.
+  `index.html` (lógica idéntica, comentario "idéntico a quin-admin.html"),
+  `web/lib/motor/jornada.ts` (`jornadaDe`, `CORTE_JORNADA_POR_DEFECTO`),
+  `web/components/Cargar/CorteJornadaPanel.tsx`.
+- Casos límite verificados en `pruebas/test-motor-real.js` (con el corte por
+  defecto 8/7): sábado 06:59 → viernes; sábado 07:01 → sábado; domingo 07:59
+  → sábado; martes 08:01 → martes; martes 07:59 → lunes.
 
 ## 2. Festivos de Colombia
 
@@ -155,18 +169,25 @@
 
 - **Sin login, sin datos privados**: solo lee lo que la base deja leer a
   cualquiera (metas, días no laborables, ranking ya calculado, y de
-  `jornadas` **solo** fecha, propias y si está cerrada — nunca detalle por
-  vendedor ni por tienda).
-- El vendedor **nunca ve cifras individuales de nadie**, ni las suyas ni las
-  de otros — solo posición en el ranking + nombre. Se probó y se descartó
-  explícitamente un gráfico "VS" incluso sin números.
+  `jornadas` **solo** fecha, propias y si está cerrada — nunca el detalle
+  `ven`/`tie` de esas jornadas, columna por columna en `jornadas`).
+- **Actualizado 24-jul-2026 — el ranking SÍ lleva la cantidad de cada
+  vendedor.** Antes solo mostraba puesto + nombre; el dueño pidió el cambio
+  porque el equipo pregunta cómo le va. `ranking_publico` tiene una columna
+  `cantidad` (prendas propias del mes) que cualquiera puede leer, igual que
+  puesto y nombre — sigue siendo una tabla aparte, ya resumida por el admin
+  al cerrar: el detalle `ven`/`tie` de `jornadas` (que sí identifica venta
+  por venta) sigue sin exponerse.
 - **No hay filtro "ver como [vendedor]"** — hasta que exista login
-  diferenciado por vendedor, la vista es siempre a nivel de equipo completo.
+  diferenciado por vendedor, la vista es siempre a nivel de equipo completo
+  (los KPIs y la gráfica de "cómo va el equipo" siguen sin desglosar por
+  persona; solo el ranking lo hace).
 - La vista está **fija al mes actual**, sin navegación a meses anteriores.
 - Las reglas de cálculo (reparto, meta del día) son **las mismas** que usa
   el admin — verificado por `pruebas/test-vendedor-publico.js`, que compara
   ambos cálculos para que no se desalineen con el tiempo.
-- Fuente: `bitacora-quin.md` (decisiones 8, 11, 12, 16), `index.html:152-161`.
+- Fuente: `bitacora-quin.md` (decisiones 8, 11, 12, 16 — el ranking sin
+  cifras fue la decisión 11/12; se revirtió el 24-jul-2026), `index.html:152-161`.
 
 ## 10. Seguridad: aplicada en la base de datos, no en el código
 

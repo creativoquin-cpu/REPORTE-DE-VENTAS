@@ -81,10 +81,13 @@ create table public.dias_manuales (
 -- Ranking público: SOLO puesto y nombre, ninguna cifra.
 -- Lo escribe el administrador ya calculado, para que el detalle por vendedor
 -- no tenga que salir nunca de la tabla privada.
+-- "cantidad" agregada el 24-jul-2026: regla 9 actualizada, el equipo pregunta
+-- cómo le va y ahora sí ve la cifra de cada vendedor en el ranking público.
 create table public.ranking_publico (
-  mes     text    not null,
-  puesto  integer not null,
-  nombre  text    not null,
+  mes       text    not null,
+  puesto    integer not null,
+  nombre    text    not null,
+  cantidad  integer not null default 0,
   primary key (mes, puesto)
 );
 

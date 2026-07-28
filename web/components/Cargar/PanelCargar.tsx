@@ -14,6 +14,7 @@ import { Descartes } from "./Descartes";
 import { MetasPanel } from "./MetasPanel";
 import { DiasNoLaborablesPanel } from "./DiasNoLaborablesPanel";
 import { DiaNuloPanel } from "./DiaNuloPanel";
+import { CorteJornadaPanel } from "./CorteJornadaPanel";
 import { JornadasPanel } from "./JornadasPanel";
 import { CierrePanel } from "./CierrePanel";
 
@@ -39,6 +40,7 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
     listaVend,
     descartarNovedad,
     diasManuales,
+    corteJornada,
     nubeError,
     ponerEstadoDropi,
     ponerEstadoEffi,
@@ -60,8 +62,9 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
       listaVend,
       descartarNovedad,
       diasManuales,
+      corteJornada,
     }),
-    [filasDropi, filasEffi, listaEstatus, listaVend, descartarNovedad, diasManuales]
+    [filasDropi, filasEffi, listaEstatus, listaVend, descartarNovedad, diasManuales, corteJornada]
   );
 
   const resultado = useMemo(() => calcular(entrada), [entrada]);
@@ -121,6 +124,7 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
       )}
 
       <MetasPanel />
+      <CorteJornadaPanel />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <DiasNoLaborablesPanel />
         <DiaNuloPanel />

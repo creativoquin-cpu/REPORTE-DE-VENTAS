@@ -1,10 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import {
-  resumenEquipo,
-  type JornadaPublicaDia,
-  type ResumenEquipo,
-} from "@/lib/motor/equipo";
+import { resumenEquipo, type JornadaPublicaDia, type ResumenEquipo } from "@/lib/motor/equipo";
 import { claveFecha } from "@/lib/motor/fechas";
 import { MOTIVO_SIN_VENTAS, type Meta } from "@/types/database";
 
@@ -20,6 +16,7 @@ import { MOTIVO_SIN_VENTAS, type Meta } from "@/types/database";
 export interface RankingEntry {
   puesto: number;
   nombre: string;
+  cantidad: number;
 }
 
 export interface DatosVistaEquipo {
@@ -55,7 +52,7 @@ export async function cargarVistaEquipo(): Promise<DatosVistaEquipo> {
     sb.from("jornadas").select("fecha,propias,cerrada,actualizado"),
     sb.from("metas").select("id,desde,total,propias"),
     sb.from("dias_manuales").select("fecha, motivo"),
-    sb.from("ranking_publico").select("puesto,nombre").eq("mes", mes).order("puesto"),
+    sb.from("ranking_publico").select("puesto,nombre,cantidad").eq("mes", mes).order("puesto"),
   ]);
 
   if (rJor.error || rMet.error || rDia.error || rRank.error) {

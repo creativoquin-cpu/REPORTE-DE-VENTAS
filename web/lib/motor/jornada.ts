@@ -2,11 +2,27 @@
  * Corte de jornada operativa y lectura de fechas de los dos Excel.
  * Portado 1:1 desde quin-admin.html:465-514. Ver docs/BUSINESS-RULES.md regla 1.
  *
- * La jornada corta a las 8am, salvo la madrugada del sábado que corta a las
- * 7am: lo vendido antes del corte pertenece a la jornada del día anterior.
- * Aplica a Dropi (fecha+hora) y a Effi (solo si la celda trae hora).
+ * La jornada corta por defecto a las 8am, salvo la madrugada del sábado que
+ * corta a las 7am: lo vendido antes del corte pertenece a la jornada del día
+ * anterior. Aplica a Dropi (fecha+hora) y a Effi (solo si la celda trae hora).
+ *
+ * Editable desde 28-jul-2026: el corte dejó de estar fijo en el código porque
+ * la jornada de la agencia cambió — ahora vive en `ajustes.datos`
+ * (corteSemana/corteSabado) y lo edita el admin en el panel "Cargar y
+ * validar". Estos valores son solo el POR DEFECTO si no hay nada guardado.
  */
 import { claveFecha } from "./fechas";
+
+/** Horas de corte (0–23) de la jornada operativa. */
+export interface CorteJornada {
+  /** Hora de corte de lunes a viernes (y domingo). */
+  semana: number;
+  /** Hora de corte de la madrugada del sábado. */
+  sabado: number;
+}
+
+/** Valores de arranque si el admin nunca guardó un corte propio. */
+export const CORTE_JORNADA_POR_DEFECTO: CorteJornada = { semana: 8, sabado: 7 };
 
 /** Valor crudo de una celda de Excel tal como lo entrega SheetJS. */
 export type CeldaExcel = Date | string | number | null | undefined;
@@ -41,12 +57,18 @@ export function horaDropi(celda: CeldaExcel): number | null {
 
 /**
  * Día operativo (clave "YYYY-MM-DD") de una venta según su fecha y hora.
- * Corte 8am, 7am los sábados. quin-admin.html:483
+ * Corte configurable (por defecto 8am, 7am los sábados). quin-admin.html:483
  */
-export function jornadaDe(y: number, m: number, d: number, hora: number | null): string {
+export function jornadaDe(
+  y: number,
+  m: number,
+  d: number,
+  hora: number | null,
+  corte: CorteJornada = CORTE_JORNADA_POR_DEFECTO
+): string {
   const f = new Date(y, m - 1, d);
-  const corte = f.getDay() === 6 ? 7 : 8;
-  if (hora != null && hora < corte) f.setDate(f.getDate() - 1);
+  const c = f.getDay() === 6 ? corte.sabado : corte.semana;
+  if (hora != null && hora < c) f.setDate(f.getDate() - 1);
   return claveFecha(f.getFullYear(), f.getMonth() + 1, f.getDate());
 }
 
@@ -89,9 +111,12 @@ export function partesEffi(celda: CeldaExcel): PartesEffi | null {
  * tal cual; si la trae, aplica el mismo corte de jornada que Dropi.
  * Decidido por el dueño el 19-jul-2026. quin-admin.html:509
  */
-export function fechaEffi(celda: CeldaExcel): string | null {
+export function fechaEffi(
+  celda: CeldaExcel,
+  corte: CorteJornada = CORTE_JORNADA_POR_DEFECTO
+): string | null {
   const p = partesEffi(celda);
   if (!p) return null;
   if (p.h == null) return claveFecha(p.y, p.m, p.d);
-  return jornadaDe(p.y, p.m, p.d, p.h);
+  return jornadaDe(p.y, p.m, p.d, p.h, corte);
 }

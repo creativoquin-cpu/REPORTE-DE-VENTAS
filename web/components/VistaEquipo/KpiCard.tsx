@@ -9,8 +9,10 @@ interface KpiCardProps {
 export function KpiCard({ etiqueta, valor, pie, destacada }: KpiCardProps) {
   return (
     <div
-      className={`flex min-w-0 flex-col gap-1 rounded-card border border-black/[0.04] p-5 shadow-card ${
-        destacada ? "bg-tinta" : "bg-white"
+      className={`flex min-w-0 flex-col gap-1 rounded-card border p-5 shadow-card ${
+        destacada
+          ? "border-turquesa/25 bg-gradient-to-br from-tinta-2 to-tinta"
+          : "border-black/[0.04] bg-white"
       }`}
     >
       <span

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
 import { LogoQuin, Quino } from "@/components/Marca";
 
@@ -29,6 +30,12 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="soft-card p-8">
+          <Link
+            href="/"
+            className="mb-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-d-txt-2 transition hover:text-turquesa"
+          >
+            ← Volver a la vista del equipo
+          </Link>
           <div className="mb-6 flex items-center gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-tinta text-white">
               <svg

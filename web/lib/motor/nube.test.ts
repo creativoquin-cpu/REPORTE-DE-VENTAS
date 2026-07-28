@@ -27,7 +27,13 @@ const cifra = { propias: 10, dropi: 4, ven: { Ana: 7, Beto: 3 }, tie: { T1: 4 } 
 
 describe("filaCierreJornada", () => {
   it("día sin jornada previa → nace la oficial, cerrada, sin fotos", () => {
-    const { fila, esNueva } = filaCierreJornada("2026-07-10", cifra, null, "10-jul-2026 09:00", "I1");
+    const { fila, esNueva } = filaCierreJornada(
+      "2026-07-10",
+      cifra,
+      null,
+      "10-jul-2026 09:00",
+      "I1"
+    );
     expect(esNueva).toBe(true);
     expect(fila).toEqual({
       fecha: "2026-07-10",
@@ -55,7 +61,13 @@ describe("filaCierreJornada", () => {
       actualizado: "I1",
     };
     const nueva = { propias: 12, dropi: 5, ven: { Ana: 9, Beto: 3 }, tie: { T1: 5 } };
-    const { fila, esNueva } = filaCierreJornada("2026-07-10", nueva, existente, "11-jul-2026 08:00", "I2");
+    const { fila, esNueva } = filaCierreJornada(
+      "2026-07-10",
+      nueva,
+      existente,
+      "11-jul-2026 08:00",
+      "I2"
+    );
     expect(esNueva).toBe(false);
     // oficial intacto
     expect(fila.propias).toBe(10);
@@ -72,7 +84,9 @@ describe("resumenCierre", () => {
     expect(resumenCierre(3, 0)).toBe("cerré 3 jornadas nuevas.");
   });
   it("una nueva y una actualizada", () => {
-    expect(resumenCierre(1, 1)).toBe("cerré 1 jornada nueva y actualicé el comparativo de 1 ya cerrada.");
+    expect(resumenCierre(1, 1)).toBe(
+      "cerré 1 jornada nueva y actualicé el comparativo de 1 ya cerrada."
+    );
   });
   it("nada", () => {
     expect(resumenCierre(0, 0)).toBe("No había nada que cerrar.");
@@ -88,8 +102,8 @@ describe("rankingPublico", () => {
     };
     const r = rankingPublico(oficiales, {}, "2026-07");
     expect(r).toEqual([
-      { mes: "2026-07", puesto: 1, nombre: "Beto" }, // 12
-      { mes: "2026-07", puesto: 2, nombre: "Ana" }, // 10
+      { mes: "2026-07", puesto: 1, nombre: "Beto", cantidad: 12 },
+      { mes: "2026-07", puesto: 2, nombre: "Ana", cantidad: 10 },
     ]);
   });
 
@@ -101,8 +115,8 @@ describe("rankingPublico", () => {
     };
     const r = rankingPublico(oficiales, borradores, "2026-07");
     expect(r).toEqual([
-      { mes: "2026-07", puesto: 1, nombre: "Beto" }, // 6
-      { mes: "2026-07", puesto: 2, nombre: "Ana" }, // 5
+      { mes: "2026-07", puesto: 1, nombre: "Beto", cantidad: 6 },
+      { mes: "2026-07", puesto: 2, nombre: "Ana", cantidad: 5 },
     ]);
   });
 
@@ -112,10 +126,10 @@ describe("rankingPublico", () => {
     expect(r.map((x) => x.nombre)).toEqual(["Ana", "Zoe"]);
   });
 
-  it("nunca lleva cifras (solo mes/puesto/nombre)", () => {
+  it("lleva la cantidad de cada vendedor (regla 9 actualizada 24-jul-2026)", () => {
     const oficiales = { "2026-07-01": { ven: { Ana: 5 } } };
     const r = rankingPublico(oficiales, {}, "2026-07");
-    expect(Object.keys(r[0]).sort()).toEqual(["mes", "nombre", "puesto"]);
+    expect(r[0]).toEqual({ mes: "2026-07", puesto: 1, nombre: "Ana", cantidad: 5 });
   });
 });
 
@@ -136,8 +150,8 @@ describe("planificarCierre", () => {
     expect(plan.ranking).toHaveLength(1);
     expect(plan.ranking[0].mes).toBe("2026-07");
     expect(plan.ranking[0].filas).toEqual([
-      { mes: "2026-07", puesto: 1, nombre: "Beto" },
-      { mes: "2026-07", puesto: 2, nombre: "Ana" },
+      { mes: "2026-07", puesto: 1, nombre: "Beto", cantidad: 9 },
+      { mes: "2026-07", puesto: 2, nombre: "Ana", cantidad: 7 },
     ]);
   });
 
@@ -159,17 +173,24 @@ describe("planificarCierre", () => {
 
 describe("planificarReapertura", () => {
   it("saca ese día del ranking; el resto del mes queda", () => {
-    const jornadas = { "2026-07-01": jor("2026-07-01", { Ana: 5 }), "2026-07-02": jor("2026-07-02", { Beto: 3 }) };
+    const jornadas = {
+      "2026-07-01": jor("2026-07-01", { Ana: 5 }),
+      "2026-07-02": jor("2026-07-02", { Beto: 3 }),
+    };
     const plan = planificarReapertura("2026-07-01", jornadas, {});
     expect(plan.fecha).toBe("2026-07-01");
-    expect(plan.ranking[0].filas).toEqual([{ mes: "2026-07", puesto: 1, nombre: "Beto" }]);
+    expect(plan.ranking[0].filas).toEqual([
+      { mes: "2026-07", puesto: 1, nombre: "Beto", cantidad: 3 },
+    ]);
   });
 
   it("si el día reabierto sigue en el Excel, vuelve a contar como bosquejo", () => {
     const jornadas = { "2026-07-01": jor("2026-07-01", { Ana: 5 }) };
     const cifras = { "2026-07-01": { propias: 5, dropi: 0, ven: { Ana: 5 }, tie: {} } };
     const plan = planificarReapertura("2026-07-01", jornadas, cifras);
-    expect(plan.ranking[0].filas).toEqual([{ mes: "2026-07", puesto: 1, nombre: "Ana" }]);
+    expect(plan.ranking[0].filas).toEqual([
+      { mes: "2026-07", puesto: 1, nombre: "Ana", cantidad: 5 },
+    ]);
   });
 });
 

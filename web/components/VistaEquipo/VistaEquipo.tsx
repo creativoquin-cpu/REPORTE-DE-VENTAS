@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { KpiCard } from "./KpiCard";
 import { GoalProgressBar } from "./GoalProgressBar";
 import { RankingList } from "./RankingList";
@@ -14,8 +15,9 @@ import { bonita, MESES_L } from "@/lib/motor/fechas";
  *
  * Componente único reutilizado en "/" (vista pública) y en la sección "Vista
  * del vendedor" del panel (última sección de components/PanelCompleto) —
- * reemplaza el <iframe src="index.html"> de quin-admin.html:403-406. Nunca
- * muestra cifras por persona (docs/BUSINESS-RULES.md regla 9).
+ * reemplaza el <iframe src="index.html"> de quin-admin.html:403-406. El
+ * ranking muestra la cantidad de cada vendedor (docs/BUSINESS-RULES.md
+ * regla 9, actualizada).
  */
 
 const avisoBox =
@@ -32,106 +34,124 @@ export async function VistaEquipo() {
   const metaCumplida = resumen.metaPeriodo > 0 && resumen.total >= resumen.metaPeriodo;
 
   return (
-    <div className="mx-auto max-w-[1240px] px-6 py-8 pb-11">
-      <header className="mb-5 flex items-center justify-between gap-3 border-b border-linea pb-4">
-        <LogoQuin tono="claro" alto={46} priority />
-        <Quino emocion="presentando" alto={82} className="hidden sm:block" priority />
-      </header>
-      <p className="mb-4 text-sm text-gris">{subtitulo}</p>
-
-      {error && (
-        <div className={avisoBox}>
-          <b>No se pudo conectar.</b> Probá de nuevo en un momento.
-        </div>
-      )}
-
-      {!error && n === 0 && (
-        <div className={`${avisoBox} flex items-center gap-4`}>
-          <Quino emocion="pensando" alto={72} className="shrink-0" />
-          <b>Todavía no hay ventas cargadas este mes.</b>
-        </div>
-      )}
-
-      {!error && n > 0 && (
-        <>
-          {resumen.abiertas.length > 0 && (
-            <div className={avisoBox}>
-              Hay{" "}
-              <b>
-                {resumen.abiertas.length} día{plural(resumen.abiertas.length)}
-              </b>{" "}
-              que todavía no cierra el administrador. Esas cifras pueden cambiar.
-              {resumen.ultimaSubida &&
-                ` Subidas por última vez: ${new Date(resumen.ultimaSubida).toLocaleString(
-                  "es-CO",
-                  { dateStyle: "short", timeStyle: "short" }
-                )}.`}
-            </div>
-          )}
-
-          <div className="mb-4 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-            <KpiCard
-              etiqueta="Prendas propias del equipo"
-              valor={resumen.total}
-              pie={`en ${n} día${plural(n)}`}
-              destacada
-            />
-            <KpiCard
-              etiqueta="Promedio por día"
-              valor={resumen.promedio}
-              pie={`meta de ${resumen.metaHoyPropias}`}
-            />
-            <KpiCard etiqueta="Días en meta" valor={resumen.diasEnMeta} pie={`de ${n} día${plural(n)}`} />
-            <KpiCard
-              etiqueta="Mejor día del equipo"
-              valor={resumen.mejor ? resumen.mejor.valor : "—"}
-              pie={resumen.mejor ? bonita(resumen.mejor.clave) : ""}
-            />
+    <div className="relative min-h-dvh overflow-hidden">
+      <div className="decor-grid" />
+      <div className="relative mx-auto max-w-[1240px] px-6 py-8 pb-11">
+        <header className="soft-card mb-6 flex items-center justify-between gap-4 p-6 sm:p-7">
+          <div>
+            <LogoQuin tono="claro" alto={40} priority />
+            <p className="eyebrow mt-4">PANEL DEL EQUIPO</p>
+            <p className="mt-1 text-sm text-gris">{subtitulo}</p>
           </div>
-
-          <div className={`mb-4 ${cardBox}`}>
-            <h2 className={h2Box}>Cómo va el equipo</h2>
-            <p className="mb-3 text-sm text-gris">
-              Prendas propias por día, con la meta del equipo.
-            </p>
-            <div className="mb-3 flex flex-wrap gap-4 text-[13px] text-gris-2">
-              <span className="flex items-center gap-1.5">
-                <i className="inline-block h-3 w-3 rounded-sm bg-turquesa" />
-                Propias del equipo
-              </span>
-              <span className="flex items-center gap-1.5">
-                <i className="inline-block h-0.5 w-[18px] bg-tinta" />
-                Meta del equipo
-              </span>
-            </div>
-            <TeamChart
-              claves={resumen.claves}
-              porDia={resumen.porDia}
-              metaPorDia={resumen.metaPorDia}
-            />
+          <div className="flex shrink-0 flex-col items-end gap-3">
+            <Link
+              href="/admin"
+              className="rounded-full border border-black/[0.08] bg-white px-4 py-2 text-[13px] font-semibold text-tinta-2 shadow-sm transition hover:border-turquesa hover:text-turquesa"
+            >
+              Administrador
+            </Link>
+            <Quino emocion="presentando" alto={96} className="hidden sm:block" priority />
           </div>
+        </header>
 
-          <div className={`mb-4 ${cardBox}`}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="mb-1 text-xs font-extrabold tracking-[0.12em] text-turquesa-prof">
-                  META DEL EQUIPO
-                </p>
-                <h2 className={h2Box}>Meta de propias del mes</h2>
+        {error && (
+          <div className={avisoBox}>
+            <b>No se pudo conectar.</b> Probá de nuevo en un momento.
+          </div>
+        )}
+
+        {!error && n === 0 && (
+          <div className={`${avisoBox} flex items-center gap-4`}>
+            <Quino emocion="pensando" alto={72} className="shrink-0" />
+            <b>Todavía no hay ventas cargadas este mes.</b>
+          </div>
+        )}
+
+        {!error && n > 0 && (
+          <>
+            {resumen.abiertas.length > 0 && (
+              <div className={avisoBox}>
+                Hay{" "}
+                <b>
+                  {resumen.abiertas.length} día{plural(resumen.abiertas.length)}
+                </b>{" "}
+                que todavía no cierra el administrador. Esas cifras pueden cambiar.
+                {resumen.ultimaSubida &&
+                  ` Subidas por última vez: ${new Date(resumen.ultimaSubida).toLocaleString(
+                    "es-CO",
+                    { dateStyle: "short", timeStyle: "short" }
+                  )}.`}
               </div>
-              {metaCumplida && (
-                <Quino emocion="celebrando" alto={92} className="hidden shrink-0 sm:block" />
-              )}
-            </div>
-            <GoalProgressBar actual={resumen.total} meta={resumen.metaPeriodo} />
-          </div>
+            )}
 
-          <div className={cardBox}>
-            <h2 className={h2Box}>Ranking del mes</h2>
-            <RankingList entradas={ranking} />
-          </div>
-        </>
-      )}
+            <div className="mb-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+              <KpiCard
+                etiqueta="Prendas propias del equipo"
+                valor={resumen.total}
+                pie={`en ${n} día${plural(n)}`}
+                destacada
+              />
+              <KpiCard
+                etiqueta="Promedio por día"
+                valor={resumen.promedio}
+                pie={`meta de ${resumen.metaHoyPropias}`}
+              />
+              <KpiCard
+                etiqueta="Días en meta"
+                valor={resumen.diasEnMeta}
+                pie={`de ${n} día${plural(n)}`}
+              />
+              <KpiCard
+                etiqueta="Mejor día del equipo"
+                valor={resumen.mejor ? resumen.mejor.valor : "—"}
+                pie={resumen.mejor ? bonita(resumen.mejor.clave) : ""}
+              />
+            </div>
+
+            <div className={`mb-6 ${cardBox}`}>
+              <p className="eyebrow mb-1">ESTE MES</p>
+              <h2 className={h2Box}>Cómo va el equipo</h2>
+              <p className="mb-3 text-sm text-gris">
+                Prendas propias por día, con la meta del equipo.
+              </p>
+              <div className="mb-3 flex flex-wrap gap-4 text-[13px] text-gris-2">
+                <span className="flex items-center gap-1.5">
+                  <i className="inline-block h-3 w-3 rounded-sm bg-turquesa" />
+                  Propias del equipo
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <i className="inline-block h-0.5 w-[18px] bg-tinta" />
+                  Meta del equipo
+                </span>
+              </div>
+              <TeamChart
+                claves={resumen.claves}
+                porDia={resumen.porDia}
+                metaPorDia={resumen.metaPorDia}
+              />
+            </div>
+
+            <div className={`mb-6 ${cardBox}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow mb-1">META DEL EQUIPO</p>
+                  <h2 className={h2Box}>Meta de propias del mes</h2>
+                </div>
+                {metaCumplida && (
+                  <Quino emocion="celebrando" alto={92} className="hidden shrink-0 sm:block" />
+                )}
+              </div>
+              <GoalProgressBar actual={resumen.total} meta={resumen.metaPeriodo} />
+            </div>
+
+            <div className={cardBox}>
+              <p className="eyebrow mb-1">TOP VENDEDORES</p>
+              <h2 className={h2Box}>Ranking del mes</h2>
+              <RankingList entradas={ranking} />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

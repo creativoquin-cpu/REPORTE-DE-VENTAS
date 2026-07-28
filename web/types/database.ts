@@ -60,6 +60,10 @@ export interface AjustesDatos {
   ven?: Record<string, boolean>;
   descartarNovedad?: boolean;
   diasManuales?: Record<string, true>;
+  /** Hora de corte de jornada entre semana (0–23). Por defecto 8 si no está. */
+  corteSemana?: number;
+  /** Hora de corte de jornada el sábado (0–23). Por defecto 7 si no está. */
+  corteSabado?: number;
   actualizado?: string;
 }
 
@@ -123,11 +127,12 @@ export interface DiaManual {
  */
 export const MOTIVO_SIN_VENTAS = "Sin ventas";
 
-/** Nunca lleva cifras — ver BUSINESS-RULES.md regla 9. */
+/** Lleva la cantidad de prendas propias de cada vendedor — ver BUSINESS-RULES.md regla 9. */
 export interface RankingPublicoEntry {
   mes: string;
   puesto: number;
   nombre: string;
+  cantidad: number;
 }
 
 export interface AdminRow {

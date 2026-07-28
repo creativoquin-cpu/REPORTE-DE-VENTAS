@@ -8,7 +8,7 @@
  * referencia de pruebas/test-motor-real.js deben salir de acá.
  */
 import { claveFecha, fdate, aNumero } from "./fechas";
-import { fechaDropi, horaDropi, jornadaDe, fechaEffi } from "./jornada";
+import { fechaDropi, horaDropi, jornadaDe, fechaEffi, CORTE_JORNADA_POR_DEFECTO, type CorteJornada } from "./jornada";
 import { porQueNoLaborable } from "./festivos";
 import { repartir, armarBloques, type Bloque } from "./reparto";
 import { permitido, nombreTienda, type FilaExcel, type ItemFiltro } from "./filtros";
@@ -38,6 +38,8 @@ export interface EntradaCalculo {
   listaVend: ItemFiltro[];
   descartarNovedad: boolean;
   diasManuales: Record<string, unknown>;
+  /** Horas de corte de jornada; por defecto 8am (7am sábado) si no se pasa. */
+  corteJornada?: CorteJornada;
 }
 
 export interface ResultadoCalculo {
@@ -65,6 +67,7 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
     listaVend,
     descartarNovedad,
     diasManuales,
+    corteJornada = CORTE_JORNADA_POR_DEFECTO,
   } = entrada;
 
   const dias: Record<string, DiaCalculado> = {};
@@ -85,7 +88,7 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
     const f = fechaDropi(r["FECHA"]);
     const h = horaDropi(r["HORA"]);
     let jor: string | null = null;
-    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h);
+    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h, corteJornada);
     else if (!motivo) motivo = "sin fecha u hora legible";
     if (!motivo && jor) {
       const dj = dia(jor);
@@ -103,7 +106,10 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
     let motivo: string | null = null;
     if (!permitido(listaVend, vend, "(sin vendedor)"))
       motivo = "vendedor desmarcado: " + (vend || "(sin vendedor)");
-    const k = fechaEffi(r["Fecha creación"] != null ? r["Fecha creación"] : r["Fecha creacion"]);
+    const k = fechaEffi(
+      r["Fecha creación"] != null ? r["Fecha creación"] : r["Fecha creacion"],
+      corteJornada
+    );
     if (!motivo && !k) motivo = "sin fecha legible";
     if (!motivo && k) {
       const de = dia(k);

@@ -4,10 +4,12 @@ import {
   fusionar,
   APAGADO_DROPI,
   APAGADO_EFFI,
+  CORTE_JORNADA_POR_DEFECTO,
   type FilaExcel,
   type ItemFiltro,
+  type CorteJornada,
 } from "@/lib/motor";
-import type { Jornada, MesCerrado, Meta } from "@/types/database";
+import type { Jornada, MesCerrado, Meta, AjustesDatos } from "@/types/database";
 import type { EstadoAdminInicial } from "@/lib/data/admin";
 
 /**
@@ -48,6 +50,12 @@ interface CargarState {
   /** Toggles de filtros guardados en la nube (valor→cuenta), para sembrar. */
   ajustesEst: Record<string, boolean>;
   ajustesVen: Record<string, boolean>;
+  /** Blob crudo de `ajustes.datos` tal como llegó de la nube, para no pisar
+   * claves que este store no conoce al guardar un cambio puntual (ej. el
+   * corte de jornada no debe borrar est/ven). */
+  ajustesRaw: AjustesDatos;
+  /** Horas de corte de jornada vigentes (editable, ver BUSINESS-RULES.md regla 1). */
+  corteJornada: CorteJornada;
 
   // --- escritura (4b-2) ---
   /** "preview" = dry-run (default, no escribe); "vivo" = escribe a producción. */
@@ -65,6 +73,8 @@ interface CargarState {
   aplicarGuardarMetaLocal: (meta: Meta) => void;
   /** Refleja localmente una meta quitada por id. */
   aplicarQuitarMetaLocal: (id: number) => void;
+  /** Refleja localmente un corte de jornada guardado. */
+  aplicarGuardarCorteLocal: (corte: CorteJornada) => void;
   /** Refleja localmente un día no laborable marcado/quitado. */
   aplicarMarcarDiaLocal: (fecha: string) => void;
   /** Refleja localmente un día nulo (sin ventas / descanso) marcado. */
@@ -126,6 +136,8 @@ export const useCargar = create<CargarState>((set) => ({
   nubeError: false,
   ajustesEst: {},
   ajustesVen: {},
+  ajustesRaw: {},
+  corteJornada: CORTE_JORNADA_POR_DEFECTO,
   modoEscritura: "preview",
 
   setModoEscritura: (modoEscritura) => set({ modoEscritura }),
@@ -145,6 +157,11 @@ export const useCargar = create<CargarState>((set) => ({
   aplicarGuardarMetaLocal: (meta) =>
     set((s) => ({ metas: [...s.metas.filter((m) => m.id !== meta.id), meta] })),
   aplicarQuitarMetaLocal: (id) => set((s) => ({ metas: s.metas.filter((m) => m.id !== id) })),
+  aplicarGuardarCorteLocal: (corte) =>
+    set((s) => ({
+      corteJornada: corte,
+      ajustesRaw: { ...s.ajustesRaw, corteSemana: corte.semana, corteSabado: corte.sabado },
+    })),
   aplicarMarcarDiaLocal: (fecha) =>
     set((s) => {
       // No laborable con reparto: sale de "nulos" si estaba ahí (un día es de un
@@ -183,6 +200,10 @@ export const useCargar = create<CargarState>((set) => ({
       const ajustesVen = aj.ven ?? {};
       const descartarNovedad =
         typeof aj.descartarNovedad === "boolean" ? aj.descartarNovedad : s.descartarNovedad;
+      const corteJornada: CorteJornada = {
+        semana: aj.corteSemana ?? CORTE_JORNADA_POR_DEFECTO.semana,
+        sabado: aj.corteSabado ?? CORTE_JORNADA_POR_DEFECTO.sabado,
+      };
       // Los días manuales de los ajustes también cuentan (el app viejo los
       // guardaba en ajustes.datos.diasManuales además de la tabla).
       Object.keys(aj.diasManuales ?? {}).forEach((f) => (diasManuales[f] = true));
@@ -196,6 +217,8 @@ export const useCargar = create<CargarState>((set) => ({
         descartarNovedad,
         ajustesEst,
         ajustesVen,
+        ajustesRaw: aj,
+        corteJornada,
         hidratado: true,
         nubeError: e.error,
         ...reconstruir(s.filasDropi, s.filasEffi, s.listaEstatus, s.listaVend, ajustesEst, ajustesVen),

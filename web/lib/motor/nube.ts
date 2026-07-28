@@ -61,7 +61,8 @@ export function filaCierreJornada(
 /** Resumen en texto de cuántas jornadas se cerraron/actualizaron. */
 export function resumenCierre(nuevas: number, actualizadas: number): string {
   const p: string[] = [];
-  if (nuevas) p.push(`cerré ${nuevas} jornada${nuevas > 1 ? "s" : ""} nueva${nuevas > 1 ? "s" : ""}`);
+  if (nuevas)
+    p.push(`cerré ${nuevas} jornada${nuevas > 1 ? "s" : ""} nueva${nuevas > 1 ? "s" : ""}`);
   if (actualizadas)
     p.push(`actualicé el comparativo de ${actualizadas} ya cerrada${actualizadas > 1 ? "s" : ""}`);
   return p.length ? p.join(" y ") + "." : "No había nada que cerrar.";
@@ -73,10 +74,12 @@ export interface VenDia {
 }
 
 /**
- * Filas de `ranking_publico` del mes: SOLO puesto y nombre, ninguna cifra
- * (regla 9). Suma el detalle por vendedor de las jornadas oficiales del mes y,
- * para los días aún sin cerrar (bosquejo), también los suma salvo que ese día
- * ya esté cerrado (ahí manda lo oficial). Empates: por nombre ascendente.
+ * Filas de `ranking_publico` del mes: puesto, nombre y cantidad de prendas
+ * propias (regla 9 actualizada — el equipo pregunta cómo le va, así que sí ve
+ * su cifra y la de los demás en el ranking). Suma el detalle por vendedor de
+ * las jornadas oficiales del mes y, para los días aún sin cerrar (bosquejo),
+ * también los suma salvo que ese día ya esté cerrado (ahí manda lo oficial).
+ * Empates: por nombre ascendente.
  */
 export function rankingPublico(
   oficiales: Record<string, VenDia>,
@@ -97,7 +100,7 @@ export function rankingPublico(
   return Object.keys(ac)
     .map((nom) => ({ nom, n: ac[nom] }))
     .sort((a, b) => b.n - a.n || (a.nom < b.nom ? -1 : 1))
-    .map((x, i) => ({ mes, puesto: i + 1, nombre: x.nom }));
+    .map((x, i) => ({ mes, puesto: i + 1, nombre: x.nom, cantidad: x.n }));
 }
 
 /** El ranking de un mes que hay que reemplazar (borrar e insertar). */
@@ -157,7 +160,13 @@ export function planificarCierre(
   const meses = [...new Set(filas.map((f) => f.fecha.slice(0, 7)))];
   const ranking = meses.map((mes) => ({ mes, filas: rankingPublico(oficiales, borradores, mes) }));
 
-  return { jornadas: filas, ranking, resumen: resumenCierre(nuevas, actualizadas), nuevas, actualizadas };
+  return {
+    jornadas: filas,
+    ranking,
+    resumen: resumenCierre(nuevas, actualizadas),
+    nuevas,
+    actualizadas,
+  };
 }
 
 /**

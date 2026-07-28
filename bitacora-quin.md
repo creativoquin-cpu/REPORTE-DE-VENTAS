@@ -1,14 +1,23 @@
 # Bitácora Quin — registro de la construcción
 
-> Resumen compacto de lo hecho, lo decidido y lo que falta. Se lee junto con `jornada-quin-cowork.md` (la fuente de verdad). Última actualización: 20-jul-2026 (paso 9 completo: Supabase, login y PWA publicados; paso 10 en curso: diagnóstico de la estética con el mockup).
+> Resumen compacto de lo hecho, lo decidido y lo que falta. Última actualización: 28-jul-2026 (migración a Next.js terminada hasta la Fase 11 + reorganización de layout + rediseño estético del panel de vendedores + regla 9 actualizada + navegación admin↔equipo + corte de jornada editable, regla 1). El detalle fase por fase de la migración vive en `docs/MIGRATION-PLAN.md`; las reglas de negocio vigentes en `docs/BUSINESS-RULES.md`. Esta bitácora se retoma acá tras quedar congelada en el paso 10.5 tres semanas atrás — ver la sección **"Migración a Next.js y trabajo posterior"** más abajo para todo lo que pasó desde entonces.
 
 ---
 
-## Estado actual
+## Estado actual (25-jul-2026)
 
-**Un solo archivo funcionando: `quin-admin.html`.** Se abre con doble clic. Cuatro pestañas son del **administrador** y la quinta es la **vista del vendedor** (por ahora vive aquí como vista previa; se separará con el login del paso 9).
+**La app vive en `web/`, un proyecto Next.js 16 (App Router + TypeScript) desplegado en Vercel**, no un archivo único. `quin-admin.html` e `index.html` quedaron atrás como prototipo (Fase 13 del plan de migración los archivará formalmente cuando se confirme el corte). Dos rutas:
 
-Tiene cinco pestañas:
+- **`/admin`** — panel del administrador, una sola página que baja en scroll (ya no son pestañas con botones): Cargar y validar, Tablero del mes, Calendario, Comparativo.
+- **`/`** — vista pública del equipo (`<VistaEquipo>`), sin login, la misma que ve el vendedor. Ya no vive como pestaña dentro del admin (se sacó de ahí — ver más abajo).
+
+Todo lo de las secciones **"Pasos completados"** y **"Decisiones tomadas"** de abajo describe el prototipo de un solo archivo (`quin-admin.html`/`index.html`) tal como se construyó entre el paso 1 y el 10.5 — sigue siendo la referencia de comportamiento (qué debe hacer cada cálculo), pero el código real hoy es el de `web/`.
+
+### Cómo era el archivo único (referencia histórica)
+
+Cuatro pestañas eran del **administrador** y la quinta era la **vista del vendedor** (vivía ahí como vista previa; se separó con el login del paso 9).
+
+Tenía cinco pestañas:
 
 1. **Cargar y validar** — sube los dos Excel, elige qué cuenta, marca días no laborables, fija las metas del equipo, cierra y reabre los meses, muestra la tabla día por día (real y repartida), congela jornadas.
 2. **Tablero del mes** — indicadores del resumen, dos gráficas con línea de meta, rankings y el botón de imagen para WhatsApp.
@@ -130,6 +139,69 @@ Se cargaron los dos archivos tal cual, sin inventar datos, y se compararon con l
 3. **`miguel angel angarita ariza` viene apagado por defecto**, así que de las 99 unidades del archivo el motor cuenta 98. Es lo esperado, queda anotado para que nadie lo lea como un descuadre.
 4. **El bloque de fin de semana solo se arma con los días que existen.** Como el archivo se exportó el domingo a las 11am, el rango termina el sábado y las 8 unidades se quedan ahí; el domingo y el lunes festivo todavía no existen. Al cargar el archivo del lunes el bloque se arma solo y el reparto se corrige. Se comprobó que con el bloque completo reparte 2/2/4 (base 2 y el sobrante al último día, decisión 6). El §17 decía 2/3/3, que es anterior a esa decisión: **el desactualizado es el documento, no el código**.
 - Quedó sin ubicar la columna del «contacto de la tienda» en el Excel de Dropi. Dejó de ser bloqueante al definirse que la tienda es el vendedor.
+
+---
+
+## Migración a Next.js y trabajo posterior (paso 10.5 → 25-jul-2026)
+
+Todo esto pasó **después** de la última entrada anterior de esta bitácora (paso 10.5, reestructura visual del archivo único). El detalle fase por fase con riesgos y verificación está en `docs/MIGRATION-PLAN.md`; acá solo el resumen para no perder el hilo.
+
+**Migración completa a Next.js (Fases 1 a 11, `docs/MIGRATION-PLAN.md`):**
+
+Se migró el archivo único a un proyecto Next.js 16 + TypeScript en `web/`, incremental y con luz verde por fase: scaffold y documentación (Fase 0-1), motor de negocio puro portado a `lib/motor/*.ts` con Vitest (Fase 2), vista pública del equipo como Server Component (Fase 3), la pestaña "Cargar y validar" completa incluida la escritura a Supabase con dry-run por defecto (Fase 4a-4d), "Tablero del mes" (Fase 5), "Calendario" (Fase 6), "Comparativo" (Fase 7), vista del vendedor unificada de verdad sin iframe (Fase 8), imágenes de WhatsApp (Fase 9), PWA instalable (Fase 10) y auditoría de seguridad del backend — resultado: **backend seguro y correcto**, un solo ajuste trivial de rendimiento en una policy RLS (Fase 11). Quedan pendientes a propósito, sin bloquear nada: normalizar `ven`/`tie` a tablas relacionales y mover el cálculo del ranking a Postgres. Al cerrar la Fase 11 la suite de tests estaba en 182 verdes.
+
+**Reorganización de layout (post-Fase 11, 22-jul-2026):** el panel de administrador pasó de 5 pestañas con botones a una sola página que baja en scroll. La "Vista del vendedor" se sacó del panel del admin — es lo que ve el equipo, vive en `/` y ya no tiene sentido como pestaña interna. `/admin` quedó como página única.
+
+**Día nulo / día de descanso (22-jul-2026):** se agregó una regla nueva que no existía en el app vieja — un día sin ninguna venta (ej. domingo de descanso) sale del cálculo sin repartirse ni contar como día; si tenía ventas cargadas, esas ventas pasan al día real anterior. Se marca a mano, guardado en `dias_manuales` con `motivo="Sin ventas"`, separado de un no laborable normal. Documentado como regla 3b en `BUSINESS-RULES.md`. Con esto llegó también un calendario visual para marcar días (no laborables / sin ventas) lado a lado, y redirects de las rutas viejas.
+
+**Ajustes de gráficas del tablero (22-jul-2026):** la línea de meta del tablero se recortaba en los bordes del lienzo — corregido, con el valor rotulado. Se agregó también la línea de **meta de propias** (antes solo se veía la de total) en las gráficas del tablero.
+
+**Limpieza (22-jul-2026):** se sacó `image.png` (una captura de pantalla que había quedado comiteada por error, no era parte del proyecto) y se agregó al `.gitignore`.
+
+**Rediseño estético claro + identidad de marca (23-jul-2026):** paleta clara tipo "Jornada" aplicada consistentemente (turquesa `#00a89d`, tinta `#091315`, Montserrat), tokens declarados en `web/app/globals.css` (`@theme` de Tailwind v4): `rounded-card`/`shadow-card` (patrón "soft-card"), `.eyebrow` (etiqueta en mayúsculas), `.decor-grid` (rejilla decorativa de fondo). Guía `COMO-ABRIR-EN-OTRO-PC.md` agregada para retomar el proyecto desde otra computadora.
+
+### Sesión 25-jul-2026 — panel de vendedores acorde a la identidad "Jornada" + regla 9 actualizada
+
+A pedido del dueño ("el motor dejar intacto, solo vamos a mejorar estética"), se llevó `<VistaEquipo>` (la vista pública `/`, lo que ve el equipo) al mismo sistema visual ya usado en el panel del admin (`TableroPanel`/`TableroChart`), sin tocar ningún cálculo:
+
+- **Rejilla de fondo a toda la página:** `.decor-grid` estaba encerrada dentro de la cabecera; se movió para cubrir todo el fondo de la página, igual que en `app/admin/(panel)/layout.tsx`.
+- **Cabecera y tarjetas con el patrón `.soft-card`**, etiquetas `.eyebrow` ("PANEL DEL EQUIPO", "ESTE MES", "META DEL EQUIPO", "TOP VENDEDORES") sobre cada sección, más espaciado, la mascota Quino más grande en la cabecera, y la tarjeta de KPI destacada con degradado en vez de color plano.
+- **Gráfica "Cómo va el equipo" (`TeamChart`):** el eje X ahora muestra el número del día **y** el nombre del día de la semana (Domingo…Sábado); se dibuja la cantidad encima de cada barra; y se agregó la **línea de meta** dibujada de verdad sobre el lienzo (antes solo aparecía en el tooltip) — mismo patrón de plugin de Chart.js (`afterDatasetsDraw`) ya usado en `TableroChart`.
+- **Ranking con medallas:** color distinto para 1°, 2° y 3° puesto (ya existía en el admin, se llevó acá).
+
+**Cambio de regla de negocio (pedido explícito del dueño, no solo estética):** *"por fis puede mostrar las cantidades de cada vendedor... vamos a cambiar la regla porque ellos van a estar preguntando cómo le va"*. Esto revierte las decisiones 11/12 (el ranking público nunca mostraba cifras, solo puesto y nombre). Se implementó de punta a punta, no solo en la UI:
+
+1. **Base de datos** (Supabase, proyecto `vhczimiicebyuytikdat`): columna `cantidad integer not null default 0` agregada a `ranking_publico` (migración `ranking_publico_agrega_cantidad`) y backfill de los meses ya sellados sumando `ven` de las jornadas oficiales de cada mes (migración `ranking_publico_backfill_cantidad`), verificado contra julio 2026.
+2. **Motor puro** (`web/lib/motor/nube.ts`): `rankingPublico()` ahora devuelve `cantidad` (prendas propias del mes) por vendedor, no solo `puesto`/`nombre`.
+3. **Capa de datos** (`web/lib/data/equipo.ts`) y **tipos** (`web/types/database.ts`): `RankingEntry`/`RankingPublicoEntry` con el campo `cantidad`; el select a Supabase lo pide explícitamente.
+4. **UI** (`RankingList.tsx`): barra de progreso proporcional al máximo del ranking + la cifra a la derecha de cada fila.
+5. **Tests** (`web/lib/motor/nube.test.ts`): las 6 pruebas de `rankingPublico`/`planificarCierre`/`planificarReapertura` que tocan el ranking se actualizaron con el nuevo campo; la prueba que antes verificaba "nunca lleva cifras" ahora verifica lo contrario. Suite completa: **184/184 verdes**.
+6. **Documentación** (`docs/BUSINESS-RULES.md` regla 9): reescrita para reflejar que el ranking sí expone `cantidad`, aclarando qué sigue sin exponerse (el detalle `ven`/`tie` venta por venta de `jornadas`) y que la frontera real sigue siendo el `GRANT` a nivel de columna en Postgres (regla 10), no el código del cliente.
+
+Lo que **no** cambió: los KPIs y la gráfica de "cómo va el equipo" siguen a nivel de equipo, sin desglosar por persona — la regla 9 actualizada solo afecta al ranking. Tampoco hay filtro "ver como [vendedor]" (sigue pendiente del login diferenciado, ver Fase 12/13).
+
+### Sesión 28-jul-2026 — navegación admin ↔ equipo + corte de jornada editable (regla 1)
+
+**Navegación entre las dos vistas públicas/admin:**
+
+- Botón **"Administrador"** en la cabecera de `<VistaEquipo>` (`/`), lleva a `/admin` (que redirige solo a `/admin/login` si no hay sesión — lo resuelve `proxy.ts`, no el botón).
+- Enlace **"← Volver a la vista del equipo"** en `app/admin/login/page.tsx`, para volver a `/` sin tener que borrar la URL a mano.
+
+**Corte de jornada editable (BUSINESS-RULES.md regla 1):** el dueño pidió que dejara de estar fijo en el código ("por que se hizo cambio de la jornada... volvamos todo esto editable"), sin saber todavía la hora nueva — se dejó editable con 8am/7am (sábado) como valores de arranque, para que el dueño mismo la cambie cuando la tenga. Se acordaron tres decisiones antes de tocar el motor:
+
+1. El corte se guarda como valor único vigente (no versionado por fecha como las metas — regla 6): al calcular, el corte solo determina a qué día operativo pertenece una venta cruda del Excel, y un día ya **cerrado** nunca se recalcula (regla 7/8), así que cambiarlo no puede alterar cifras oficiales pasadas.
+2. Se mantiene la excepción del sábado (corta distinto que el resto de la semana) como un segundo valor editable, no se unificó a un solo corte para toda la semana.
+3. El cambio **solo aplica hacia adelante** (un día abierto/bosquejo sí se recalcula con el corte nuevo si se le vuelve a subir el Excel; uno cerrado no).
+
+Implementación:
+
+1. **Motor** (`web/lib/motor/jornada.ts`): `jornadaDe()` y `fechaEffi()` reciben un `CorteJornada { semana, sabado }` opcional (`CORTE_JORNADA_POR_DEFECTO = { semana: 8, sabado: 7 }` si no se pasa nada) — antes era `f.getDay() === 6 ? 7 : 8` fijo.
+2. `web/lib/motor/calcular.ts` y `diagnostico.ts`: `EntradaCalculo` suma `corteJornada?` y lo pasa a cada llamada de `jornadaDe`/`fechaEffi`.
+3. **Guardado**: se reutilizó la tabla `ajustes` que ya existía (una sola fila, columna jsonb `datos`, antes solo con `est`/`ven`/`descartarNovedad`) en vez de crear una tabla nueva — se le agregaron las claves `corteSemana`/`corteSabado` (`web/types/database.ts`). Escritura nueva en `web/lib/data/escribir-ajustes.ts` (`ejecutarGuardarCorteJornada`): hace merge con lo que ya había guardado para no pisar `est`/`ven`.
+4. **Store** (`web/lib/store/cargar.ts`): nuevo estado `corteJornada` + `ajustesRaw` (el blob completo, para el merge al guardar), hidratados desde la nube igual que el resto de `ajustes`.
+5. **UI**: panel nuevo `web/components/Cargar/CorteJornadaPanel.tsx` en "Cargar y validar", mismo patrón que el resto de las escrituras (vista previa/dry-run + toggle "En vivo" antes de tocar producción).
+6. **Tests**: casos nuevos en `jornada.test.ts` (corte por defecto explícito, corte a medianoche, corte corrido a las 10am/9am) y en `calcular.test.ts` (una venta sintética de Effi y una de Dropi a las 9:30am cae en su propio día con el corte por defecto, pero pasa al día anterior con un corte de 10am/9am). Suite completa: **190/190 verdes**, `tsc --noEmit` sin errores.
+7. **Documentación** (`docs/BUSINESS-RULES.md` regla 1): reescrita para explicar que el corte es editable y por qué el cambio no toca días ya cerrados.
 
 ---
 

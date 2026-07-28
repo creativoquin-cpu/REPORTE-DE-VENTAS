@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { jornadaDe, fechaEffi } from "./jornada";
+import { jornadaDe, fechaEffi, CORTE_JORNADA_POR_DEFECTO } from "./jornada";
 
 // Portado de pruebas/test-motor-real.js §8 y §9.
 
@@ -13,6 +13,28 @@ describe("jornadaDe — bordes del turno (corte 8am, 7am los sábados)", () => {
   ];
   it.each(casos)("%s", (_nombre, y, m, d, hora, esperado) => {
     expect(jornadaDe(y, m, d, hora)).toBe(esperado);
+  });
+});
+
+describe("jornadaDe — corte editable (BUSINESS-RULES.md regla 1)", () => {
+  it("con el corte por defecto explícito da lo mismo que sin pasarlo", () => {
+    expect(jornadaDe(2026, 7, 14, 7.983, CORTE_JORNADA_POR_DEFECTO)).toBe(
+      jornadaDe(2026, 7, 14, 7.983)
+    );
+  });
+
+  it("un corte de medianoche (0am) hace que toda hora cuente para su propio día", () => {
+    const corte = { semana: 0, sabado: 0 };
+    expect(jornadaDe(2026, 7, 14, 0.5, corte)).toBe("2026-07-14");
+    expect(jornadaDe(2026, 7, 11, 0.5, corte)).toBe("2026-07-11");
+  });
+
+  it("un corte más tarde (10am entre semana, 9am sábado) corre el límite", () => {
+    const corte = { semana: 10, sabado: 9 };
+    expect(jornadaDe(2026, 7, 14, 9.5, corte)).toBe("2026-07-13"); // martes 9:30 sigue siendo lunes
+    expect(jornadaDe(2026, 7, 14, 10.5, corte)).toBe("2026-07-14"); // martes 10:30 ya es martes
+    expect(jornadaDe(2026, 7, 11, 8.5, corte)).toBe("2026-07-10"); // sábado 8:30 sigue siendo viernes
+    expect(jornadaDe(2026, 7, 11, 9.5, corte)).toBe("2026-07-11"); // sábado 9:30 ya es sábado
   });
 });
 
@@ -30,5 +52,11 @@ describe("fechaEffi — la fecha de Effi en todos los formatos", () => {
   ];
   it.each(casos)("%s", (_nombre, celda, esperado) => {
     expect(fechaEffi(celda)).toBe(esperado);
+  });
+
+  it("respeta un corte propio en vez del de 8am/7am", () => {
+    const corte = { semana: 10, sabado: 9 };
+    expect(fechaEffi("2026-07-14 09:30:00", corte)).toBe("2026-07-13");
+    expect(fechaEffi("2026-07-14 10:30:00", corte)).toBe("2026-07-14");
   });
 });
