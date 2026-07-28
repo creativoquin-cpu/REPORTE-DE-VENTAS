@@ -13,7 +13,10 @@
  */
 import { claveFecha } from "./fechas";
 
-/** Horas de corte (0–23) de la jornada operativa. */
+/**
+ * Horas de corte de la jornada operativa, en horas decimales (0–24) para
+ * poder representar minutos: 6:45am = 6.75, 6:20am = 6 + 20/60.
+ */
 export interface CorteJornada {
   /** Hora de corte de lunes a viernes (y domingo). */
   semana: number;

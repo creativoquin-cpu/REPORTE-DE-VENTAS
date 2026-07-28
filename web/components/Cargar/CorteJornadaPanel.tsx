@@ -14,18 +14,30 @@ import { ModoEscrituraToggle } from "./ModoEscrituraToggle";
  * operativo se asigna una venta nueva al calcular.
  */
 const inputCls =
-  "w-[90px] rounded-lg border border-d-sup-3 bg-d-sup-2 px-2.5 py-1.5 text-sm text-d-txt outline-none focus:outline-2 focus:outline-turquesa";
+  "w-[120px] rounded-lg border border-d-sup-3 bg-d-sup-2 px-2.5 py-1.5 text-sm text-d-txt outline-none focus:outline-2 focus:outline-turquesa";
 
+/** "HH:MM" → horas decimales (6:45 → 6.75), o null si no es una hora válida. */
 function horaValida(texto: string): number | null {
-  const n = parseInt(texto, 10);
-  if (Number.isNaN(n) || n < 0 || n > 23) return null;
-  return n;
+  const m = texto.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const h = +m[1];
+  const min = +m[2];
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h + min / 60;
+}
+
+/** Horas decimales → "HH:MM" (6.75 → "06:45"), para mostrar y para el <input type="time">. */
+function horaATexto(horas: number): string {
+  const totalMin = Math.round(horas * 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export function CorteJornadaPanel() {
   const { corteJornada, ajustesRaw, modoEscritura, aplicarGuardarCorteLocal } = useCargar();
-  const [semana, setSemana] = useState(String(corteJornada.semana));
-  const [sabado, setSabado] = useState(String(corteJornada.sabado));
+  const [semana, setSemana] = useState(horaATexto(corteJornada.semana));
+  const [sabado, setSabado] = useState(horaATexto(corteJornada.sabado));
   const [pendiente, setPendiente] = useState<CorteJornada | null>(null);
   const [escribiendo, setEscribiendo] = useState(false);
   const [mensaje, setMensaje] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -36,8 +48,8 @@ export function CorteJornadaPanel() {
   const [base, setBase] = useState(corteJornada);
   if (base.semana !== corteJornada.semana || base.sabado !== corteJornada.sabado) {
     setBase(corteJornada);
-    setSemana(String(corteJornada.semana));
-    setSabado(String(corteJornada.sabado));
+    setSemana(horaATexto(corteJornada.semana));
+    setSabado(horaATexto(corteJornada.sabado));
   }
 
   function prepararGuardar() {
@@ -45,7 +57,7 @@ export function CorteJornadaPanel() {
     const s = horaValida(semana);
     const b = horaValida(sabado);
     if (s == null || b == null) {
-      setMensaje({ ok: false, texto: "Las dos horas deben ser un número entero entre 0 y 23." });
+      setMensaje({ ok: false, texto: "Las dos horas deben tener formato HH:MM (por ejemplo 6:45)." });
       return;
     }
     if (s === corteJornada.semana && b === corteJornada.sabado) {
@@ -67,7 +79,7 @@ export function CorteJornadaPanel() {
     aplicarGuardarCorteLocal(pendiente);
     setMensaje({
       ok: true,
-      texto: `Corte guardado: ${pendiente.semana}am entre semana, ${pendiente.sabado}am sábado.`,
+      texto: `Corte guardado: ${horaATexto(pendiente.semana)}am entre semana, ${horaATexto(pendiente.sabado)}am sábado.`,
     });
     setPendiente(null);
   }
@@ -83,22 +95,18 @@ export function CorteJornadaPanel() {
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-[13px] font-semibold text-d-txt-2">
-            Corte entre semana (am)
+            Corte entre semana
             <input
-              type="number"
-              min={0}
-              max={23}
+              type="time"
               value={semana}
               onChange={(e) => setSemana(e.target.value)}
               className={`mt-1 block ${inputCls}`}
             />
           </label>
           <label className="text-[13px] font-semibold text-d-txt-2">
-            Corte sábado (am)
+            Corte sábado
             <input
-              type="number"
-              min={0}
-              max={23}
+              type="time"
               value={sabado}
               onChange={(e) => setSabado(e.target.value)}
               className={`mt-1 block ${inputCls}`}
@@ -113,8 +121,8 @@ export function CorteJornadaPanel() {
           <ModoEscrituraToggle />
         </div>
         <p className="mt-2.5 text-[13px] text-d-txt-2">
-          Vigente hoy: <b className="text-d-txt">{corteJornada.semana}am</b> entre semana,{" "}
-          <b className="text-d-txt">{corteJornada.sabado}am</b> el sábado.
+          Vigente hoy: <b className="text-d-txt">{horaATexto(corteJornada.semana)}am</b> entre semana,{" "}
+          <b className="text-d-txt">{horaATexto(corteJornada.sabado)}am</b> el sábado.
         </p>
 
         {pendiente && (
@@ -124,8 +132,8 @@ export function CorteJornadaPanel() {
             </p>
             <p className="text-d-txt">
               Upsert en <code className="text-turquesa">ajustes</code>: corte entre semana{" "}
-              {corteJornada.semana}am → <b>{pendiente.semana}am</b>, corte sábado{" "}
-              {corteJornada.sabado}am → <b>{pendiente.sabado}am</b>
+              {horaATexto(corteJornada.semana)}am → <b>{horaATexto(pendiente.semana)}am</b>, corte sábado{" "}
+              {horaATexto(corteJornada.sabado)}am → <b>{horaATexto(pendiente.sabado)}am</b>
             </p>
             <div className="mt-3 flex gap-2">
               {modoVivo && (

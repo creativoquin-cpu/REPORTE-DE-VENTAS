@@ -20,10 +20,11 @@
 - **Editable desde 28-jul-2026**: la jornada de la agencia cambió, así que
   las dos horas de corte (entre semana y sábado) dejaron de estar fijas en
   el código. El admin las edita en el panel "Cargar y validar" → panel
-  "Corte de jornada"; se guardan en `ajustes.datos.corteSemana` /
-  `corteSabado` (0–23), con 8/7 como valores de arranque si nunca se guardó
-  nada. Pasa por la misma vista previa (dry-run) que el resto de las
-  escrituras.
+  "Corte de jornada" con un selector de hora **HH:MM** (admite minutos, por
+  ejemplo 6:45 o 8:20, no solo horas cerradas); se guardan en
+  `ajustes.datos.corteSemana` / `corteSabado` como horas decimales (6:45 →
+  6.75), con 8/7 como valores de arranque si nunca se guardó nada. Pasa por
+  la misma vista previa (dry-run) que el resto de las escrituras.
   - **El cambio solo aplica hacia adelante**: como el corte solo se usa al
     calcular a qué día operativo pertenece una venta cruda del Excel (regla
     7), un día ya **cerrado** no se recalcula — solo se ve afectado un día
