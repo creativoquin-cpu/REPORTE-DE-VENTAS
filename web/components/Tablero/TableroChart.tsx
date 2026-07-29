@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { ChartConfiguration, Plugin } from "chart.js";
-import { ChartCanvas } from "@/components/ChartCanvas";
+import { ChartCanvas, ySinSolape, type CajaTexto } from "@/components/ChartCanvas";
 import { bonita } from "@/lib/motor";
 
 /**
@@ -45,14 +45,22 @@ export function TableroChart({
       id: "extras",
       afterDatasetsDraw(c) {
         const ctx = c.ctx;
-        // Totales sobre cada barra.
+        const colocadas: CajaTexto[] = [];
+
+        // Totales sobre cada barra (van primero: son el dato principal, las
+        // líneas de meta ceden el paso si chocan con un número).
         ctx.save();
         ctx.font = "800 13px -apple-system,Segoe UI,Roboto,sans-serif";
         ctx.fillStyle = "#091315";
         ctx.textAlign = "center";
         c.getDatasetMeta(1).data.forEach((b, i) => {
           const t = propias[i] + dropi[i];
-          if (t) ctx.fillText(String(t), b.x, b.y - 6);
+          if (!t) return;
+          const texto = String(t);
+          const w = ctx.measureText(texto).width;
+          const y = b.y - 6;
+          ctx.fillText(texto, b.x, y);
+          colocadas.push({ x: b.x - w / 2, y, w, h: 13 });
         });
         ctx.restore();
 
@@ -84,9 +92,17 @@ export function TableroChart({
           ctx.textAlign = "left";
           barras.forEach((b, i) => {
             if (i && serie[i] === serie[i - 1]) return;
-            const y = c.scales.y.getPixelForValue(serie[i]);
-            if (y < c.chartArea.top || y > c.chartArea.bottom) return;
-            ctx.fillText(`${etiqueta} ${serie[i]}`, Math.max(b.x - medio + 2, c.chartArea.left + 2), y - 5);
+            const yLinea = c.scales.y.getPixelForValue(serie[i]);
+            if (yLinea < c.chartArea.top || yLinea > c.chartArea.bottom) return;
+            const texto = `${etiqueta} ${serie[i]}`;
+            const x = Math.max(b.x - medio + 2, c.chartArea.left + 2);
+            const w = ctx.measureText(texto).width;
+            const y = Math.max(
+              ySinSolape({ x, y: yLinea - 5, w, h: 11 }, colocadas),
+              c.chartArea.top + 11
+            );
+            ctx.fillText(texto, x, y);
+            colocadas.push({ x, y, w, h: 11 });
           });
           ctx.restore();
         }

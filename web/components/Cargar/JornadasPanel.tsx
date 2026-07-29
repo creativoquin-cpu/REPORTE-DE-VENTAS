@@ -38,7 +38,17 @@ type Pendiente =
   | { tipo: "reapertura"; plan: PlanReapertura }
   | { tipo: "bosquejo"; plan: PlanBosquejo };
 
-function DetalleJornada({ j, onReabrir }: { j: Jornada; onReabrir: (fecha: string) => void }) {
+function DetalleJornada({
+  j,
+  nuevaCifra,
+  onReabrir,
+  onComparar,
+}: {
+  j: Jornada;
+  nuevaCifra?: { propias: number; dropi: number };
+  onReabrir: (fecha: string) => void;
+  onComparar: (fecha: string) => void;
+}) {
   const oficial = j.propias + j.dropi;
   const ultima = j.fotos.length ? j.fotos[j.fotos.length - 1] : null;
   const revisado = ultima ? ultima.p + ultima.d : null;
@@ -75,6 +85,21 @@ function DetalleJornada({ j, onReabrir }: { j: Jornada; onReabrir: (fecha: strin
           </tr>
         </tbody>
       </table>
+
+      {nuevaCifra && (
+        <p className="mt-3 text-[13px] text-d-txt-2">
+          Hay un Excel cargado para este día:{" "}
+          <b className="text-d-txt">{nuevaCifra.propias + nuevaCifra.dropi}</b> ({nuevaCifra.propias}{" "}
+          propias · {nuevaCifra.dropi} Dropi). Lo oficial no cambia.{" "}
+          <button
+            onClick={() => onComparar(j.fecha)}
+            className="font-semibold text-turquesa hover:underline"
+          >
+            Actualizar comparación con este Excel
+          </button>
+        </p>
+      )}
+
       <button
         onClick={() => onReabrir(j.fecha)}
         className="mt-3 rounded-full border border-red-500/40 px-3 py-1.5 text-[13px] font-semibold text-red-400 hover:bg-red-500/10"
@@ -117,6 +142,7 @@ function CalendarioMes({
     let tip = "";
     let onClick: (() => void) | undefined;
     let extra = "";
+    let diff: number | null = null;
     if (j) {
       const revisada = j.fotos.length > 0;
       clase = revisada
@@ -124,6 +150,14 @@ function CalendarioMes({
         : "border border-turquesa/30 bg-turquesa/10 text-d-txt cursor-pointer";
       val = String(j.propias + j.dropi);
       tip = revisada ? "cerrada, con revisión" : "cerrada";
+      if (c) {
+        diff = c.propias + c.dropi - (j.propias + j.dropi);
+        clase += " ring-1 ring-turquesa";
+        tip +=
+          diff !== 0
+            ? ` · Excel nuevo con diferencia de ${diff > 0 ? `+${diff}` : diff}`
+            : " · Excel nuevo cargado, sin diferencia";
+      }
       onClick = () => onTocarCerrada(k);
       if (abierta === k) extra = " outline outline-2 outline-turquesa";
     } else if (c) {
@@ -140,8 +174,17 @@ function CalendarioMes({
         key={k}
         title={tip}
         onClick={onClick}
-        className={`flex min-h-[46px] flex-col rounded-md p-1 ${clase}${extra}`}
+        className={`relative flex min-h-[46px] flex-col rounded-md p-1 ${clase}${extra}`}
       >
+        {!!diff && (
+          <span
+            className={`absolute -right-1 -top-1 rounded-full px-1 text-[9px] font-bold leading-tight ${
+              diff > 0 ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+            }`}
+          >
+            {diff > 0 ? `+${diff}` : diff}
+          </span>
+        )}
         <span className="text-[11px] leading-none text-d-txt-2">{d}</span>
         <span className="mt-auto text-right text-[13px] font-semibold tabular-nums">{val}</span>
       </div>
@@ -275,10 +318,12 @@ function ResumenVentas({
   total,
   mejorVend,
   mejorTienda,
+  comparativos,
 }: {
   total: number;
   mejorVend: { nombre: string; n: number } | null;
   mejorTienda: { nombre: string; n: number } | null;
+  comparativos: number;
 }) {
   return (
     <aside className="w-full max-w-[300px] shrink-0 self-center rounded-card border border-d-sup-3 bg-turquesa/[0.06] p-5">
@@ -305,8 +350,82 @@ function ResumenVentas({
             {mejorTienda ? `${mejorTienda.n} Dropi` : "sin datos del Excel"}
           </p>
         </div>
+        {comparativos > 0 && (
+          <div className="rounded-card-sm border border-turquesa/40 bg-turquesa/10 p-3">
+            <p className="eyebrow text-[0.62rem]">Comparativos</p>
+            <p className="mt-1 font-black text-d-txt">
+              {comparativos} día{comparativos === 1 ? "" : "s"} con diferencia
+            </p>
+            <p className="text-[13px] text-d-txt-2">Tocá el día en el calendario para revisar.</p>
+          </div>
+        )}
       </div>
     </aside>
+  );
+}
+
+interface FilaComparativoMes {
+  fecha: string;
+  oficial: number;
+  cargado: number;
+  diferencia: number;
+}
+
+/**
+ * Compilación de las diferencias de UN mes (fecha, oficial, Excel cargado y
+ * la diferencia), ordenada de mayor a menor diferencia. Acotada al mes de su
+ * <details> — nunca una lista global que crezca con el historial.
+ */
+function TablaComparativosMes({
+  filas,
+  onActualizar,
+}: {
+  filas: FilaComparativoMes[];
+  onActualizar: (fecha: string) => void;
+}) {
+  const ordenadas = [...filas].sort((a, b) => Math.abs(b.diferencia) - Math.abs(a.diferencia));
+  return (
+    <div className="mt-4">
+      <p className="mb-2 text-[13px] font-semibold text-d-txt">
+        Comparativos del mes: oficial vs. Excel cargado
+      </p>
+      <div className="overflow-x-auto rounded-card-sm border border-d-sup-3">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-d-sup-3 bg-d-sup-2 text-left text-d-txt-2">
+              <th className="px-3 py-2 font-semibold">Fecha</th>
+              <th className="px-3 py-2 text-right font-semibold">Oficial</th>
+              <th className="px-3 py-2 text-right font-semibold">Excel cargado</th>
+              <th className="px-3 py-2 text-right font-semibold">Diferencia</th>
+              <th className="px-3 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {ordenadas.map((f) => {
+              const colorDif = f.diferencia < 0 ? "text-red-400" : "text-emerald-400";
+              return (
+                <tr key={f.fecha} className="border-b border-d-sup-3 last:border-0">
+                  <td className="px-3 py-2 text-d-txt">{bonita(f.fecha)}</td>
+                  <td className="px-3 py-2 text-right text-d-txt">{f.oficial}</td>
+                  <td className="px-3 py-2 text-right text-d-txt">{f.cargado}</td>
+                  <td className={`px-3 py-2 text-right font-semibold ${colorDif}`}>
+                    {f.diferencia > 0 ? `+${f.diferencia}` : f.diferencia}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      onClick={() => onActualizar(f.fecha)}
+                      className="font-semibold text-turquesa hover:underline"
+                    >
+                      Actualizar
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
@@ -376,6 +495,12 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
   function prepararReapertura(fecha: string) {
     setMensaje(null);
     setPendiente({ tipo: "reapertura", plan: planificarReapertura(fecha, jornadas, dias) });
+  }
+  function prepararComparacion(fecha: string) {
+    setMensaje(null);
+    const plan = planificarCierre([fecha], dias, jornadas, hoyTexto(), new Date().toISOString());
+    if (!plan.jornadas.length) return;
+    setPendiente({ tipo: "cierre", plan });
   }
   async function prepararBosquejoAccion() {
     setMensaje(null);
@@ -462,8 +587,10 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
           let suma = 0;
           let pend = 0;
           let rev = 0;
+          let comp = 0;
           const venMes: Record<string, number> = {};
           const tieMes: Record<string, number> = {};
+          const diffsMes: FilaComparativoMes[] = [];
           for (let d = 1; d <= ultimo; d++) {
             const k = claveFecha(ano, mes1, d);
             const j = jornadas[k];
@@ -473,6 +600,14 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
             suma += j ? j.propias + j.dropi : c.propias + c.dropi;
             if (!j) pend++;
             if (j && j.fotos.length) rev++;
+            if (j && c) {
+              const oficial = j.propias + j.dropi;
+              const cargado = c.propias + c.dropi;
+              if (cargado !== oficial) {
+                comp++;
+                diffsMes.push({ fecha: k, oficial, cargado, diferencia: cargado - oficial });
+              }
+            }
             // El "mejor vendedor / tienda" sale del detalle por día del Excel
             // cargado (los oficiales de la nube no guardan ese desglose).
             if (c) {
@@ -493,6 +628,7 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
                   {ksMes} día{ksMes === 1 ? "" : "s"} · {suma} prendas ·{" "}
                   {pend ? <b className="text-amber-400">{pend} sin cerrar</b> : "todas cerradas"}
                   {rev ? ` · ${rev} con revisión` : ""}
+                  {comp ? ` · ${comp} con diferencia` : ""}
                 </span>
               </summary>
 
@@ -525,10 +661,23 @@ export function JornadasPanel({ resultado }: { resultado: ResultadoCalculo }) {
                     onToggleSel={toggleSel}
                   />
                 </div>
-                <ResumenVentas total={suma} mejorVend={mejorVend} mejorTienda={mejorTienda} />
+                <ResumenVentas
+                  total={suma}
+                  mejorVend={mejorVend}
+                  mejorTienda={mejorTienda}
+                  comparativos={comp}
+                />
               </div>
+              {diffsMes.length > 0 && (
+                <TablaComparativosMes filas={diffsMes} onActualizar={prepararComparacion} />
+              )}
               {abierta && abierta.slice(0, 7) === m && jornadas[abierta] && (
-                <DetalleJornada j={jornadas[abierta]} onReabrir={prepararReapertura} />
+                <DetalleJornada
+                  j={jornadas[abierta]}
+                  nuevaCifra={dias[abierta]}
+                  onReabrir={prepararReapertura}
+                  onComparar={prepararComparacion}
+                />
               )}
             </details>
           );

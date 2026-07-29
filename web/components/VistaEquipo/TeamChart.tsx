@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { ChartConfiguration, Plugin } from "chart.js/auto";
-import { ChartCanvas } from "@/components/ChartCanvas";
+import { ChartCanvas, ySinSolape, type CajaTexto } from "@/components/ChartCanvas";
 import { bonita, fdate, DIAS } from "@/lib/motor/fechas";
 
 interface TeamChartProps {
@@ -48,13 +48,21 @@ export function TeamChart({ claves, porDia, metaPorDia }: TeamChartProps) {
         const barras = c.getDatasetMeta(0).data;
         if (!barras.length) return;
 
-        // Cantidad encima de cada barra.
+        const colocadas: CajaTexto[] = [];
+
+        // Cantidad encima de cada barra (va primero: es el dato principal,
+        // la línea de meta cede el paso si choca con un número).
         ctx.save();
         ctx.font = "800 13px -apple-system,Segoe UI,Roboto,sans-serif";
         ctx.fillStyle = "#091315";
         ctx.textAlign = "center";
         barras.forEach((b, i) => {
-          if (porDia[i]) ctx.fillText(String(porDia[i]), b.x, b.y - 6);
+          if (!porDia[i]) return;
+          const texto = String(porDia[i]);
+          const w = ctx.measureText(texto).width;
+          const y = b.y - 6;
+          ctx.fillText(texto, b.x, y);
+          colocadas.push({ x: b.x - w / 2, y, w, h: 13 });
         });
         ctx.restore();
 
@@ -83,13 +91,17 @@ export function TeamChart({ claves, porDia, metaPorDia }: TeamChartProps) {
         ctx.textAlign = "left";
         barras.forEach((b, i) => {
           if (i && metaPorDia[i] === metaPorDia[i - 1]) return;
-          const y = c.scales.y.getPixelForValue(metaPorDia[i]);
-          if (y < c.chartArea.top || y > c.chartArea.bottom) return;
-          ctx.fillText(
-            `Meta ${metaPorDia[i]}`,
-            Math.max(b.x - medio + 2, c.chartArea.left + 2),
-            y - 5
+          const yLinea = c.scales.y.getPixelForValue(metaPorDia[i]);
+          if (yLinea < c.chartArea.top || yLinea > c.chartArea.bottom) return;
+          const texto = `Meta ${metaPorDia[i]}`;
+          const x = Math.max(b.x - medio + 2, c.chartArea.left + 2);
+          const w = ctx.measureText(texto).width;
+          const y = Math.max(
+            ySinSolape({ x, y: yLinea - 5, w, h: 11 }, colocadas),
+            c.chartArea.top + 11
           );
+          ctx.fillText(texto, x, y);
+          colocadas.push({ x, y, w, h: 11 });
         });
         ctx.restore();
       },

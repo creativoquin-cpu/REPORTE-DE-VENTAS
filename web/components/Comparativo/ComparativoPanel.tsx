@@ -95,6 +95,13 @@ function TablaPersonas({ filas, meses, etiqueta }: { filas: FilaPersona[]; meses
   );
 }
 
+type TabPersonas = "vendedores" | "tiendas";
+
+const TABS_PERSONAS: { id: TabPersonas; label: string }[] = [
+  { id: "vendedores", label: "Vendedores mes a mes — Effi" },
+  { id: "tiendas", label: "Tiendas mes a mes — Dropi" },
+];
+
 export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdminInicial }) {
   useHidratarNube(estadoInicial);
   const {
@@ -111,6 +118,7 @@ export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdmin
 
   const [incluirBosquejo, setIncluirBosquejo] = useState(true);
   const [mismoNumeroDias, setMismoNumeroDias] = useState(false);
+  const [tabPersonas, setTabPersonas] = useState<TabPersonas>("vendedores");
 
   const calc = useMemo(
     () =>
@@ -298,17 +306,32 @@ export function ComparativoPanel({ estadoInicial }: { estadoInicial: EstadoAdmin
       </section>
 
       <section>
-        <h2 className="mb-3 text-[22px] font-black tracking-tight text-d-txt">
-          Vendedores mes a mes — Effi
-        </h2>
-        <TablaPersonas filas={tablaPersonas(R, "ven")} meses={meses} etiqueta="Vendedor" />
-      </section>
+        <div className="flex border-b border-d-sup-3">
+          {TABS_PERSONAS.map((t, i) => (
+            <button
+              key={t.id}
+              onClick={() => setTabPersonas(t.id)}
+              className={[
+                "px-5 py-2.5 text-[13px] font-semibold",
+                i > 0 ? "border-l border-d-sup-3" : "",
+                tabPersonas === t.id
+                  ? "-mb-px rounded-t-lg border-t border-r border-d-sup-3 bg-d-sup text-turquesa-prof"
+                  : "text-d-txt-2 hover:bg-d-sup-2",
+              ].join(" ")}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-      <section>
-        <h2 className="mb-3 text-[22px] font-black tracking-tight text-d-txt">
-          Tiendas mes a mes — Dropi
-        </h2>
-        <TablaPersonas filas={tablaPersonas(R, "tie")} meses={meses} etiqueta="Tienda" />
+        <div className="mt-6">
+          {tabPersonas === "vendedores" && (
+            <TablaPersonas filas={tablaPersonas(R, "ven")} meses={meses} etiqueta="Vendedor" />
+          )}
+          {tabPersonas === "tiendas" && (
+            <TablaPersonas filas={tablaPersonas(R, "tie")} meses={meses} etiqueta="Tienda" />
+          )}
+        </div>
       </section>
     </div>
   );

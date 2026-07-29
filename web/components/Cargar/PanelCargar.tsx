@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { calcular, diagnosticar } from "@/lib/motor";
 import { useCargar } from "@/lib/store/cargar";
 import { useHidratarNube } from "@/lib/store/useHidratarNube";
@@ -17,6 +17,13 @@ import { DiaNuloPanel } from "./DiaNuloPanel";
 import { CorteJornadaPanel } from "./CorteJornadaPanel";
 import { JornadasPanel } from "./JornadasPanel";
 import { CierrePanel } from "./CierrePanel";
+
+type TabId = "metas-corte" | "jornadas-cierre";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "metas-corte", label: "Metas y corte de jornada" },
+  { id: "jornadas-cierre", label: "Jornadas y cierre mensual" },
+];
 
 /**
  * Pestaña 1 · Cargar y validar.
@@ -47,6 +54,7 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
     cargarDropi,
     cargarEffi,
   } = useCargar();
+  const [tab, setTab] = useState<TabId>("metas-corte");
 
   // El estado de la nube se carga en el servidor (con la sesión admin) y se
   // vuelca al store una vez, al montar.
@@ -123,14 +131,45 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
         </>
       )}
 
-      <MetasPanel />
-      <CorteJornadaPanel />
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <DiasNoLaborablesPanel />
         <DiaNuloPanel />
       </div>
-      <JornadasPanel resultado={resultado} />
-      <CierrePanel />
+
+      <section>
+        <div className="flex border-b border-d-sup-3">
+          {TABS.map((t, i) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={[
+                "px-5 py-2.5 text-[13px] font-semibold",
+                i > 0 ? "border-l border-d-sup-3" : "",
+                tab === t.id
+                  ? "-mb-px rounded-t-lg border-t border-r border-d-sup-3 bg-d-sup text-turquesa-prof"
+                  : "text-d-txt-2 hover:bg-d-sup-2",
+              ].join(" ")}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-6">
+          {tab === "metas-corte" && (
+            <>
+              <MetasPanel />
+              <CorteJornadaPanel />
+            </>
+          )}
+          {tab === "jornadas-cierre" && (
+            <>
+              <JornadasPanel resultado={resultado} />
+              <CierrePanel />
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
