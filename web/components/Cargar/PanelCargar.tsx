@@ -8,6 +8,7 @@ import type { EstadoAdminInicial } from "@/lib/data/admin";
 import { CargadorTodo } from "./CargadorTodo";
 import { Filtros } from "./Filtros";
 import { ResumenCarga } from "./ResumenCarga";
+import { ResumenVigencia } from "./ResumenVigencia";
 import { TablaPorDia } from "./TablaPorDia";
 import { RankingTabla } from "./RankingTabla";
 import { Descartes } from "./Descartes";
@@ -103,6 +104,7 @@ export function PanelCargar({ estadoInicial }: { estadoInicial: EstadoAdminInici
 
       {hayDatos && (
         <>
+          <ResumenVigencia />
           <Filtros />
           <TablaPorDia resultado={resultado} />
           <div className="grid gap-6 lg:grid-cols-2">

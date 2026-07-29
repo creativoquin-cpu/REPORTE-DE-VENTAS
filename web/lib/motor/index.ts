@@ -4,6 +4,7 @@ export * from "./festivos";
 export * from "./reparto";
 export * from "./metas";
 export * from "./filtros";
+export * from "./vigencia";
 export * from "./calcular";
 export * from "./diagnostico";
 export * from "./equipo";

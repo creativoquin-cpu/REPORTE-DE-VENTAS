@@ -12,11 +12,15 @@ import { fechaDropi, horaDropi, jornadaDe, fechaEffi, CORTE_JORNADA_POR_DEFECTO,
 import { porQueNoLaborable } from "./festivos";
 import { repartir, armarBloques, type Bloque } from "./reparto";
 import { permitido, nombreTienda, type FilaExcel, type ItemFiltro } from "./filtros";
+import { esAnulada } from "./vigencia";
 
 /** Lo calculado para un día operativo. */
 export interface DiaCalculado {
-  /** Prendas propias (Effi) reales del día. */
+  /** Prendas propias (Effi) reales del día: solo remisiones VIGENTES. */
   propias: number;
+  /** Prendas Effi ANULADAS del día (columna Vigencia). No son venta real;
+   * se cuentan aparte para poder mostrar la diferencia real vs oficial. */
+  anuladas: number;
   /** Prendas Dropi reales del día. */
   dropi: number;
   /** Detalle propias por vendedor. PRIVADO (nunca va al rol anon). */
@@ -56,7 +60,7 @@ export interface ResultadoCalculo {
 }
 
 function diaVacio(): DiaCalculado {
-  return { propias: 0, dropi: 0, ven: {}, tie: {}, motivo: null, repP: 0, repD: 0 };
+  return { propias: 0, anuladas: 0, dropi: 0, ven: {}, tie: {}, motivo: null, repP: 0, repD: 0 };
 }
 
 export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
@@ -113,9 +117,16 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
     if (!motivo && !k) motivo = "sin fecha legible";
     if (!motivo && k) {
       const de = dia(k);
-      de.propias += cant;
-      porVendedorEffi[vend] = (porVendedorEffi[vend] || 0) + cant;
-      de.ven[vend] = (de.ven[vend] || 0) + cant;
+      // Las remisiones "anuladas" (columna Vigencia) NO son venta real: se
+      // cuentan aparte. Sin columna Vigencia (archivos viejos) todo es vigente,
+      // así que el conteo de datos previos no cambia.
+      if (esAnulada(r)) {
+        de.anuladas += cant;
+      } else {
+        de.propias += cant;
+        porVendedorEffi[vend] = (porVendedorEffi[vend] || 0) + cant;
+        de.ven[vend] = (de.ven[vend] || 0) + cant;
+      }
     }
   });
 
