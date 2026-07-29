@@ -211,6 +211,24 @@ Se evaluó desplegar `web/` directo con la herramienta de Vercel (subiendo el c�
 
 **Resuelto:** en vez de que el dueño hiciera los clics en el dashboard de Vercel, se hicieron con automatización de navegador (Claude in Chrome) sobre la sesión real y ya logueada del dueño — mismos pasos, sin retranscribir código: Add New Project → Import `creativoquin-cpu/REPORTE-DE-VENTAS` → Root Directory `web` (detecta Next.js solo) → env vars `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` → Deploy. Quedó como proyecto Vercel nuevo y separado (equipo "Tatiana", nombre `reporte-de-ventas-bwey`), con auto-deploy en cada push a `main` igual que el sitio viejo — sin tocar ni el dominio ni el proyecto de `reportedeventasagenciaquin.vercel.app`. Verificado en el navegador: `/` muestra el panel del equipo con el ranking por cantidad, y `/admin` redirige correctamente a `/admin/login` (sin sesión), ambos con el diseño y las funciones nuevas.
 
+### Sesión 29-jul-2026 — dominio propio vencido, subdominio gratis en vivo, y "venta real vs oficial" (Vigencia)
+
+**Verificación del deploy y limpieza de Vercel.** Al revisar el auto-deploy se encontró que el proyecto con el dominio real (`reporte-de-ventas-bbto` → `www.reportedeventas.com`) servía la **app vieja estática** (Root Directory `./`, Framework "Other", sin build), y que había **6 proyectos duplicados** apuntando al mismo repo. Se probó la app nueva en un duplicado (Root `web` + Next.js + env vars, deploy OK con datos vivos) y se **limpió** el desorden: se borraron 4 duplicados, quedando solo `bbto` (dominio real) + `bwey` (prueba).
+
+**Corte del dominio → 503 → causa raíz: el dominio propio está vencido.** Se reconfiguró `bbto` a la app nueva (Root `web`, Next.js, 2 env vars) y se promovió a producción, pero `www.reportedeventas.com` devolvía **503** (Vercel lo marcaba "Invalid Configuration" en el DNS). Se hizo rollback (que tampoco lo levantó) y, revisando WHOIS con **dos fuentes** (whois.com y who.is), se descubrió que **`reportedeventas.com` no está registrado — está vencido**. Un dominio sin registro no resuelve: **no fue el cambio de Vercel lo que rompió nada**; la app funcionaba perfecto en su URL directa de Vercel.
+
+**Solución: subdominio gratis, en vivo.** En vez de depender de renovar el `.com` (pago, ~USD 10–15/año, queda pendiente para el dueño), se agregó un subdominio gratuito de Vercel: **`reportedeventas.vercel.app`**, conectado a producción, con la app nueva, datos reales y https. El `.com` se conectará cuando el dueño lo renueve (DNS: `A @ → 216.198.79.1`, `CNAME www → cname.vercel-dns.com`).
+
+**Feature nueva (Fase 1): "venta real vs oficial" con la columna Vigencia de Effi.** Los Excel de remisiones de Effi ahora traen columnas nuevas (**Vigencia**, **Observación concepto**, **Devoluciones vigentes**, **Observación anulación**). Regla de negocio: una remisión **"anulada"** no es venta real. Hasta ahora el motor sumaba TODO (incluidas anuladas) → cifras infladas.
+
+1. **Motor** (`web/lib/motor/calcular.ts` + nuevo `web/lib/motor/vigencia.ts`): las anuladas ya no cuentan como propias; van a `DiaCalculado.anuladas`. Real = vigentes. Compatible con archivos viejos sin la columna (todo cuenta como vigente). `resumenVigencia()` da remitido/real/anuladas + motivos.
+2. **UI** (`web/components/Cargar/ResumenVigencia.tsx`): tarjeta en "Cargar y validar" con Venta real (vigentes) vs Oficial/remitido vs Anuladas, más el listado de motivos de anulación.
+3. **Tests** (`web/lib/motor/vigencia.test.ts`): suite completa **196/196 verdes**, `tsc --noEmit` y lint sin errores. Con el Excel de referencia (`...2026-07-29`): Real 110 · Oficial 128 · Anuladas 18.
+
+**Deploy de prueba, sin oficializar todavía.** A pedido del dueño, la feature quedó en la rama **`feat/vigencia-real-oficial`** con un **deploy de preview** de Vercel (no toca producción), para revisar mañana con unos Excel de verificación del comparativo antes de mergear a `main`.
+
+**En pausa:** la columna **"Observación concepto"** (códigos numéricos) es el vínculo al **ranking de catálogos** vía la API de Klixmant — sigue pausado hasta que le den acceso a esa API.
+
 ---
 
 ## Cómo trabajamos (funcionó, mantenerlo)
