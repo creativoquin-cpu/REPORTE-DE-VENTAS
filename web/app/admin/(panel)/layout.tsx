@@ -40,6 +40,14 @@ export default async function AdminPanelLayout({ children }: { children: ReactNo
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="/admin/historial"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-d-sup-3 bg-d-sup-2 px-4 py-2 text-[13px] font-semibold text-d-txt-2 hover:border-turquesa hover:text-d-txt"
+            >
+              Ver historial completo
+            </a>
             {user?.email && <span className="text-[13px] text-d-txt-2">{user.email}</span>}
             <LogoutButton />
           </div>

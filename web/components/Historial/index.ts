@@ -1,0 +1,1 @@
+export { HistorialJornadas } from "./HistorialJornadas";
