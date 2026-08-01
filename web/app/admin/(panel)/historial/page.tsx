@@ -8,5 +8,12 @@ import { HistorialJornadas } from "@/components/Historial";
  */
 export default async function HistorialPage() {
   const estado = await cargarEstadoAdmin();
-  return <HistorialJornadas jornadas={estado.jornadas} />;
+  return (
+    <HistorialJornadas
+      jornadas={estado.jornadas}
+      metas={estado.metas}
+      diasNulos={estado.diasNulos}
+      diasManuales={estado.diasManuales}
+    />
+  );
 }
