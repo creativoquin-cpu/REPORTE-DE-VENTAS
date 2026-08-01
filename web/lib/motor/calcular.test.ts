@@ -214,14 +214,15 @@ describe("7. corteJornada es editable (BUSINESS-RULES.md regla 1)", () => {
     diasManuales: {},
   };
 
-  it("sin corteJornada usa el valor por defecto (8am): 9:30am ya es su propio día", () => {
+  it("sin corteJornada usa el valor por defecto: 9:30am ya es su propio día", () => {
     const r = calcular(entradaBase);
     expect(r.dias["2026-07-14"].propias).toBe(5);
     expect(r.dias["2026-07-14"].dropi).toBe(3);
   });
 
   it("con un corte propio (10am) la misma venta de 9:30am pertenece al día anterior", () => {
-    const r = calcular({ ...entradaBase, corteJornada: { semana: 10, sabado: 9 } });
+    const corteJornada = [{ dias: [0, 1, 2, 3, 4, 5], hora: 10 }, { dias: [6], hora: 9 }];
+    const r = calcular({ ...entradaBase, corteJornada });
     expect(r.dias["2026-07-13"].propias).toBe(5);
     expect(r.dias["2026-07-13"].dropi).toBe(3);
     expect(r.dias["2026-07-14"]?.propias ?? 0).toBe(0);
