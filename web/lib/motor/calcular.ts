@@ -92,7 +92,7 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
     const f = fechaDropi(r["FECHA"]);
     const h = horaDropi(r["HORA"]);
     let jor: string | null = null;
-    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h, corteJornada);
+    if (f && h != null) jor = jornadaDe(f.y, f.m, f.d, h, corteJornada, diasManuales);
     else if (!motivo) motivo = "sin fecha u hora legible";
     if (!motivo && jor) {
       const dj = dia(jor);
@@ -112,7 +112,8 @@ export function calcular(entrada: EntradaCalculo): ResultadoCalculo {
       motivo = "vendedor desmarcado: " + (vend || "(sin vendedor)");
     const k = fechaEffi(
       r["Fecha creación"] != null ? r["Fecha creación"] : r["Fecha creacion"],
-      corteJornada
+      corteJornada,
+      diasManuales
     );
     if (!motivo && !k) motivo = "sin fecha legible";
     if (!motivo && k) {

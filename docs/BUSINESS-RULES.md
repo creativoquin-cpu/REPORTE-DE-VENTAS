@@ -7,9 +7,9 @@
 
 ## 1. Corte de jornada (día operativo)
 
-- La jornada de un día corre de **8:00am a 8:00am del día siguiente**, salvo
-  los **sábados, que cortan a las 7:00am** (la madrugada del sábado hasta
-  las 6:59am pertenece al viernes). Estos son los valores **por defecto**.
+- La jornada de un día corre de un corte a otro (ej.: 7:30am a 7:30am del día
+  siguiente): lo vendido antes del corte pertenece a la jornada del día
+  anterior.
 - Aplica tanto a **Dropi** (fecha+hora combinadas) como a **Effi**. Effi
   aplica el corte solo cuando la celda trae hora; si no trae hora, se toma
   el día tal cual.
@@ -17,14 +17,37 @@
     se pensó que Effi no necesitaba el corte; se corrigió al encontrar 9
     unidades registradas entre 2am y 6:09am de un sábado que en realidad
     pertenecían a la jornada del viernes.
-- **Editable desde 28-jul-2026**: la jornada de la agencia cambió, así que
-  las dos horas de corte (entre semana y sábado) dejaron de estar fijas en
-  el código. El admin las edita en el panel "Cargar y validar" → panel
-  "Corte de jornada" con un selector de hora **HH:MM** (admite minutos, por
-  ejemplo 6:45 o 8:20, no solo horas cerradas); se guardan en
-  `ajustes.datos.corteSemana` / `corteSabado` como horas decimales (6:45 →
-  6.75), con 8/7 como valores de arranque si nunca se guardó nada. Pasa por
-  la misma vista previa (dry-run) que el resto de las escrituras.
+- **Editable desde 28-jul-2026** (primer cambio: dos horas fijas, entre
+  semana / sábado) y **reescrito a rangos flexibles el 01-ago-2026** (segundo
+  cambio: el área productiva volvió a modificar el corte y ya no alcanzaba
+  con dos valores). El corte vigente es una **lista de rangos**
+  (`RangoCorte[]`, `web/lib/motor/jornada.ts`): cada rango cubre uno o más
+  días de la semana (`dias: number[]`, 0=domingo … 6=sábado) con su propia
+  `hora` (decimal, admite minutos: 7.5 = 7:30am).
+  - **Regla vigente desde el 01-ago-2026**: martes a viernes corta a las
+    **7:30am**; el fin de semana (sábado + domingo, se acumula) corta a las
+    **7:00am**; el **lunes corta a las 8:00am** — y si el lunes cae festivo,
+    ese corte de 8am se corre día por día hasta el **primer día hábil
+    siguiente** (ej.: si el lunes es puente, el martes hereda el corte de
+    8am y recién el miércoles vuelve a 7:30am). Esto es el campo
+    `correrSiFestivo` de un rango — pensado para rangos de un solo día.
+  - `correrSiFestivo` se resuelve contra los **festivos automáticos de
+    Colombia** (`festivosColombia`) y los **días marcados a mano** como no
+    laborables (`diasManuales`) — no contra sábados/domingos (esos ya tienen
+    su propio rango). Ver `horaDeCorte()` en `jornada.ts` para el algoritmo
+    exacto.
+  - Se admite cualquier combinación de rangos (no solo estos 3), para que un
+    tercer cambio de regla no vuelva a requerir tocar código — el admin los
+    arma en el panel "Cargar y validar" → "Corte de jornada": cada rango es
+    una fila con chips de días de la semana, un selector de hora con la
+    estética de la marca (no el `<input type="time">` nativo del navegador,
+    que no se puede recolorear) y el checkbox de "correr si festivo". Se
+    valida que los 7 días queden cubiertos por exactamente un rango antes de
+    guardar.
+  - Se guarda en `ajustes.datos.corteRangos` (reemplaza a los campos viejos
+    `corteSemana`/`corteSabado`, que solo se leen para migrar un guardado
+    anterior al 01-ago-2026 — ver `hidratarNube()` en `lib/store/cargar.ts`).
+    Pasa por la misma vista previa (dry-run) que el resto de las escrituras.
   - **El cambio solo aplica hacia adelante**: como el corte solo se usa al
     calcular a qué día operativo pertenece una venta cruda del Excel (regla
     7), un día ya **cerrado** no se recalcula — solo se ve afectado un día
@@ -32,11 +55,12 @@
     nueva de ahí en adelante.
 - Fuente: `bitacora-quin.md` (decisión 1), `quin-admin.html:482-508`,
   `index.html` (lógica idéntica, comentario "idéntico a quin-admin.html"),
-  `web/lib/motor/jornada.ts` (`jornadaDe`, `CORTE_JORNADA_POR_DEFECTO`),
-  `web/components/Cargar/CorteJornadaPanel.tsx`.
-- Casos límite verificados en `pruebas/test-motor-real.js` (con el corte por
-  defecto 8/7): sábado 06:59 → viernes; sábado 07:01 → sábado; domingo 07:59
-  → sábado; martes 08:01 → martes; martes 07:59 → lunes.
+  `web/lib/motor/jornada.ts` (`jornadaDe`, `horaDeCorte`,
+  `CORTE_JORNADA_POR_DEFECTO`), `web/components/Cargar/CorteJornadaPanel.tsx`.
+- Casos límite verificados en `web/lib/motor/jornada.test.ts` — incluye el
+  corte por defecto, la corrida por festivo (con un festivo real de 2026 y
+  con `diasManuales` sintéticos, incluso festivos consecutivos) y cortes a
+  medida.
 
 ## 2. Festivos de Colombia
 

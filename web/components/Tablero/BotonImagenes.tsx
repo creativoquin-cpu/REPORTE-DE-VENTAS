@@ -69,7 +69,7 @@ export function BotonImagenes({ datos }: { datos: DatosImagen | null }) {
       disabled={!datos || bajando}
       className="rounded-full border border-d-sup-3 bg-d-sup-2 px-4 py-2 text-[13px] font-semibold text-d-txt-2 hover:border-turquesa hover:text-d-txt disabled:cursor-not-allowed disabled:opacity-40"
     >
-      {bajando ? "Generando…" : "Imágenes para WhatsApp (2)"}
+      {bajando ? "Generando…" : "Reportes Diarios"}
     </button>
   );
 }

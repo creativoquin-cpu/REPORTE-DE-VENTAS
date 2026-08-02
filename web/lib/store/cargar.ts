@@ -158,10 +158,12 @@ export const useCargar = create<CargarState>((set) => ({
     set((s) => ({ metas: [...s.metas.filter((m) => m.id !== meta.id), meta] })),
   aplicarQuitarMetaLocal: (id) => set((s) => ({ metas: s.metas.filter((m) => m.id !== id) })),
   aplicarGuardarCorteLocal: (corte) =>
-    set((s) => ({
-      corteJornada: corte,
-      ajustesRaw: { ...s.ajustesRaw, corteSemana: corte.semana, corteSabado: corte.sabado },
-    })),
+    set((s) => {
+      const ajustesRaw = { ...s.ajustesRaw, corteRangos: corte };
+      delete ajustesRaw.corteSemana;
+      delete ajustesRaw.corteSabado;
+      return { corteJornada: corte, ajustesRaw };
+    }),
   aplicarMarcarDiaLocal: (fecha) =>
     set((s) => {
       // No laborable con reparto: sale de "nulos" si estaba ahí (un día es de un
@@ -200,10 +202,18 @@ export const useCargar = create<CargarState>((set) => ({
       const ajustesVen = aj.ven ?? {};
       const descartarNovedad =
         typeof aj.descartarNovedad === "boolean" ? aj.descartarNovedad : s.descartarNovedad;
-      const corteJornada: CorteJornada = {
-        semana: aj.corteSemana ?? CORTE_JORNADA_POR_DEFECTO.semana,
-        sabado: aj.corteSabado ?? CORTE_JORNADA_POR_DEFECTO.sabado,
-      };
+      // corteRangos es la forma vigente; si un guardado viejo (antes del
+      // 01-ago-2026) solo tiene corteSemana/corteSabado, se reconstruye el
+      // rango equivalente (domingo a viernes + sábado aparte, sin
+      // correrSiFestivo — esa regla no existía todavía).
+      const corteJornada: CorteJornada =
+        aj.corteRangos ??
+        (aj.corteSemana != null || aj.corteSabado != null
+          ? [
+              { dias: [0, 1, 2, 3, 4, 5], hora: aj.corteSemana ?? 8 },
+              { dias: [6], hora: aj.corteSabado ?? 7 },
+            ]
+          : CORTE_JORNADA_POR_DEFECTO);
       // Los días manuales de los ajustes también cuentan (el app viejo los
       // guardaba en ajustes.datos.diasManuales además de la tabla).
       Object.keys(aj.diasManuales ?? {}).forEach((f) => (diasManuales[f] = true));

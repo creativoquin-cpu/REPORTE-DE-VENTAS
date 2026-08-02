@@ -55,14 +55,29 @@ export interface Meta {
  * valor→bool (quin-admin.html:621-623 `est[x.valor]=x.cuenta`), no como
  * arreglo de objetos.
  */
+/** Un tramo de días de la semana con su propia hora de corte (ver lib/motor/jornada.ts RangoCorte). */
+export interface RangoCorteGuardado {
+  /** Días que cubre (0=domingo … 6=sábado). */
+  dias: number[];
+  /** Hora de corte, horas decimales (0–23.98). */
+  hora: number;
+  /** Si el día cae festivo, el corte se corre al primer día hábil siguiente. */
+  correrSiFestivo?: boolean;
+}
+
 export interface AjustesDatos {
   est?: Record<string, boolean>;
   ven?: Record<string, boolean>;
   descartarNovedad?: boolean;
   diasManuales?: Record<string, true>;
-  /** Hora de corte de jornada entre semana (0–23). Por defecto 8 si no está. */
+  /** Rangos de corte de jornada vigentes (regla 1, editable desde 28-jul-2026,
+   * reescrita a rangos flexibles el 01-ago-2026). */
+  corteRangos?: RangoCorteGuardado[];
+  /** @deprecated reemplazado por corteRangos el 01-ago-2026 — solo se lee para
+   * migrar datos guardados antes de ese cambio. */
   corteSemana?: number;
-  /** Hora de corte de jornada el sábado (0–23). Por defecto 7 si no está. */
+  /** @deprecated reemplazado por corteRangos el 01-ago-2026 — solo se lee para
+   * migrar datos guardados antes de ese cambio. */
   corteSabado?: number;
   actualizado?: string;
 }
